@@ -112,3 +112,6 @@ lerna-debug.log*
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Uploaded files
+Backend/course-service/uploads/
