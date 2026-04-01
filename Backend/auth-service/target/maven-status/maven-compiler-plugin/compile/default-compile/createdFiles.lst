@@ -8,6 +8,7 @@ com\smartek\authservice\dto\RegisterRequest.class
 com\smartek\authservice\entity\User$UserBuilder.class
 com\smartek\authservice\dto\AuthResponse.class
 com\smartek\authservice\enums\RoleType.class
+com\smartek\authservice\util\PasswordHashGenerator.class
 com\smartek\authservice\dto\LoginRequest.class
 com\smartek\authservice\AuthServiceApplication.class
 com\smartek\authservice\controller\AuthController.class

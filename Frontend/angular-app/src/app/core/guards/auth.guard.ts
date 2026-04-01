@@ -12,20 +12,5 @@ export const authGuard: CanActivateFn = (route, state) => {
     return false;
   }
 
-  // Vérifier si l'utilisateur existe toujours dans la base de données
-  return authService.validateUser().pipe(
-    map(isValid => {
-      if (!isValid) {
-        console.log('Utilisateur invalide ou supprimé, déconnexion...');
-        authService.logout();
-        return false;
-      }
-      return true;
-    }),
-    catchError(() => {
-      console.log('Erreur lors de la validation de l\'utilisateur, déconnexion...');
-      authService.logout();
-      return of(false);
-    })
-  );
+  return true;
 };

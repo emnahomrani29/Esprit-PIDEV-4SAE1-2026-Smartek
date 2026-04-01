@@ -1,0 +1,145 @@
+### JWT Authentication Flow Test
+### Use this file with REST Client extension or manually with curl
+
+### Step 1: Login as Learner
+POST http://localhost:8081/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "learner1@example.com",
+  "password": "password123"
+}
+
+### Expected Response:
+# {
+#   "token": "eyJhbGciOiJIUzI1NiJ9...",
+#   "userId": 1,
+#   "email": "learner1@example.com",
+#   "firstName": "Learner1",
+#   "role": "LEARNER",
+#   "message": "Connexion réussie"
+# }
+
+### COPY THE TOKEN FROM RESPONSE ABOVE AND PASTE IT BELOW
+
+###
+
+### Step 2: Get Earned Badges (Replace TOKEN and USER_ID)
+GET http://localhost:8083/api/certifications-badges/earned-badges/learner/1
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Expected Response (if badges exist):
+# [
+#   {
+#     "id": 1,
+#     "badgeTemplate": {
+#       "id": 3,
+#       "name": "Spring Boot Silver Badge",
+#       "description": "Awarded for scoring 75% or higher",
+#       "examId": 102,
+#       "minimumScore": 75.0
+#     },
+#     "learnerId": 1,
+#     "awardDate": "2026-02-27",
+#     "awardedBy": 0
+#   }
+# ]
+
+### Expected Response (if no badges):
+# []
+
+###
+
+### Step 3: Get Earned Certifications (Replace TOKEN and USER_ID)
+GET http://localhost:8083/api/certifications-badges/earned-certifications/learner/1
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Expected Response (if certifications exist):
+# [
+#   {
+#     "id": 1,
+#     "certificationTemplate": {
+#       "id": 1,
+#       "title": "Spring Boot Fundamentals",
+#       "description": "Certification for completing Spring Boot exam",
+#       "examId": 102
+#     },
+#     "learnerId": 1,
+#     "issueDate": "2026-02-27",
+#     "expiryDate": "2028-02-27",
+#     "awardedBy": 0
+#   }
+# ]
+
+###
+
+### Step 4: Test with Wrong Learner ID (should return 403 FORBIDDEN)
+GET http://localhost:8083/api/certifications-badges/earned-badges/learner/999
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Expected Response:
+# 403 FORBIDDEN
+
+###
+
+### Step 5: Test without Token (should return 401 UNAUTHORIZED)
+GET http://localhost:8083/api/certifications-badges/earned-badges/learner/1
+
+### Expected Response:
+# 401 UNAUTHORIZED
+# {"error": "Invalid or expired token"}
+
+###
+
+### Step 6: Award a badge via auto-award system (to create test data)
+POST http://localhost:8083/api/certifications-badges/exam-integration/process-exam-result
+Content-Type: application/json
+X-Internal-Api-Key: exam-service-dev-key
+
+{
+  "learnerId": 1,
+  "examId": 102,
+  "score": 75.0,
+  "maxScore": 100.0
+}
+
+### Expected Response:
+# {
+#   "learnerId": 1,
+#   "examId": 102,
+#   "percentage": 75.0,
+#   "passed": true,
+#   "certificationAwarded": true,
+#   "certificationId": 1,
+#   "badgeAwarded": true,
+#   "badgeId": 1,
+#   "message": "Exam score: 75.00%. Passed! Certification awarded. Badge awarded for high achievement!"
+# }
+
+###
+
+### TROUBLESHOOTING
+
+### Check Auth Service Health
+GET http://localhost:8081/actuator/health
+
+###
+
+### Check Certification-Badge Service Health
+GET http://localhost:8083/actuator/health
+
+###
+
+### Verify JWT Secret Configuration
+# Both services must have the same jwt.secret value:
+# - Backend/auth-service/src/main/resources/application.yml
+# - Backend/certification-badge-service/src/main/resources/application.yml
+
+###
+
+### Common Issues:
+# 1. 401 UNAUTHORIZED → Token missing, invalid, or expired
+# 2. 403 FORBIDDEN → User doesn't have permission (wrong learner ID)
+# 3. CORS error → Backend CORS configuration issue
+# 4. Connection refused → Service not running
+# 5. Empty array [] → No badges/certifications awarded yet (run Step 6)

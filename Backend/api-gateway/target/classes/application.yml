@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8084
 
 spring:
   application:
@@ -17,8 +17,10 @@ spring:
           uri: lb://auth-service
           predicates:
             - Path=/api/auth/**
-          filters:
-            - StripPrefix=1
+        - id: certification-badge-service
+          uri: lb://certification-badge-service
+          predicates:
+            - Path=/api/certifications-badges/**
       globalcors:
         cors-configurations:
           '[/**]':

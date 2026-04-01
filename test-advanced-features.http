@@ -1,0 +1,71 @@
+### Test Advanced Features - SMARTEK Platform
+### Make sure backend is running on port 8083
+
+### 1. Login as Learner to get JWT token
+POST http://localhost:8081/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "Learner@smartek.com",
+  "password": "Learner123"
+}
+
+### Save the token from response and use it below
+@token = YOUR_JWT_TOKEN_HERE
+
+###
+
+### 2. Test Certification Templates Pagination
+GET http://localhost:8083/api/certifications-badges/certification-templates/paginated?page=0&size=5&sortBy=id&sortDirection=DESC
+Authorization: Bearer {{token}}
+
+###
+
+### 3. Test Badge Templates Pagination
+GET http://localhost:8083/api/certifications-badges/badge-templates/paginated?page=0&size=5&sortBy=id&sortDirection=DESC
+Authorization: Bearer {{token}}
+
+###
+
+### 4. Test Earned Certifications Pagination (replace {learnerId} with actual ID)
+GET http://localhost:8083/api/certifications-badges/earned-certifications/learner/2/paginated?page=0&size=10&sortBy=issueDate&sortDirection=DESC
+Authorization: Bearer {{token}}
+
+###
+
+### 5. Test Earned Badges Pagination (replace {learnerId} with actual ID)
+GET http://localhost:8083/api/certifications-badges/earned-badges/learner/2/paginated?page=0&size=10&sortBy=awardDate&sortDirection=DESC
+Authorization: Bearer {{token}}
+
+###
+
+### 6. Test Certificate Details Endpoint (replace {id} with actual certification ID)
+GET http://localhost:8083/api/certifications-badges/earned-certifications/1/details
+Authorization: Bearer {{token}}
+
+###
+
+### 7. Test Different Page Sizes
+GET http://localhost:8083/api/certifications-badges/certification-templates/paginated?page=0&size=25&sortBy=title&sortDirection=ASC
+Authorization: Bearer {{token}}
+
+###
+
+### 8. Test Page Navigation (page 1)
+GET http://localhost:8083/api/certifications-badges/certification-templates/paginated?page=1&size=10&sortBy=id&sortDirection=DESC
+Authorization: Bearer {{token}}
+
+###
+
+### Expected Response Format:
+# {
+#   "content": [...],
+#   "totalElements": 47,
+#   "totalPages": 5,
+#   "size": 10,
+#   "number": 0,
+#   "first": true,
+#   "last": false,
+#   "numberOfElements": 10,
+#   "empty": false
+# }

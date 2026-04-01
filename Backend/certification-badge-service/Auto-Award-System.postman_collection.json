@@ -1,0 +1,456 @@
+{
+	"info": {
+		"name": "Auto-Award System - Complete Tests",
+		"description": "Complete testing suite for the certification and badge auto-award system",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Setup - Create Test Data",
+			"item": [
+				{
+					"name": "1.1 Create Certification Template",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Spring Boot Fundamentals Certification\",\n  \"description\": \"Awarded for passing the Spring Boot Fundamentals exam with a score of 60% or higher\",\n  \"examId\": 102\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8083/api/certifications-badges/certification-templates",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8083",
+							"path": ["api", "certifications-badges", "certification-templates"]
+						}
+					}
+				},
+				{
+					"name": "1.2 Create Bronze Badge (60%)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Spring Boot Bronze Badge\",\n  \"description\": \"Awarded for scoring 60% or higher on the Spring Boot exam\",\n  \"examId\": 102,\n  \"minimumScore\": 60.0\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8083/api/certifications-badges/badge-templates",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8083",
+							"path": ["api", "certifications-badges", "badge-templates"]
+						}
+					}
+				},
+				{
+					"name": "1.3 Create Silver Badge (75%)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Spring Boot Silver Badge\",\n  \"description\": \"Awarded for scoring 75% or higher on the Spring Boot exam\",\n  \"examId\": 102,\n  \"minimumScore\": 75.0\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8083/api/certifications-badges/badge-templates",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8083",
+							"path": ["api", "certifications-badges", "badge-templates"]
+						}
+					}
+				},
+				{
+					"name": "1.4 Create Gold Badge (90%)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Spring Boot Gold Badge\",\n  \"description\": \"Awarded for scoring 90% or higher on the Spring Boot exam\",\n  \"examId\": 102,\n  \"minimumScore\": 90.0\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8083/api/certifications-badges/badge-templates",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8083",
+							"path": ["api", "certifications-badges", "badge-templates"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Auto-Award Tests",
+			"item": [
+				{
+					"name": "2.1 Test 1 - Fail (45%)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Internal-Api-Key",
+								"value": "exam-service-dev-key"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"learnerId\": 100,\n  \"examId\": 102,\n  \"score\": 45.0,\n  \"maxScore\": 100.0\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8083/api/certifications-badges/exam-integration/process-exam-result",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8083",
+							"path": ["api", "certifications-badges", "exam-integration", "process-exam-result"]
+						}
+					}
+				},
+				{
+					"name": "2.2 Test 2 - Bronze (60%)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Internal-Api-Key",
+								"value": "exam-service-dev-key"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"learnerId\": 101,\n  \"examId\": 102,\n  \"score\": 60.0,\n  \"maxScore\": 100.0\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8083/api/certifications-badges/exam-integration/process-exam-result",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8083",
+							"path": ["api", "certifications-badges", "exam-integration", "process-exam-result"]
+						}
+					}
+				},
+				{
+					"name": "2.3 Test 3 - Silver (75%)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Internal-Api-Key",
+								"value": "exam-service-dev-key"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"learnerId\": 102,\n  \"examId\": 102,\n  \"score\": 75.0,\n  \"maxScore\": 100.0\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8083/api/certifications-badges/exam-integration/process-exam-result",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8083",
+							"path": ["api", "certifications-badges", "exam-integration", "process-exam-result"]
+						}
+					}
+				},
+				{
+					"name": "2.4 Test 4 - Gold (92%)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Internal-Api-Key",
+								"value": "exam-service-dev-key"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"learnerId\": 103,\n  \"examId\": 102,\n  \"score\": 92.0,\n  \"maxScore\": 100.0\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8083/api/certifications-badges/exam-integration/process-exam-result",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8083",
+							"path": ["api", "certifications-badges", "exam-integration", "process-exam-result"]
+						}
+					}
+				},
+				{
+					"name": "2.5 Test 5 - Duplicate Prevention",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Internal-Api-Key",
+								"value": "exam-service-dev-key"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"learnerId\": 102,\n  \"examId\": 102,\n  \"score\": 85.0,\n  \"maxScore\": 100.0\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8083/api/certifications-badges/exam-integration/process-exam-result",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8083",
+							"path": ["api", "certifications-badges", "exam-integration", "process-exam-result"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Query Templates",
+			"item": [
+				{
+					"name": "3.1 Get All Certification Templates",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8083/api/certifications-badges/certification-templates",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8083",
+							"path": ["api", "certifications-badges", "certification-templates"]
+						}
+					}
+				},
+				{
+					"name": "3.2 Get All Badge Templates",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8083/api/certifications-badges/badge-templates",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8083",
+							"path": ["api", "certifications-badges", "badge-templates"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Query Earned (Requires Auth)",
+			"item": [
+				{
+					"name": "4.1 Get Earned Certifications (Learner 101)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"description": "Replace with actual JWT token from login"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8083/api/certifications-badges/earned-certifications/learner/101",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8083",
+							"path": ["api", "certifications-badges", "earned-certifications", "learner", "101"]
+						}
+					}
+				},
+				{
+					"name": "4.2 Get Earned Badges (Learner 101)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"description": "Replace with actual JWT token from login"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8083/api/certifications-badges/earned-badges/learner/101",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8083",
+							"path": ["api", "certifications-badges", "earned-badges", "learner", "101"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "5. Edge Cases",
+			"item": [
+				{
+					"name": "5.1 Different Max Score (45/50 = 90%)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Internal-Api-Key",
+								"value": "exam-service-dev-key"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"learnerId\": 104,\n  \"examId\": 102,\n  \"score\": 45.0,\n  \"maxScore\": 50.0\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8083/api/certifications-badges/exam-integration/process-exam-result",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8083",
+							"path": ["api", "certifications-badges", "exam-integration", "process-exam-result"]
+						}
+					}
+				},
+				{
+					"name": "5.2 Non-Existent Exam",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Internal-Api-Key",
+								"value": "exam-service-dev-key"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"learnerId\": 105,\n  \"examId\": 999,\n  \"score\": 85.0,\n  \"maxScore\": 100.0\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8083/api/certifications-badges/exam-integration/process-exam-result",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8083",
+							"path": ["api", "certifications-badges", "exam-integration", "process-exam-result"]
+						}
+					}
+				},
+				{
+					"name": "5.3 Validation - Missing Fields",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Internal-Api-Key",
+								"value": "exam-service-dev-key"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"learnerId\": 106,\n  \"examId\": 102\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8083/api/certifications-badges/exam-integration/process-exam-result",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8083",
+							"path": ["api", "certifications-badges", "exam-integration", "process-exam-result"]
+						}
+					}
+				},
+				{
+					"name": "5.4 Validation - Negative Score",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Internal-Api-Key",
+								"value": "exam-service-dev-key"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"learnerId\": 107,\n  \"examId\": 102,\n  \"score\": -10.0,\n  \"maxScore\": 100.0\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8083/api/certifications-badges/exam-integration/process-exam-result",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8083",
+							"path": ["api", "certifications-badges", "exam-integration", "process-exam-result"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "6. Health Check",
+			"item": [
+				{
+					"name": "6.1 Exam Integration Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8083/api/certifications-badges/exam-integration/health",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8083",
+							"path": ["api", "certifications-badges", "exam-integration", "health"]
+						}
+					}
+				}
+			]
+		}
+	]
+}

@@ -47,7 +47,7 @@ export class SignInComponent {
         next: (response: AuthResponse) => {
           console.log('Login successful:', response);
           this.isLoading = false;
-          this.router.navigate(['/']);
+          this.router.navigate(['/dashboard']);
         },
         error: (error: any) => {
           console.error('Login error:', error);

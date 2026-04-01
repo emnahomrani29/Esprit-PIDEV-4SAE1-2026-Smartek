@@ -74,10 +74,18 @@ export const MENU_ITEMS: MenuItem[] = [
 
   // Certification & Badge Management - RH_SMARTEK
   {
-    label: 'Certifications & Badges',
+    label: 'Certifications',
     icon: 'workspace_premium',
     route: '/dashboard/certifications',
-    permissions: [Permission.CERTIFICATIONS_VIEW, Permission.BADGES_VIEW]
+    roles: [Role.TRAINER, Role.RH_SMARTEK, Role.ADMIN],
+    permissions: [Permission.CERTIFICATIONS_VIEW]
+  },
+  {
+    label: 'Badges',
+    icon: 'military_tech',
+    route: '/dashboard/badges',
+    roles: [Role.TRAINER, Role.RH_SMARTEK, Role.ADMIN],
+    permissions: [Permission.BADGES_VIEW]
   },
 
   // My Certifications - LEARNER
@@ -87,6 +95,13 @@ export const MENU_ITEMS: MenuItem[] = [
     route: '/dashboard/my-certifications',
     roles: [Role.LEARNER],
     permissions: [Permission.CERTIFICATIONS_VIEW]
+  },
+  {
+    label: 'My Badges',
+    icon: 'verified',
+    route: '/dashboard/my-badges',
+    roles: [Role.LEARNER],
+    permissions: [Permission.BADGES_VIEW]
   },
 
   // Skill Evidence - LEARNER, TRAINER, RH_SMARTEK

@@ -9,16 +9,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*")
 public class AuthController {
     
     private final AuthService authService;
+    private final PasswordEncoder passwordEncoder;
     
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -80,5 +82,12 @@ public class AuthController {
                             .message("Utilisateur non trouvé")
                             .build());
         }
+    }
+    
+    @GetMapping("/hash/{password}")
+    public ResponseEntity<String> generateHash(@PathVariable String password) {
+        log.info("Génération de hash BCrypt pour test");
+        String hash = passwordEncoder.encode(password);
+        return ResponseEntity.ok(hash);
     }
 }

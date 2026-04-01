@@ -1,0 +1,70 @@
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold text-gray-800 mb-6">My Certifications</h1>
+  
+  <!-- Error Message -->
+  <div *ngIf="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    {{ error }}
+  </div>
+  
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-8">
+    <p class="text-gray-600">Loading certifications...</p>
+  </div>
+  
+  <!-- Empty State -->
+  <div *ngIf="!loading && certifications.length === 0" class="text-center py-8">
+    <p class="text-gray-600 mb-4">No certifications earned yet.</p>
+    <button 
+      (click)="awardSample()" 
+      class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded transition"
+      [disabled]="awarding">
+      {{ awarding ? 'Awarding...' : 'Award me a sample certification' }}
+    </button>
+  </div>
+  
+  <!-- Certifications List -->
+  <div *ngIf="!loading && certifications.length > 0">
+    <!-- Results Info -->
+    <div class="mb-4 text-gray-600">
+      Showing {{ (pageInfo.page * pageInfo.size) + 1 }}-{{ Math.min((pageInfo.page + 1) * pageInfo.size, pageInfo.totalElements) }} of {{ pageInfo.totalElements }} certifications
+    </div>
+    
+    <!-- Certifications Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+      <div *ngFor="let cert of certifications" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+        <div class="mb-4">
+          <h3 class="text-xl font-semibold text-gray-800 mb-2">
+            {{ cert.certificationTemplate.title || 'Certification' }}
+          </h3>
+          <p class="text-gray-600 text-sm mb-2" *ngIf="cert.certificationTemplate.description">
+            {{ cert.certificationTemplate.description }}
+          </p>
+        </div>
+        
+        <div class="space-y-1 mb-4">
+          <p class="text-gray-600 text-sm">
+            <span class="font-medium">Issued:</span> {{ cert.issueDate | date:'mediumDate' }}
+          </p>
+          <p class="text-gray-600 text-sm" *ngIf="cert.expiryDate">
+            <span class="font-medium">Expires:</span> {{ cert.expiryDate | date:'mediumDate' }}
+          </p>
+        </div>
+        
+        <!-- View Certificate Button -->
+        <button 
+          (click)="viewCertificate(cert.id!)" 
+          class="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition">
+          View Certificate
+        </button>
+      </div>
+    </div>
+    
+    <!-- Pagination Component -->
+    <app-pagination
+      [pageInfo]="pageInfo"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)">
+    </app-pagination>
+  </div>
+</div>

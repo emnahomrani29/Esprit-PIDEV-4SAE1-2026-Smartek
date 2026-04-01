@@ -2,6 +2,9 @@ import { Routes } from '@angular/router';
 import { HomePageComponent } from './features/home/home-page/home-page.component';
 import { DashboardLayoutComponent } from './features/dashboard/dashboard-layout/dashboard-layout.component';
 import { DashboardPageComponent } from './features/dashboard/dashboard-page/dashboard-page.component';
+import { MyCertificationsComponent } from './features/certifications-badges/my-certifications/my-certifications.component';
+import { MyBadgesComponent } from './features/certifications-badges/my-badges/my-badges.component';
+import { CertificateViewerComponent } from './features/certifications-badges/certificate-viewer/certificate-viewer.component';
 import { SignUpComponent } from './features/auth/sign-up/sign-up.component';
 import { SignInComponent } from './features/auth/sign-in/sign-in.component';
 import { authGuard } from './core/guards/auth.guard';
@@ -70,19 +73,38 @@ export const routes: Routes = [
         canActivate: [permissionGuard],
         data: { roles: [Role.LEARNER], permissions: [Permission.TRAINING_VIEW] }
       },
-      // Certifications & Badges
+      // Badges Management
+      { 
+        path: 'badges', 
+        loadChildren: () => import('./features/certifications-badges/badges.module').then(m => m.BadgesModule),
+        canActivate: [permissionGuard],
+        data: { roles: [Role.TRAINER, Role.RH_SMARTEK, Role.ADMIN], permissions: [Permission.BADGES_VIEW] }
+      },
+      // Certifications Management
       { 
         path: 'certifications', 
-        component: DashboardPageComponent,
+        loadChildren: () => import('./features/certifications-badges/certifications.module').then(m => m.CertificationsModule),
         canActivate: [permissionGuard],
-        data: { permissions: [Permission.CERTIFICATIONS_VIEW, Permission.BADGES_VIEW] }
+        data: { roles: [Role.TRAINER, Role.RH_SMARTEK, Role.ADMIN], permissions: [Permission.CERTIFICATIONS_VIEW] }
       },
       // My Certifications - LEARNER
       { 
         path: 'my-certifications', 
-        component: DashboardPageComponent,
+        component: MyCertificationsComponent,
         canActivate: [permissionGuard],
         data: { roles: [Role.LEARNER], permissions: [Permission.CERTIFICATIONS_VIEW] }
+      },
+      // Certificate Viewer - LEARNER
+      { 
+        path: 'certificate-viewer/:id', 
+        component: CertificateViewerComponent,
+        canActivate: [authGuard]
+      },
+      { 
+        path: 'my-badges', 
+        component: MyBadgesComponent,
+        canActivate: [permissionGuard],
+        data: { roles: [Role.LEARNER], permissions: [Permission.BADGES_VIEW] }
       },
       // Skill Evidence
       { 

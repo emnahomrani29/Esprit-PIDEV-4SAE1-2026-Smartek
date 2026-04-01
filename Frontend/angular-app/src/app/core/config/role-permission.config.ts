@@ -38,6 +38,12 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     Permission.TRAINING_DELETE,
     Permission.TRAINING_MANAGE_PARTICIPANTS,
     
+    // Certification & Badge Management
+    Permission.CERTIFICATIONS_VIEW,
+    Permission.CERTIFICATIONS_ASSIGN,
+    Permission.BADGES_VIEW,
+    Permission.BADGES_ASSIGN,
+    
     // Planning/Schedule
     Permission.PLANNING_VIEW,
     Permission.PLANNING_CREATE,
