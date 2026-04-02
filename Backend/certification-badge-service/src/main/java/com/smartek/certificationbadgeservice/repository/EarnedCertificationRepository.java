@@ -49,4 +49,9 @@ public interface EarnedCertificationRepository extends JpaRepository<EarnedCerti
      * Used to prevent duplicate awards.
      */
     boolean existsByLearnerIdAndCertificationTemplateId(Long learnerId, Long certificationTemplateId);
+
+    /**
+     * Find a certification by its public verification UUID.
+     */
+    java.util.Optional<EarnedCertification> findByVerificationId(String verificationId);
 }

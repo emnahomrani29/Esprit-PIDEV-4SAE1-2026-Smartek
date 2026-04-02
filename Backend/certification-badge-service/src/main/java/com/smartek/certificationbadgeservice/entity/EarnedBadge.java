@@ -38,11 +38,17 @@ public class EarnedBadge {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
+    @Column(name = "verification_id", unique = true, length = 36, updatable = false)
+    private String verificationId;
+    
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         if (awardDate == null) {
             awardDate = LocalDate.now();
+        }
+        if (verificationId == null) {
+            verificationId = java.util.UUID.randomUUID().toString();
         }
     }
 }

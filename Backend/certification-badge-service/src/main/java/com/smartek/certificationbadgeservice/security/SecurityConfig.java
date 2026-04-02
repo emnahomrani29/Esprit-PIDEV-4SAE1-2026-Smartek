@@ -45,6 +45,8 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         // Exam integration endpoint (called by exam service)
                         .requestMatchers("/api/certifications-badges/exam-integration/**").permitAll()
+                        // Public certificate verification endpoint
+                        .requestMatchers("/api/certifications-badges/verify/**").permitAll()
                         // Temporarily allow all for testing
                         .anyRequest().permitAll()
                 )

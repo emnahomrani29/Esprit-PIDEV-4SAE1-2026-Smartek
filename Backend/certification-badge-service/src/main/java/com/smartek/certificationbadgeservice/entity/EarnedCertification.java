@@ -43,6 +43,9 @@ public class EarnedCertification {
     @Column(name = "exam_id", length = 100)
     private String examId;
     
+    @Column(name = "verification_id", unique = true, length = 36, updatable = false)
+    private String verificationId;
+    
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
@@ -51,6 +54,9 @@ public class EarnedCertification {
         createdAt = LocalDateTime.now();
         if (issueDate == null) {
             issueDate = LocalDate.now();
+        }
+        if (verificationId == null) {
+            verificationId = java.util.UUID.randomUUID().toString();
         }
     }
     

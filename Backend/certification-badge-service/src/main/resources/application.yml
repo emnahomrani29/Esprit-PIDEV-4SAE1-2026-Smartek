@@ -35,6 +35,20 @@ spring:
       allowed-headers: "*"
       allow-credentials: true
 
+  # Mail Configuration (Mailtrap SMTP for development)
+  mail:
+    host: sandbox.smtp.mailtrap.io
+    port: 2525
+    username: your_mailtrap_username
+    password: your_mailtrap_password
+    from: noreply@smartek.com
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 server:
   port: 8083
 
@@ -82,3 +96,16 @@ jwt:
 # Internal API key for service-to-service integration (Exam Service)
 internal:
   api-key: exam-service-dev-key
+
+# Auth Service base URL (for Feign client to fetch user email)
+auth-service:
+  base-url: http://localhost:8081
+
+# Certificate settings
+certificate:
+  keystore:
+    path: smartek-keystore.p12
+    password: smartek123
+    alias: smartek
+  verification:
+    base-url: http://192.168.1.16:8083

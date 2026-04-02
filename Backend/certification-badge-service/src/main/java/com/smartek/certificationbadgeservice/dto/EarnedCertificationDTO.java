@@ -28,4 +28,6 @@ public class EarnedCertificationDTO {
     private Boolean isExpired;
     
     private String examId;
+    
+    private String verificationId;
 }

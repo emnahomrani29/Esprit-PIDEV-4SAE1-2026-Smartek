@@ -137,6 +137,53 @@
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
+        
+        <!-- ZXing for QR Codes -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>3.5.2</version>
+        </dependency>
+        
+        <!-- iText 7 for PDF Generation and Signing -->
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itext7-core</artifactId>
+            <version>7.2.5</version>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>sign</artifactId>
+            <version>7.2.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk18on</artifactId>
+            <version>1.72</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>1.72</version>
+        </dependency>
+        
+        <!-- Spring Mail for Email Delivery -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+        
+        <!-- OpenFeign for Service-to-Service communication -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
     </dependencies>
     
     <dependencyManagement>

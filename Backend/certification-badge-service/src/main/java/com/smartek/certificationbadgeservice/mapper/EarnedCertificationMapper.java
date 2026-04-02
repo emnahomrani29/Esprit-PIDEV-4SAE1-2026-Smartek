@@ -26,6 +26,7 @@ public class EarnedCertificationMapper {
         dto.setAwardedBy(entity.getAwardedBy());
         dto.setIsExpired(entity.isExpired());
         dto.setExamId(entity.getExamId());
+        dto.setVerificationId(entity.getVerificationId());
         
         return dto;
     }

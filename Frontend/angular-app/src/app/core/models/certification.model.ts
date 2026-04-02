@@ -16,6 +16,7 @@ export interface EarnedCertification {
   awardedBy: number;
   isExpired?: boolean;
   examId?: string;
+  verificationId?: string;
 }
 
 export interface AwardCertificationRequest {

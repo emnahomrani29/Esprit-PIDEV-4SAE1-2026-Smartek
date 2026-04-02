@@ -18,7 +18,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 /**
  * REST controller for managing earned badges.
@@ -128,5 +131,33 @@ public class EarnedBadgeController {
         log.info("Retrieved page {} with {} earned badges for learner {}", 
                 page, earnedBadges.getNumberOfElements(), learnerId);
         return ResponseEntity.ok(earnedBadges);
+    }
+
+    /**
+     * Generate and return the LinkedIn "Add to Profile" URL for a badge.
+     * POST /api/certifications-badges/earned-badges/share/linkedin/{id}
+     */
+    @PostMapping("/share/linkedin/{id}")
+    public ResponseEntity<Map<String, String>> shareOnLinkedIn(@PathVariable Long id) {
+        log.info("Generating LinkedIn share URL for badge id: {}", id);
+
+        EarnedBadgeDTO badge = earnedBadgeService.findById(id);
+
+        String name = URLEncoder.encode(badge.getBadgeTemplate().getName(), StandardCharsets.UTF_8);
+        String orgName = URLEncoder.encode("Smartek Platform", StandardCharsets.UTF_8);
+        String issueYear = String.valueOf(badge.getAwardDate().getYear());
+        String issueMonth = String.valueOf(badge.getAwardDate().getMonthValue());
+
+        String url = "https://www.linkedin.com/profile/add"
+                + "?startTask=CERTIFICATION_NAME"
+                + "&name=" + name
+                + "&organizationName=" + orgName
+                + "&issueYear=" + issueYear
+                + "&issueMonth=" + issueMonth
+                + (badge.getVerificationId() != null
+                        ? "&certId=" + URLEncoder.encode(badge.getVerificationId(), StandardCharsets.UTF_8)
+                        : "");
+
+        return ResponseEntity.ok(Map.of("linkedInUrl", url));
     }
 }

@@ -163,6 +163,14 @@ public class EarnedBadgeService {
     }
     
     @Transactional(readOnly = true)
+    public EarnedBadgeDTO findById(Long id) {
+        EarnedBadge badge = earnedBadgeRepository.findById(id)
+                .orElseThrow(() -> new com.smartek.certificationbadgeservice.exception.ResourceNotFoundException(
+                        "Earned badge not found with id: " + id));
+        return earnedBadgeMapper.toDTO(badge);
+    }
+
+    @Transactional(readOnly = true)
     public List<EarnedBadgeDTO> findByLearnerId(Long learnerId) {
         MDC.put("operation", "FIND_EARNED_BADGES_BY_LEARNER");
         try {

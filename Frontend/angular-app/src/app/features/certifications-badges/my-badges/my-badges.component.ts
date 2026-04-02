@@ -16,6 +16,7 @@ export class MyBadgesComponent implements OnInit {
   badges: EarnedBadge[] = [];
   loading = false;
   error: string | null = null;
+  sharingId: number | null = null;
 
   constructor(
     private badgeService: BadgeService,
@@ -43,6 +44,22 @@ export class MyBadgesComponent implements OnInit {
         console.error('Error loading badges:', err);
         this.error = 'Failed to load badges';
         this.loading = false;
+      }
+    });
+  }
+
+  shareOnLinkedIn(badge: EarnedBadge): void {
+    if (!badge.id || this.sharingId === badge.id) return;
+    this.sharingId = badge.id;
+
+    this.badgeService.shareOnLinkedIn(badge.id).subscribe({
+      next: (res) => {
+        window.open(res.linkedInUrl, '_blank');
+        this.sharingId = null;
+      },
+      error: () => {
+        this.error = 'Failed to generate LinkedIn share link';
+        this.sharingId = null;
       }
     });
   }

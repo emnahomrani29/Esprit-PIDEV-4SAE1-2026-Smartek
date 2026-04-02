@@ -1,5 +1,6 @@
 package com.smartek.certificationbadgeservice.service;
 
+import com.smartek.certificationbadgeservice.client.AuthServiceClient;
 import com.smartek.certificationbadgeservice.dto.*;
 import com.smartek.certificationbadgeservice.entity.CertificationTemplate;
 import com.smartek.certificationbadgeservice.entity.EarnedCertification;
@@ -31,6 +32,9 @@ public class EarnedCertificationService {
     private final EarnedCertificationRepository earnedCertificationRepository;
     private final CertificationTemplateRepository certificationTemplateRepository;
     private final EarnedCertificationMapper earnedCertificationMapper;
+    private final PdfGenerationService pdfGenerationService;
+    private final EmailService emailService;
+    private final AuthServiceClient authServiceClient;
     
     @Transactional(propagation = Propagation.REQUIRED)
     public EarnedCertificationDTO awardCertification(AwardCertificationRequestDTO request) {
@@ -69,8 +73,13 @@ public class EarnedCertificationService {
             earnedCertification.setCertificateUrl(request.getCertificateUrl());
             earnedCertification.setAwardedBy(request.getAwardedBy());
             
-            EarnedCertification saved = earnedCertificationRepository.save(earnedCertification);
+            EarnedCertification saved = earnedCertificationRepository.saveAndFlush(earnedCertification);
             
+            log.info("Certification saved with id={} verificationId={}", saved.getId(), saved.getVerificationId());
+
+            // Asynchronously generate signed PDF and send email
+            dispatchCertificateAsync(saved);
+
             log.info("Successfully awarded certification {} to learner {} by user {}", 
                     request.getCertificationTemplateId(), request.getLearnerId(), request.getAwardedBy());
             return earnedCertificationMapper.toDTO(saved);
@@ -301,5 +310,62 @@ public class EarnedCertificationService {
             log.warn("Invalid certificate URL format: {}", url);
             throw new ValidationException("Invalid certificate URL format: " + url);
         }
+    }
+
+    /**
+     * Fetch learner email from auth-service, generate signed PDF, and send email — all async.
+     */
+    private void dispatchCertificateAsync(EarnedCertification saved) {
+        try {
+            String learnerEmail;
+            String learnerName;
+            try {
+                UserDTO user = authServiceClient.getUserById(saved.getLearnerId());
+                learnerEmail = user.getEmail();
+                learnerName = user.getFirstName() != null ? user.getFirstName() : "Learner";
+            } catch (Exception ex) {
+                log.warn("Could not fetch learner {} from auth-service, using fallback email. Reason: {}",
+                        saved.getLearnerId(), ex.getMessage());
+                learnerEmail = "learner@example.com";
+                learnerName = "Learner";
+            }
+
+            final String finalEmail = learnerEmail;
+            final String finalName = learnerName;
+
+            // Run PDF generation + email in a separate thread (non-blocking)
+            new Thread(() -> {
+                try {
+                    byte[] pdf = pdfGenerationService.generateCertificatePdf(saved, finalName);
+                    emailService.sendCertificateEmail(finalEmail, finalName, saved, pdf);
+                } catch (Exception e) {
+                    log.error("Async PDF/email dispatch failed for cert id={}", saved.getId(), e);
+                }
+            }).start();
+
+        } catch (Exception e) {
+            log.error("Failed to initiate async dispatch for cert id={}", saved.getId(), e);
+        }
+    }
+
+    /**
+     * Generate and return the signed PDF bytes for a given earned certification.
+     * Used by the download endpoint.
+     */
+    @Transactional(readOnly = true)
+    public byte[] downloadCertificatePdf(Long id) {
+        EarnedCertification cert = earnedCertificationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Earned certification not found with id: " + id));
+
+        String learnerName;
+        try {
+            UserDTO user = authServiceClient.getUserById(cert.getLearnerId());
+            learnerName = user.getFirstName() != null ? user.getFirstName() : "Learner";
+        } catch (Exception e) {
+            log.warn("Could not fetch learner name for cert id={}, using fallback", id);
+            learnerName = "Learner";
+        }
+
+        return pdfGenerationService.generateCertificatePdf(cert, learnerName);
     }
 }

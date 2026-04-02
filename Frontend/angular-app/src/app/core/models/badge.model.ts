@@ -15,6 +15,7 @@ export interface EarnedBadge {
   awardDate: Date;
   awardedBy: number;
   createdAt?: Date;
+  verificationId?: string;
 }
 
 export interface AwardBadgeRequest {

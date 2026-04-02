@@ -19,6 +19,7 @@ export class MyCertificationsComponent implements OnInit {
   loading = false;
   error: string | null = null;
   awarding = false;
+  sharingId: number | null = null;
 
   // Expose Math to template
   Math = Math;
@@ -87,6 +88,22 @@ export class MyCertificationsComponent implements OnInit {
 
   viewCertificate(certificationId: number): void {
     this.router.navigate(['/dashboard/certificate-viewer', certificationId]);
+  }
+
+  shareOnLinkedIn(cert: EarnedCertification): void {
+    if (!cert.id || this.sharingId === cert.id) return;
+    this.sharingId = cert.id;
+
+    this.certificationService.shareOnLinkedIn(cert.id).subscribe({
+      next: (res) => {
+        window.open(res.linkedInUrl, '_blank');
+        this.sharingId = null;
+      },
+      error: () => {
+        this.error = 'Failed to generate LinkedIn share link';
+        this.sharingId = null;
+      }
+    });
   }
 
   awardSample(): void {

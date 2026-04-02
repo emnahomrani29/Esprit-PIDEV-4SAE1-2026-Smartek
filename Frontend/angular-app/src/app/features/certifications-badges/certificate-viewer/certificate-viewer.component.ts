@@ -4,8 +4,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CertificationService } from '../../../core/services/certification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { EarnedCertification } from '../../../core/models/certification.model';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 @Component({
   selector: 'app-certificate-viewer',
@@ -20,6 +18,7 @@ export class CertificateViewerComponent implements OnInit {
   loading = false;
   error: string | null = null;
   downloading = false;
+  sharingLinkedIn = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -38,7 +37,7 @@ export class CertificateViewerComponent implements OnInit {
   private loadCertification(id: number): void {
     this.loading = true;
     this.error = null;
-    
+
     this.certificationService.getEarnedCertificationById(id).subscribe({
       next: (data) => {
         this.certification = data;
@@ -60,8 +59,6 @@ export class CertificateViewerComponent implements OnInit {
   }
 
   getBadgeLevel(): string {
-    // This would be determined by the exam score or badge template
-    // For now, returning a default
     return 'Gold';
   }
 
@@ -78,47 +75,43 @@ export class CertificateViewerComponent implements OnInit {
     return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   }
 
-  async downloadPDF(): Promise<void> {
-    if (!this.certification || this.downloading) return;
-    
+  /** Download the digitally signed PDF from the backend */
+  downloadPDF(): void {
+    if (!this.certification?.id || this.downloading) return;
     this.downloading = true;
-    try {
-      const element = document.getElementById('certificate-content');
-      if (!element) {
-        throw new Error('Certificate element not found');
+
+    this.certificationService.downloadCertificatePdf(this.certification.id).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Smartek_Certificate_${this.certification!.certificationTemplate.title.replace(/\s+/g, '_')}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.downloading = false;
+      },
+      error: () => {
+        this.error = 'Failed to download PDF';
+        this.downloading = false;
       }
+    });
+  }
 
-      // Capture the certificate as canvas
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
-      });
+  /** Share this certification on LinkedIn */
+  shareOnLinkedIn(): void {
+    if (!this.certification?.id || this.sharingLinkedIn) return;
+    this.sharingLinkedIn = true;
 
-      // Create PDF in A4 landscape format
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      const imgWidth = 297; // A4 landscape width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-
-      // Generate filename
-      const fileName = `SMARTEK_Certification_${this.learnerName}_${this.certification.certificationTemplate.title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-      
-      pdf.save(fileName);
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      this.error = 'Failed to generate PDF';
-    } finally {
-      this.downloading = false;
-    }
+    this.certificationService.shareOnLinkedIn(this.certification.id).subscribe({
+      next: (res) => {
+        window.open(res.linkedInUrl, '_blank');
+        this.sharingLinkedIn = false;
+      },
+      error: () => {
+        this.error = 'Failed to generate LinkedIn share link';
+        this.sharingLinkedIn = false;
+      }
+    });
   }
 
   goBack(): void {

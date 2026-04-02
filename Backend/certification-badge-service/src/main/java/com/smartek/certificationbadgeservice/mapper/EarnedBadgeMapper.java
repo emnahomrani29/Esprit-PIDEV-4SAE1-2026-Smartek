@@ -22,6 +22,7 @@ public class EarnedBadgeMapper {
         dto.setLearnerId(entity.getLearnerId());
         dto.setAwardDate(entity.getAwardDate());
         dto.setAwardedBy(entity.getAwardedBy());
+        dto.setVerificationId(entity.getVerificationId());
         
         return dto;
     }

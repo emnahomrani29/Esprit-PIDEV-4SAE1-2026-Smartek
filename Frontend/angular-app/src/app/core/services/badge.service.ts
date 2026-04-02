@@ -91,4 +91,8 @@ export class BadgeService {
   revokeBadge(id: number): Observable<void> {
     return this.http.delete<void>(`${this.earnedApiUrl}/${id}`);
   }
+
+  shareOnLinkedIn(id: number): Observable<{ linkedInUrl: string }> {
+    return this.http.post<{ linkedInUrl: string }>(`${this.earnedApiUrl}/share/linkedin/${id}`, {});
+  }
 }

@@ -20,4 +20,6 @@ public class EarnedBadgeDTO {
     private LocalDate awardDate;
     
     private Long awardedBy;
+    
+    private String verificationId;
 }

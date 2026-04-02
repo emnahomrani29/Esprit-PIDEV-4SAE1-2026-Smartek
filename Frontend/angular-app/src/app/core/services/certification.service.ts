@@ -91,4 +91,12 @@ export class CertificationService {
   revokeCertification(id: number): Observable<void> {
     return this.http.delete<void>(`${this.earnedApiUrl}/${id}`);
   }
+
+  shareOnLinkedIn(id: number): Observable<{ linkedInUrl: string }> {
+    return this.http.post<{ linkedInUrl: string }>(`${this.earnedApiUrl}/share/linkedin/${id}`, {});
+  }
+
+  downloadCertificatePdf(id: number): Observable<Blob> {
+    return this.http.get(`${this.earnedApiUrl}/${id}/pdf`, { responseType: 'blob' });
+  }
 }
