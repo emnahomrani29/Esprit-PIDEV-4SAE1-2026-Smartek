@@ -9,8 +9,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const token = authService.getToken();
 
-  // Ajouter le token JWT à toutes les requêtes
-  if (token) {
+  // Ajouter le token JWT uniquement pour les routes auth-service
+  // Les autres microservices (skill-evidence, learning, etc.) n'ont pas de Spring Security
+  const requiresAuth = req.url.includes('/api/auth/');
+
+  if (token && requiresAuth) {
     req = req.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`
@@ -20,14 +23,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      // Si l'utilisateur n'existe plus ou le token est invalide (401 ou 403)
-      if (error.status === 401 || error.status === 403) {
-        console.log('Utilisateur non autorisé ou token invalide, déconnexion...');
+      // Déconnecter uniquement si c'est une erreur auth sur les routes auth-service
+      if ((error.status === 401 || error.status === 403) && req.url.includes('/api/auth/')) {
+        console.log('Token invalide, déconnexion...');
         authService.logout();
       }
-      
+
       // Si l'utilisateur a été supprimé (404 sur les endpoints utilisateur)
-      if (error.status === 404 && error.url?.includes('/api/users/')) {
+      if (error.status === 404 && error.url?.includes('/api/auth/user/')) {
         console.log('Utilisateur introuvable, déconnexion...');
         authService.logout();
       }

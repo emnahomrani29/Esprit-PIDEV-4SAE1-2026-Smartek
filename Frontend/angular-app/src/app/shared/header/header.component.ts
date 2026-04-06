@@ -4,6 +4,8 @@ import { Router } from '@angular/router';
 import { DataService } from '../../core/services/data.service';
 import { MenuItem } from '../../core/models/menu.model';
 import { AuthService, AuthResponse } from '../../core/services/auth.service';
+import { NotificationService } from '../../core/services/notification.service';
+import { Notification } from '../../core/models/notification.model';
 
 @Component({
   selector: 'app-header',
@@ -18,12 +20,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
   sticky = false;
   userMenuOpen = false;
   academicMenuOpen = false;
+  learningPathMenuOpen = false;
+  notificationMenuOpen = false;
+  notifications: Notification[] = [];
+  unreadCount = 0;
   currentUser: AuthResponse | null = null;
 
   constructor(
     private dataService: DataService,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -41,9 +48,19 @@ export class HeaderComponent implements OnInit, OnDestroy {
       this.authService.fetchUserData().subscribe({
         next: (userData) => {
           this.currentUser = userData;
+          // Charger les notifications après avoir le rôle confirmé
+          if (this.currentUser?.role === 'LEARNER') {
+            this.loadNotifications();
+            this.startNotificationPolling();
+          }
         },
         error: (error) => {
           console.error('Error fetching user data:', error);
+          // Fallback : utiliser les données du localStorage
+          if (this.currentUser?.role === 'LEARNER') {
+            this.loadNotifications();
+            this.startNotificationPolling();
+          }
         }
       });
       
@@ -57,6 +74,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     document.removeEventListener('click', this.handleClickOutside.bind(this));
     this.stopUserValidation();
+    this.stopNotificationPolling();
   }
 
   private validationInterval: any;
@@ -86,6 +104,85 @@ export class HeaderComponent implements OnInit, OnDestroy {
     }
   }
 
+  private notificationInterval: any;
+
+  loadNotifications(): void {
+    const user = this.authService.getUserInfo();
+    if (!user?.userId) return;
+    this.notificationService.getUnread(user.userId).subscribe({
+      next: (data) => {
+        this.notifications = data;
+        this.unreadCount = data.filter(n => !n.isRead).length;
+      },
+      error: () => {}
+    });
+  }
+
+  private startNotificationPolling(): void {
+    this.notificationInterval = setInterval(() => {
+      this.loadNotifications();
+    }, 30000); // toutes les 30 secondes
+  }
+
+  private stopNotificationPolling(): void {
+    if (this.notificationInterval) {
+      clearInterval(this.notificationInterval);
+    }
+  }
+
+  toggleNotificationMenu(): void {
+    this.notificationMenuOpen = !this.notificationMenuOpen;
+    if (this.notificationMenuOpen) {
+      // Charger toutes les notifications (lues + non lues) à l'ouverture
+      const user = this.authService.getUserInfo();
+      if (user?.userId) {
+        this.notificationService.getAll(user.userId).subscribe({
+          next: (data) => { this.notifications = data; },
+          error: () => {}
+        });
+      }
+    }
+  }
+
+  markAsRead(notificationId: number, event: Event): void {
+    event.stopPropagation();
+    this.notificationService.markAsRead(notificationId).subscribe({
+      next: () => {
+        const n = this.notifications.find(n => n.notificationId === notificationId);
+        if (n) { n.isRead = true; }
+        this.unreadCount = this.notifications.filter(n => !n.isRead).length;
+      },
+      error: () => {}
+    });
+  }
+
+  markAllAsRead(): void {
+    const user = this.authService.getUserInfo();
+    if (!user?.userId) return;
+    this.notificationService.markAllAsRead(user.userId).subscribe({
+      next: () => {
+        this.notifications.forEach(n => n.isRead = true);
+        this.unreadCount = 0;
+      },
+      error: () => {}
+    });
+  }
+
+  deleteNotification(notificationId: number, event: Event): void {
+    event.stopPropagation();
+    this.notificationService.delete(notificationId).subscribe({
+      next: () => {
+        this.notifications = this.notifications.filter(n => n.notificationId !== notificationId);
+        this.unreadCount = this.notifications.filter(n => !n.isRead).length;
+      },
+      error: () => {}
+    });
+  }
+
+  getNotificationIcon(type: string): string {
+    return type === 'APPROVAL' ? '✅' : '❌';
+  }
+
   handleClickOutside(event: MouseEvent): void {
     const target = event.target as HTMLElement;
     if (this.userMenuOpen && !target.closest('.user-menu-container')) {
@@ -93,6 +190,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
     }
     if (this.academicMenuOpen && !target.closest('.academic-menu-container')) {
       this.academicMenuOpen = false;
+    }
+    if (this.learningPathMenuOpen && !target.closest('.academic-menu-container')) {
+      this.learningPathMenuOpen = false;
+    }
+    if (this.notificationMenuOpen && !target.closest('.notification-menu-container')) {
+      this.notificationMenuOpen = false;
     }
   }
 
@@ -114,6 +217,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   toggleAcademicMenu(): void {
     this.academicMenuOpen = !this.academicMenuOpen;
+  }
+
+  toggleLearningPathMenu(): void {
+    this.learningPathMenuOpen = !this.learningPathMenuOpen;
   }
 
   openSignIn(): void {

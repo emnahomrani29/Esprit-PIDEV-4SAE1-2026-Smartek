@@ -8,20 +8,6 @@ spring:
     config:
       enabled: false
     gateway:
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowedOrigins: "http://localhost:4200"
-            allowedMethods:
-              - GET
-              - POST
-              - PUT
-              - DELETE
-              - OPTIONS
-              - PATCH
-            allowedHeaders: "*"
-            allowCredentials: true
-            maxAge: 3600
       discovery:
         locator:
           enabled: true
@@ -31,6 +17,22 @@ spring:
           uri: lb://auth-service
           predicates:
             - Path=/api/auth/**
+        - id: learning-style-service
+          uri: lb://learning
+          predicates:
+            - Path=/api/learning-style-preferences/**
+        - id: learning-service
+          uri: lb://learning
+          predicates:
+            - Path=/api/learning-paths/**
+        - id: skill-evidence-service
+          uri: lb://skill-evidence-service
+          predicates:
+            - Path=/api/skill-evidence/**
+        - id: notifications-service
+          uri: lb://skill-evidence-service
+          predicates:
+            - Path=/api/notifications/**
         - id: offers-service
           uri: lb://offers-service
           predicates:

@@ -74,6 +74,31 @@ export const routes: Routes = [
     loadComponent: () => import('./features/learner/events/learner-events.component').then(m => m.LearnerEventsComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'learner/skill-evidence',
+    loadComponent: () => import('./features/learner/skill-evidence/learner-skill-evidence.component').then(m => m.LearnerSkillEvidenceComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'learner/skill-evidence-analytics',
+    loadComponent: () => import('./features/learner/skill-evidence-analytics/learner-skill-evidence-analytics.component').then(m => m.LearnerSkillEvidenceAnalyticsComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'learner/learning-path',
+    loadComponent: () => import('./features/learner/learning-path/learner-learning-path.component').then(m => m.LearnerLearningPathComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'learner/learning-style',
+    loadComponent: () => import('./features/learner/learning-style/learner-learning-style.component').then(m => m.LearnerLearningStyleComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'learner/learning-style-quiz',
+    loadComponent: () => import('./features/learner/learning-style-quiz/learner-learning-style-quiz.component').then(m => m.LearnerLearningStyleQuizComponent),
+    canActivate: [authGuard]
+  },
   
   // Trainer routes (sans layout, utilise le header du site)
   { 
@@ -253,7 +278,12 @@ export const routes: Routes = [
       // Skill Evidence - ADMIN only
       { 
         path: 'skill-evidence', 
-        component: DashboardPageComponent
+        loadComponent: () => import('./features/dashboard/skill-evidence-management/skill-evidence-management.component').then(m => m.SkillEvidenceManagementComponent)
+      },
+      // Skill Evidence Analytics - ADMIN only
+      {
+        path: 'skill-evidence-analytics',
+        loadComponent: () => import('./features/dashboard/skill-evidence-analytics/skill-evidence-analytics.component').then(m => m.SkillEvidenceAnalyticsComponent)
       },
       // Interview Management - ADMIN only
       { 
@@ -303,7 +333,7 @@ export const routes: Routes = [
       // Learning Paths - ADMIN only
       { 
         path: 'learning-paths', 
-        component: DashboardPageComponent
+        loadComponent: () => import('./features/dashboard/learning-path-management/learning-path-management.component').then(m => m.LearningPathManagementComponent)
       },
       // System Settings - ADMIN only
       { 

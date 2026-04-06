@@ -89,12 +89,20 @@ export const MENU_ITEMS: MenuItem[] = [
     permissions: [Permission.CERTIFICATIONS_VIEW]
   },
 
-  // Skill Evidence - LEARNER, TRAINER, RH_SMARTEK
+  // Skill Evidence - LEARNER, TRAINER, RH_SMARTEK, ADMIN
   {
     label: 'Skill Evidence',
     icon: 'psychology',
     route: '/dashboard/skill-evidence',
-    permissions: [Permission.SKILL_EVIDENCE_VIEW, Permission.SKILL_EVIDENCE_VIEW_ALL]
+    permissions: [Permission.SKILL_EVIDENCE_VIEW_ALL, Permission.SKILL_EVIDENCE_MANAGE]
+  },
+
+  // Skill Evidence Analytics - ADMIN, RH_SMARTEK
+  {
+    label: 'Evidence Analytics',
+    icon: 'analytics',
+    route: '/dashboard/skill-evidence-analytics',
+    permissions: [Permission.SKILL_EVIDENCE_VIEW_ALL, Permission.SKILL_EVIDENCE_MANAGE]
   },
 
   // Interview Management - RH_COMPANY, RH_SMARTEK
@@ -169,12 +177,12 @@ export const MENU_ITEMS: MenuItem[] = [
     permissions: [Permission.PARTICIPATION_VIEW, Permission.PARTICIPATION_VIEW_ALL]
   },
 
-  // Learning Path - RH_SMARTEK, LEARNER
+  // Learning Path - RH_SMARTEK, ADMIN
   {
     label: 'Learning Paths',
     icon: 'route',
     route: '/dashboard/learning-paths',
-    permissions: [Permission.LEARNING_PATH_VIEW]
+    permissions: [Permission.LEARNING_PATH_VIEW, Permission.LEARNING_PATH_CREATE]
   },
 
   // Divider
