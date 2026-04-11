@@ -33,6 +33,10 @@ eureka:
   instance:
     prefer-ip-address: true
 
+# JWT (same secret as auth-service)
+jwt:
+  secret: smartek-secret-key-for-jwt-token-generation-2024-very-secure
+
 # Logging
 logging:
   level:
