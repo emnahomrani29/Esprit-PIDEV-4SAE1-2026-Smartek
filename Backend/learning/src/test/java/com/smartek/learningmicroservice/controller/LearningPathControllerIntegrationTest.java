@@ -1,6 +1,7 @@
 package com.smartek.learningmicroservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartek.learningmicroservice.client.SkillEvidenceClient;
 import com.smartek.learningmicroservice.config.SecurityConfig;
 import com.smartek.learningmicroservice.dto.LearningPathRequest;
 import com.smartek.learningmicroservice.dto.LearningPathResponse;
@@ -45,6 +46,9 @@ class LearningPathControllerIntegrationTest {
 
     @MockBean
     private LearningPathService pathService;
+
+    @MockBean
+    private SkillEvidenceClient skillEvidenceClient;
 
     private LearningPathResponse response;
     private LearningPathRequest request;

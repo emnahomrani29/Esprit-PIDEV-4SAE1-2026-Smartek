@@ -1,5 +1,6 @@
 package com.smartek.learningmicroservice.controller;
 
+import com.smartek.learningmicroservice.client.SkillEvidenceClient;
 import com.smartek.learningmicroservice.dto.LearningPathRequest;
 import com.smartek.learningmicroservice.dto.LearningPathResponse;
 import com.smartek.learningmicroservice.entity.LearningPathStatus;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/learning-paths")
@@ -18,6 +20,7 @@ import java.util.List;
 public class LearningPathController {
 
     private final LearningPathService pathService;
+    private final SkillEvidenceClient skillEvidenceClient;
 
     @PostMapping
     public ResponseEntity<LearningPathResponse> createPath(@Valid @RequestBody LearningPathRequest request) {
@@ -25,70 +28,62 @@ public class LearningPathController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * Récupérer tous les parcours d'un apprenant
-     */
     @GetMapping("/learner/{learnerId}")
     public ResponseEntity<List<LearningPathResponse>> getPathsByLearner(@PathVariable Long learnerId) {
-        List<LearningPathResponse> paths = pathService.getAllPathsByLearner(learnerId);
-        return ResponseEntity.ok(paths);
+        return ResponseEntity.ok(pathService.getAllPathsByLearner(learnerId));
     }
 
-    /**
-     * Récupérer tous les parcours (pour admin)
-     */
     @GetMapping
     public ResponseEntity<List<LearningPathResponse>> getAllPaths() {
-        List<LearningPathResponse> paths = pathService.getAllPaths();
-        return ResponseEntity.ok(paths);
+        return ResponseEntity.ok(pathService.getAllPaths());
     }
 
-    /**
-     * Récupérer un parcours par ID
-     */
     @GetMapping("/{pathId}")
     public ResponseEntity<LearningPathResponse> getPathById(@PathVariable Long pathId) {
-        LearningPathResponse path = pathService.getPathById(pathId);
-        return ResponseEntity.ok(path);
+        return ResponseEntity.ok(pathService.getPathById(pathId));
     }
 
-    /**
-     * Récupérer les parcours par statut
-     */
     @GetMapping("/status/{status}")
     public ResponseEntity<List<LearningPathResponse>> getPathsByStatus(@PathVariable LearningPathStatus status) {
-        List<LearningPathResponse> paths = pathService.getPathsByStatus(status);
-        return ResponseEntity.ok(paths);
+        return ResponseEntity.ok(pathService.getPathsByStatus(status));
     }
 
-    /**
-     * Récupérer les parcours d'un apprenant par statut
-     */
     @GetMapping("/learner/{learnerId}/status/{status}")
     public ResponseEntity<List<LearningPathResponse>> getPathsByLearnerAndStatus(
             @PathVariable Long learnerId,
             @PathVariable LearningPathStatus status) {
-        List<LearningPathResponse> paths = pathService.getPathsByLearnerAndStatus(learnerId, status);
-        return ResponseEntity.ok(paths);
+        return ResponseEntity.ok(pathService.getPathsByLearnerAndStatus(learnerId, status));
     }
 
-    /**
-     * Mettre à jour un parcours
-     */
     @PutMapping("/{pathId}")
     public ResponseEntity<LearningPathResponse> updatePath(
             @PathVariable Long pathId,
             @Valid @RequestBody LearningPathRequest request) {
-        LearningPathResponse response = pathService.updatePath(pathId, request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(pathService.updatePath(pathId, request));
     }
 
-    /**
-     * Supprimer un parcours
-     */
     @DeleteMapping("/{pathId}")
     public ResponseEntity<Void> deletePath(@PathVariable Long pathId) {
         pathService.deletePath(pathId);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Endpoint combiné : parcours + preuves de compétences d'un apprenant.
+     * Utilise OpenFeign pour appeler skill-evidence-service.
+     */
+    @GetMapping("/learner/{learnerId}/dashboard")
+    public ResponseEntity<Map<String, Object>> getLearnerDashboard(@PathVariable Long learnerId) {
+        List<LearningPathResponse> paths = pathService.getAllPathsByLearner(learnerId);
+        List<SkillEvidenceClient.SkillEvidenceSummary> evidences =
+                skillEvidenceClient.getEvidencesByLearner(learnerId);
+        SkillEvidenceClient.LearnerAnalyticsSummary analytics =
+                skillEvidenceClient.getLearnerAnalytics(learnerId);
+
+        return ResponseEntity.ok(Map.of(
+                "learningPaths", paths,
+                "skillEvidences", evidences,
+                "analytics", analytics
+        ));
     }
 }

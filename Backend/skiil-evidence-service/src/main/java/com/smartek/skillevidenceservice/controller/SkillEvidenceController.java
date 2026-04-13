@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -54,8 +55,9 @@ public class SkillEvidenceController {
         return ResponseEntity.noContent().build();
     }
 
-    // ========== VALIDATION ENDPOINTS ==========
+    // ========== VALIDATION ENDPOINTS (ADMIN only) ==========
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('RH_SMARTEK')")
     @PostMapping("/{id}/approve")
     public ResponseEntity<SkillEvidenceResponse> approveEvidence(
             @PathVariable Integer id,
@@ -69,6 +71,7 @@ public class SkillEvidenceController {
         return ResponseEntity.ok(mapToResponse(evidence));
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('RH_SMARTEK')")
     @PostMapping("/{id}/reject")
     public ResponseEntity<SkillEvidenceResponse> rejectEvidence(
             @PathVariable Integer id,
@@ -82,6 +85,7 @@ public class SkillEvidenceController {
         return ResponseEntity.ok(mapToResponse(evidence));
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('RH_SMARTEK')")
     @PutMapping("/{id}/review")
     public ResponseEntity<SkillEvidenceResponse> reviewEvidence(
             @PathVariable Integer id,
@@ -104,6 +108,7 @@ public class SkillEvidenceController {
         return ResponseEntity.ok(service.getLearnerAnalytics(learnerId));
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('RH_SMARTEK')")
     @GetMapping("/analytics/global")
     public ResponseEntity<com.smartek.skillevidenceservice.dto.GlobalAnalyticsDTO> getGlobalAnalytics() {
         return ResponseEntity.ok(service.getGlobalAnalyticsNew());
