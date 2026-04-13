@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -55,19 +57,18 @@ public class SkillEvidenceController {
         return ResponseEntity.noContent().build();
     }
 
-    // ========== VALIDATION ENDPOINTS (ADMIN only) ==========
-
     @PreAuthorize("hasRole('ADMIN') or hasRole('RH_SMARTEK')")
     @PostMapping("/{id}/approve")
     public ResponseEntity<SkillEvidenceResponse> approveEvidence(
             @PathVariable Integer id,
             @Valid @RequestBody com.smartek.skillevidenceservice.dto.ApprovalRequest request) {
-        // Use placeholder reviewerId if not provided (in real app, extract from authentication context)
-        Long reviewerId = request.getReviewerId() != null ? request.getReviewerId() : 1L;
-        
-        com.smartek.skillevidenceservice.entity.SkillEvidence evidence = 
+        // Extraire le reviewerId depuis le token JWT (via SecurityContext)
+        Long reviewerId = getAuthenticatedUserId();
+        if (reviewerId == null) reviewerId = request.getReviewerId() != null ? request.getReviewerId() : 1L;
+
+        com.smartek.skillevidenceservice.entity.SkillEvidence evidence =
             service.approveEvidence(id, request.getScore(), reviewerId, request.getAdminComment());
-        
+
         return ResponseEntity.ok(mapToResponse(evidence));
     }
 
@@ -76,12 +77,12 @@ public class SkillEvidenceController {
     public ResponseEntity<SkillEvidenceResponse> rejectEvidence(
             @PathVariable Integer id,
             @Valid @RequestBody com.smartek.skillevidenceservice.dto.RejectionRequest request) {
-        // Use placeholder reviewerId if not provided (in real app, extract from authentication context)
-        Long reviewerId = request.getReviewerId() != null ? request.getReviewerId() : 1L;
-        
-        com.smartek.skillevidenceservice.entity.SkillEvidence evidence = 
+        Long reviewerId = getAuthenticatedUserId();
+        if (reviewerId == null) reviewerId = request.getReviewerId() != null ? request.getReviewerId() : 1L;
+
+        com.smartek.skillevidenceservice.entity.SkillEvidence evidence =
             service.rejectEvidence(id, request.getAdminComment(), reviewerId);
-        
+
         return ResponseEntity.ok(mapToResponse(evidence));
     }
 
@@ -90,13 +91,13 @@ public class SkillEvidenceController {
     public ResponseEntity<SkillEvidenceResponse> reviewEvidence(
             @PathVariable Integer id,
             @Valid @RequestBody com.smartek.skillevidenceservice.dto.ReviewRequest request) {
-        // Use placeholder reviewerId if not provided (in real app, extract from authentication context)
-        Long reviewerId = request.getReviewerId() != null ? request.getReviewerId() : 1L;
-        
-        com.smartek.skillevidenceservice.entity.SkillEvidence evidence = 
-            service.reviewEvidence(id, request.getStatus(), request.getScore(), 
+        Long reviewerId = getAuthenticatedUserId();
+        if (reviewerId == null) reviewerId = request.getReviewerId() != null ? request.getReviewerId() : 1L;
+
+        com.smartek.skillevidenceservice.entity.SkillEvidence evidence =
+            service.reviewEvidence(id, request.getStatus(), request.getScore(),
                                  request.getAdminComment(), reviewerId);
-        
+
         return ResponseEntity.ok(mapToResponse(evidence));
     }
 
@@ -155,5 +156,14 @@ public class SkillEvidenceController {
                 e.getReviewedAt(),
                 e.getCategory()
         );
+    }
+
+    // Extraire l'userId depuis le token JWT via le SecurityContext
+    private Long getAuthenticatedUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getDetails() instanceof Long) {
+            return (Long) auth.getDetails();
+        }
+        return null;
     }
 }
