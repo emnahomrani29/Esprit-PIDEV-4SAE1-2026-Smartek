@@ -34,7 +34,7 @@ export interface AuthResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8081/api/auth';
+  private apiUrl = `${environment.apiUrl}/auth`;
 
   constructor(
     private http: HttpClient,

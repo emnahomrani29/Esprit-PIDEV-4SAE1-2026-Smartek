@@ -1,4 +1,4 @@
-﻿import { inject } from '@angular/core';
+import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { map, catchError, of } from 'rxjs';
@@ -12,6 +12,7 @@ export const authGuard: CanActivateFn = (route, state) => {
     return false;
   }
 
+  // Vérifier si l'utilisateur existe toujours dans la base de données
   return authService.validateUser().pipe(
     map(isValid => {
       if (!isValid) {

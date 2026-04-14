@@ -1,4 +1,4 @@
-﻿import { Component } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -47,24 +47,7 @@ export class SignInComponent {
         next: (response: AuthResponse) => {
           console.log('Login successful:', response);
           this.isLoading = false;
-          switch (response.role) {
-            case 'RH_COMPANY':
-              this.router.navigate(['/rh-company/dashboard']);
-              break;
-            case 'RH_SMARTEK':
-              this.router.navigate(['/rh-smartek/certifications']);
-              break;
-            case 'LEARNER':
-              this.router.navigate(['/learner-courses']);
-              break;
-            case 'TRAINER':
-              this.router.navigate(['/trainer/courses']);
-              break;
-            case 'ADMIN':
-            default:
-              this.router.navigate(['/dashboard']);
-              break;
-          }
+          this.router.navigate(['/']);
         },
         error: (error: any) => {
           console.error('Login error:', error);

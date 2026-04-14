@@ -1,4 +1,4 @@
-﻿import { Role } from '../enums/role.enum';
+import { Role } from '../enums/role.enum';
 import { Permission } from '../enums/permission.enum';
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
@@ -37,12 +37,6 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     Permission.TRAINING_EDIT,
     Permission.TRAINING_DELETE,
     Permission.TRAINING_MANAGE_PARTICIPANTS,
-    
-    // Certification & Badge Management
-    Permission.CERTIFICATIONS_VIEW,
-    Permission.CERTIFICATIONS_ASSIGN,
-    Permission.BADGES_VIEW,
-    Permission.BADGES_ASSIGN,
     
     // Planning/Schedule
     Permission.PLANNING_VIEW,
@@ -248,6 +242,17 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     Permission.PARTICIPATION_VIEW_ALL,
     Permission.PARTICIPATION_MANAGE,
     Permission.PARTICIPATION_EXPORT,
+
+    // Skill Evidence Management
+    Permission.SKILL_EVIDENCE_VIEW_ALL,
+    Permission.SKILL_EVIDENCE_VALIDATE,
+    Permission.SKILL_EVIDENCE_MANAGE,
+
+    // Learning Path Management
+    Permission.LEARNING_PATH_VIEW,
+    Permission.LEARNING_PATH_CREATE,
+    Permission.LEARNING_PATH_EDIT,
+    Permission.LEARNING_PATH_DELETE,
     
     // System Settings
     Permission.SYSTEM_SETTINGS,

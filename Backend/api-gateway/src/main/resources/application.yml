@@ -1,32 +1,13 @@
-﻿server:
+server:
   port: 8090
 
 spring:
   application:
     name: api-gateway
-  main:
-    allow-bean-definition-overriding: true
   cloud:
     config:
       enabled: false
     gateway:
-      globalcors:
-        add-to-simple-url-handler-mapping: true
-        cors-configurations:
-          '[/**]':
-            allowedOrigins:
-              - "http://localhost:4200"
-            allowedMethods:
-              - GET
-              - POST
-              - PUT
-              - DELETE
-              - OPTIONS
-              - PATCH
-            allowedHeaders:
-              - "*"
-            allowCredentials: true
-            maxAge: 3600
       discovery:
         locator:
           enabled: true
@@ -36,10 +17,22 @@ spring:
           uri: lb://auth-service
           predicates:
             - Path=/api/auth/**
-        - id: certification-badge-service
-          uri: lb://certification-badge-service
+        - id: learning-style-service
+          uri: lb://learning
           predicates:
-            - Path=/api/certifications-badges/**
+            - Path=/api/learning-style-preferences/**
+        - id: learning-service
+          uri: lb://learning
+          predicates:
+            - Path=/api/learning-paths/**
+        - id: skill-evidence-service
+          uri: lb://skill-evidence-service
+          predicates:
+            - Path=/api/skill-evidence/**
+        - id: notifications-service
+          uri: lb://skill-evidence-service
+          predicates:
+            - Path=/api/notifications/**
         - id: offers-service
           uri: lb://offers-service
           predicates:
@@ -52,14 +45,6 @@ spring:
           uri: lb://offers-service
           predicates:
             - Path=/api/interviews/**
-        - id: interview-feedbacks-service
-          uri: lb://offers-service
-          predicates:
-            - Path=/api/interview-feedbacks/**
-        - id: saved-offers-service
-          uri: lb://offers-service
-          predicates:
-            - Path=/api/saved-offers/**
         - id: course-service
           uri: lb://course-service
           predicates:
@@ -84,7 +69,7 @@ spring:
           uri: lb://exam-service
           predicates:
             - Path=/api/exam-drafts/**
-        - id: analytics-exams
+        - id: analytics
           uri: lb://exam-service
           predicates:
             - Path=/api/analytics/trainer/*/exams
@@ -100,18 +85,10 @@ spring:
           uri: lb://training-service
           predicates:
             - Path=/api/performance/**
-        - id: event-service
-          uri: lb://event-service
+        - id: pi-service
+          uri: lb://pi-service
           predicates:
-            - Path=/events/**
-        - id: event-business-service
-          uri: lb://event-service
-          predicates:
-            - Path=/events/business/**
-        - id: planning-service
-          uri: lb://planning-service
-          predicates:
-            - Path=/plannings/**
+            - Path=/api/pi/**
 
 eureka:
   client:
@@ -119,7 +96,6 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
-    registry-fetch-interval-seconds: 5
   instance:
     prefer-ip-address: true
 
@@ -128,6 +104,3 @@ management:
     web:
       exposure:
         include: health,info,gateway
-
-jwt:
-  secret: smartek-secret-key-for-jwt-token-generation-2024-very-secure

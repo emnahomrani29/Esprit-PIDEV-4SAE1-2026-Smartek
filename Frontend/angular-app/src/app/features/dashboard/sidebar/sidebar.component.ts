@@ -1,4 +1,4 @@
-﻿import { Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService, AuthResponse } from '../../../core/services/auth.service';
@@ -69,6 +69,7 @@ export class SidebarComponent implements OnInit {
 
       return true;
     }).map(item => {
+      // Filtrer les enfants si présents
       if (item.children) {
         return {
           ...item,

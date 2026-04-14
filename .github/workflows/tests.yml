@@ -1,0 +1,50 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [ skill-evidence-learning-service ]
+  pull_request:
+    branches: [ skill-evidence-learning-service ]
+
+jobs:
+  test-skill-evidence:
+    name: skill-evidence-service tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Make mvnw executable
+        run: chmod +x mvnw
+        working-directory: Backend/skiil-evidence-service
+
+      - name: Run tests
+        run: ./mvnw test -B
+        working-directory: Backend/skiil-evidence-service
+
+  test-learning:
+    name: learning-service tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Make mvnw executable
+        run: chmod +x mvnw
+        working-directory: Backend/learning
+
+      - name: Run tests
+        run: ./mvnw test -B
+        working-directory: Backend/learning

@@ -1,4 +1,4 @@
-﻿import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
@@ -9,8 +9,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const token = authService.getToken();
 
-  // Ajouter le token JWT à toutes les requêtes
-  if (token) {
+  // Exclure uniquement les endpoints publics (login/register)
+  const isPublic = req.url.includes('/api/auth/login') || req.url.includes('/api/auth/register');
+
+  if (token && !isPublic) {
     req = req.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`
@@ -21,17 +23,16 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401) {
-        console.error('Token invalide ou expiré, déconnexion...');
+        console.log('Token invalide ou expiré, déconnexion...');
         authService.logout();
+        router.navigate(['/login']);
       }
-      if (error.status === 403) {
-        console.error('Accès refusé (403):', error.url);
-        // Ne pas déconnecter sur 403 - juste loguer
-      }
-      if (error.status === 404 && error.url?.includes('/api/users/')) {
+
+      if (error.status === 404 && error.url?.includes('/api/auth/user/')) {
         console.log('Utilisateur introuvable, déconnexion...');
         authService.logout();
       }
+
       return throwError(() => error);
     })
   );

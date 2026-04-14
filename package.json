@@ -18,8 +18,5 @@
     "offres-emploi"
   ],
   "author": "SMARTEK Team",
-  "license": "ISC",
-  "dependencies": {
-    "pdfkit": "^0.18.0"
-  }
+  "license": "ISC"
 }

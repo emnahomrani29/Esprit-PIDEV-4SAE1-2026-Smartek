@@ -9,23 +9,6 @@
             "href": "/#Courses"
         },
         {
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
->>>>>>> offers-service
-            "label": "Mentors",
-            "href": "/#mentors-section"
-        },
-        {
-            "label": "Testimonial",
-            "href": "/#testimonial-section"
-        },
-        {
-<<<<<<< HEAD
-=======
->>>>>>> fc6f965 (ci: add GitHub Actions + tests for offers-service and certification-badge-service)
->>>>>>> offers-service
             "label": "Planning",
             "href": "/#planning-section"
         },
@@ -40,19 +23,6 @@
         {
             "label": "Contact Us",
             "href": "/#contact"
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
->>>>>>> offers-service
-        },
-        {
-            "label": "Docs",
-            "href": "/documentation"
-<<<<<<< HEAD
-=======
->>>>>>> fc6f965 (ci: add GitHub Actions + tests for offers-service and certification-badge-service)
->>>>>>> offers-service
         }
     ],
     "CourseData": [
@@ -304,23 +274,6 @@
                     "href": "/#Courses"
                 },
                 {
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
->>>>>>> offers-service
-                    "label": "Mentors",
-                    "href": "/#mentors-section"
-                },
-                {
-                    "label": "Testimonial",
-                    "href": "/#testimonial-section"
-                },
-                {
-<<<<<<< HEAD
-=======
->>>>>>> fc6f965 (ci: add GitHub Actions + tests for offers-service and certification-badge-service)
->>>>>>> offers-service
                     "label": "Planning",
                     "href": "/#planning-section"
                 },

@@ -1,10 +1,7 @@
-﻿import { Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { HomePageComponent } from './features/home/home-page/home-page.component';
 import { DashboardLayoutComponent } from './features/dashboard/dashboard-layout/dashboard-layout.component';
 import { DashboardPageComponent } from './features/dashboard/dashboard-page/dashboard-page.component';
-import { MyCertificationsComponent } from './features/certifications-badges/my-certifications/my-certifications.component';
-import { MyBadgesComponent } from './features/certifications-badges/my-badges/my-badges.component';
-import { CertificateViewerComponent } from './features/certifications-badges/certificate-viewer/certificate-viewer.component';
 import { JobOffersRouterComponent } from './features/dashboard/job-offers-router/job-offers-router.component';
 import { JobOffersComponent } from './features/dashboard/job-offers/job-offers.component';
 import { JobOffersLearnerComponent } from './features/learner/job-offers/job-offers-learner.component';
@@ -23,9 +20,10 @@ export const routes: Routes = [
   { path: 'auth/sign-in', component: SignInComponent },
   { path: 'auth/sign-up', component: SignUpComponent },
   { path: 'settings', component: SettingsComponent, canActivate: [authGuard] },
-  { path: 'test-offers', component: JobOffersComponent },
-  { path: 'test-offers-learner', component: JobOffersLearnerComponent },
-  { path: 'test-interviews-learner', component: InterviewsLearnerComponent },
+  { path: 'test-offers', component: JobOffersComponent }, // Route de test sans guards
+  { path: 'test-offers-learner', component: JobOffersLearnerComponent }, // Route de test pour learner
+  { path: 'test-interviews-learner', component: InterviewsLearnerComponent }, // Route de test pour entretiens learner
+  // Frontoffice routes for learners
   { 
     path: 'learner-training', 
     loadComponent: () => import('./features/learner/training/learner-training.component').then(m => m.LearnerTrainingComponent),
@@ -77,20 +75,32 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
-    path: 'learner/certifications',
-    component: MyCertificationsComponent,
+    path: 'learner/skill-evidence',
+    loadComponent: () => import('./features/learner/skill-evidence/learner-skill-evidence.component').then(m => m.LearnerSkillEvidenceComponent),
     canActivate: [authGuard]
   },
   {
-    path: 'learner/badges',
-    component: MyBadgesComponent,
+    path: 'learner/skill-evidence-analytics',
+    loadComponent: () => import('./features/learner/skill-evidence-analytics/learner-skill-evidence-analytics.component').then(m => m.LearnerSkillEvidenceAnalyticsComponent),
     canActivate: [authGuard]
   },
   {
-    path: 'learner/certificate-viewer/:id',
-    component: CertificateViewerComponent,
+    path: 'learner/learning-path',
+    loadComponent: () => import('./features/learner/learning-path/learner-learning-path.component').then(m => m.LearnerLearningPathComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'learner/learning-style',
+    loadComponent: () => import('./features/learner/learning-style/learner-learning-style.component').then(m => m.LearnerLearningStyleComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'learner/learning-style-quiz',
+    loadComponent: () => import('./features/learner/learning-style-quiz/learner-learning-style-quiz.component').then(m => m.LearnerLearningStyleQuizComponent),
+    canActivate: [authGuard]
+  },
+  
+  // Trainer routes (sans layout, utilise le header du site)
   { 
     path: 'trainer/courses',
     loadComponent: () => import('./features/trainer/courses/trainer-courses.component').then(m => m.TrainerCoursesComponent),
@@ -139,39 +149,73 @@ export const routes: Routes = [
     canActivate: [permissionGuard],
     data: { roles: [Role.TRAINER] }
   },
-  { 
-    path: 'trainer/weekly-planning',
-    loadComponent: () => import('./features/trainer/weekly-planning/trainer-weekly-planning.component').then(m => m.TrainerWeeklyPlanningComponent),
-    canActivate: [permissionGuard],
-    data: { roles: [Role.TRAINER] }
-  },
+
+  // RH Smartek routes with layout
   {
     path: 'rh-smartek',
     loadComponent: () => import('./features/rh-smartek/rh-smartek-layout/rh-smartek-layout.component').then(m => m.RhSmartekLayoutComponent),
     canActivate: [authGuard, permissionGuard],
     data: { roles: [Role.RH_SMARTEK] },
     children: [
-      { path: '', redirectTo: 'certifications', pathMatch: 'full' },
-      { path: 'certifications', loadComponent: () => import('./features/rh-smartek/certifications/certifications.component').then(m => m.RhCertificationsComponent) },
-      { path: 'courses', loadComponent: () => import('./features/rh-smartek/courses/courses.component').then(m => m.RhCoursesComponent) },
-      { path: 'exams', loadComponent: () => import('./features/rh-smartek/exams/exams.component').then(m => m.RhExamsComponent) },
-      { path: 'interviews', loadComponent: () => import('./features/rh-smartek/interviews/interviews.component').then(m => m.InterviewsComponent) },
-      { path: 'schedule', loadComponent: () => import('./features/rh-smartek/schedule/schedule.component').then(m => m.ScheduleComponent) },
-      { path: 'events', loadComponent: () => import('./features/rh-smartek/events/events.component').then(m => m.RhEventsComponent) }
+      {
+        path: '',
+        redirectTo: 'certifications',
+        pathMatch: 'full'
+      },
+      {
+        path: 'certifications',
+        loadComponent: () => import('./features/rh-smartek/certifications/certifications.component').then(m => m.RhCertificationsComponent)
+      },
+      {
+        path: 'courses',
+        loadComponent: () => import('./features/rh-smartek/courses/courses.component').then(m => m.RhCoursesComponent)
+      },
+      {
+        path: 'exams',
+        loadComponent: () => import('./features/rh-smartek/exams/exams.component').then(m => m.RhExamsComponent)
+      },
+      {
+        path: 'interviews',
+        loadComponent: () => import('./features/rh-smartek/interviews/interviews.component').then(m => m.InterviewsComponent)
+      },
+      {
+        path: 'schedule',
+        loadComponent: () => import('./features/rh-smartek/schedule/schedule.component').then(m => m.ScheduleComponent)
+      },
+      {
+        path: 'events',
+        loadComponent: () => import('./features/rh-smartek/events/events.component').then(m => m.RhEventsComponent)
+      }
     ]
   },
+
+  // RH Company routes with layout
   {
     path: 'rh-company',
     loadComponent: () => import('./features/rh-company/rh-company-layout/rh-company-layout.component').then(m => m.RhCompanyLayoutComponent),
     canActivate: [authGuard, permissionGuard],
     data: { roles: [Role.RH_COMPANY] },
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      { path: 'dashboard', loadComponent: () => import('./features/rh-company/dashboard/rh-company-dashboard.component').then(m => m.RhCompanyDashboardComponent) },
-      { path: 'offers', loadComponent: () => import('./features/rh-company/offers/rh-company-offers.component').then(m => m.RhCompanyOffersComponent) },
-      { path: 'participation', loadComponent: () => import('./features/rh-company/participation/participation.component').then(m => m.CompanyParticipationComponent) }
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
+      },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/rh-company/dashboard/rh-company-dashboard.component').then(m => m.RhCompanyDashboardComponent)
+      },
+      {
+        path: 'offers',
+        component: JobOffersComponent
+      },
+      {
+        path: 'participation',
+        loadComponent: () => import('./features/rh-company/participation/participation.component').then(m => m.CompanyParticipationComponent)
+      }
     ]
   },
+  
   { 
     path: 'dashboard', 
     component: DashboardLayoutComponent,
@@ -184,134 +228,117 @@ export const routes: Routes = [
       },
       { 
         path: 'profile', 
-        component: DashboardPageComponent,
-        canActivate: [permissionGuard],
-        data: { permissions: [Permission.PROFILE_VIEW] }
+        component: DashboardPageComponent
       },
+      // Course Management - ADMIN only
       { 
-        path: 'courses', 
+        path: 'courses',
         loadComponent: () => import('./features/dashboard/course-management/course-management.component').then(m => m.CourseManagementComponent)
       },
+      // Chapter Management - ADMIN only
       { 
         path: 'courses/:courseId/chapters',
         loadComponent: () => import('./features/dashboard/chapter-management/chapter-management.component').then(m => m.ChapterManagementComponent)
       },
+      // My Courses - ADMIN only
       { 
         path: 'my-courses', 
         loadComponent: () => import('./features/dashboard/my-courses/my-courses.component').then(m => m.MyCoursesComponent)
       },
+      // Exam Management - ADMIN only
       { 
         path: 'exams', 
         loadComponent: () => import('./features/dashboard/exam-management/exam-management.component').then(m => m.ExamManagementComponent)
       },
+      // My Exams - ADMIN only
       { 
         path: 'my-exams', 
         loadComponent: () => import('./features/dashboard/my-exams/my-exams.component').then(m => m.MyExamsComponent)
       },
+      // Training Management - ADMIN only
       { 
         path: 'training', 
         loadComponent: () => import('./features/dashboard/training-management/training-management.component').then(m => m.TrainingManagementComponent)
       },
+      // My Training - ADMIN only
       { 
         path: 'my-training',
         loadComponent: () => import('./features/dashboard/my-training/my-training.component').then(m => m.MyTrainingComponent)
       },
-      { 
-        path: 'badges', 
-        loadChildren: () => import('./features/certifications-badges/badges.module').then(m => m.BadgesModule),
-        canActivate: [permissionGuard],
-        data: { roles: [Role.TRAINER, Role.RH_SMARTEK, Role.ADMIN], permissions: [Permission.BADGES_VIEW] }
-      },
+      // Certifications & Badges - ADMIN only
       { 
         path: 'certifications', 
-        loadChildren: () => import('./features/certifications-badges/certifications.module').then(m => m.CertificationsModule),
-        canActivate: [permissionGuard],
-        data: { roles: [Role.TRAINER, Role.RH_SMARTEK, Role.ADMIN], permissions: [Permission.CERTIFICATIONS_VIEW] }
+        component: DashboardPageComponent
       },
+      // My Certifications - ADMIN only
       { 
         path: 'my-certifications', 
-        component: MyCertificationsComponent,
-        canActivate: [permissionGuard],
-        data: { roles: [Role.LEARNER], permissions: [Permission.CERTIFICATIONS_VIEW] }
+        component: DashboardPageComponent
       },
-      { 
-        path: 'certificate-viewer/:id', 
-        component: CertificateViewerComponent,
-        canActivate: [authGuard]
-      },
-      { 
-        path: 'my-badges', 
-        component: MyBadgesComponent,
-        canActivate: [permissionGuard],
-        data: { roles: [Role.LEARNER], permissions: [Permission.BADGES_VIEW] }
-      },
+      // Skill Evidence - ADMIN only
       { 
         path: 'skill-evidence', 
-        component: DashboardPageComponent,
-        canActivate: [permissionGuard],
-        data: { permissions: [Permission.SKILL_EVIDENCE_VIEW, Permission.SKILL_EVIDENCE_VIEW_ALL] }
+        loadComponent: () => import('./features/dashboard/skill-evidence-management/skill-evidence-management.component').then(m => m.SkillEvidenceManagementComponent)
       },
+      // Skill Evidence Analytics - ADMIN only
+      {
+        path: 'skill-evidence-analytics',
+        loadComponent: () => import('./features/dashboard/skill-evidence-analytics/skill-evidence-analytics.component').then(m => m.SkillEvidenceAnalyticsComponent)
+      },
+      // Interview Management - ADMIN only
       { 
         path: 'interviews', 
-        component: DashboardPageComponent,
-        canActivate: [permissionGuard],
-        data: { permissions: [Permission.INTERVIEWS_VIEW, Permission.INTERVIEWS_CREATE] }
+        component: DashboardPageComponent
       },
+      // Job Offers - ADMIN only
       { 
         path: 'job-offers', 
         component: JobOffersRouterComponent
       },
+      // Planning - ADMIN only
       { 
         path: 'planning', 
         component: PlanningComponent
       },
+      // Event Management - ADMIN only
       { 
         path: 'events', 
-        component: DashboardPageComponent,
-        canActivate: [permissionGuard],
-        data: { permissions: [Permission.EVENTS_VIEW, Permission.EVENTS_CREATE] }
+        component: DashboardPageComponent
       },
+      // User Management - ADMIN only
       { 
         path: 'users', 
-        component: DashboardPageComponent,
-        canActivate: [permissionGuard],
-        data: { permissions: [Permission.USERS_VIEW] }
+        component: DashboardPageComponent
       },
+      // Company Management - ADMIN only
       { 
         path: 'companies', 
-        component: DashboardPageComponent,
-        canActivate: [permissionGuard],
-        data: { permissions: [Permission.COMPANIES_VIEW, Permission.COMPANIES_CREATE] }
+        component: DashboardPageComponent
       },
+      // Sponsor Management - ADMIN only
       { 
         path: 'sponsors', 
-        component: DashboardPageComponent,
-        canActivate: [permissionGuard],
-        data: { permissions: [Permission.SPONSORS_VIEW] }
+        component: DashboardPageComponent
       },
+      // Contact Management - ADMIN only
       { 
         path: 'contacts', 
-        component: DashboardPageComponent,
-        canActivate: [permissionGuard],
-        data: { permissions: [Permission.CONTACTS_VIEW] }
+        component: DashboardPageComponent
       },
+      // Participation - ADMIN only
       { 
         path: 'participation', 
-        component: DashboardPageComponent,
-        canActivate: [permissionGuard],
-        data: { permissions: [Permission.PARTICIPATION_VIEW, Permission.PARTICIPATION_VIEW_ALL] }
+        component: DashboardPageComponent
       },
+      // Learning Paths - ADMIN only
       { 
         path: 'learning-paths', 
-        component: DashboardPageComponent,
-        canActivate: [permissionGuard],
-        data: { permissions: [Permission.LEARNING_PATH_VIEW] }
+        loadComponent: () => import('./features/dashboard/learning-path-management/learning-path-management.component').then(m => m.LearningPathManagementComponent)
       },
+      // System Settings - ADMIN only
       { 
         path: 'settings', 
-        component: DashboardPageComponent,
-        canActivate: [permissionGuard],
-        data: { permissions: [Permission.SYSTEM_SETTINGS] }
+        component: DashboardPageComponent
       }
     ]
   },

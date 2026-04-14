@@ -18,10 +18,9 @@
         <module>auth-service</module>
         <module>course-service</module>
         <module>training-service</module>
-        <module>offers-service</module>
         <module>exam-service</module>
-        <module>event-service</module>
-        <module>planning-service</module>
+        <module>offers-service</module>
+        <module>pi-service</module>
     </modules>
     
     <properties>

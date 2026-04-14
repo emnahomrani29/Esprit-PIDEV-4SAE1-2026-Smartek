@@ -22,11 +22,7 @@ export class AppComponent {
     ).subscribe((event: any) => {
       // Hide header and footer on dashboard and auth pages
       this.showHeaderFooter = !event.url.includes('/dashboard') && 
-                              !event.url.includes('/auth/') &&
-                              !event.url.includes('/rh-company') &&
-                              !event.url.includes('/rh-smartek') &&
-                              !event.url.includes('/trainer/') &&
-                              !event.url.includes('/learner/');
+                              !event.url.includes('/auth/');
     });
   }
 }

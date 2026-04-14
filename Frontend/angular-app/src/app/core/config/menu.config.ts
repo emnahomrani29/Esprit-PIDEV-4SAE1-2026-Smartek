@@ -1,4 +1,4 @@
-﻿import { Permission } from '../enums/permission.enum';
+import { Permission } from '../enums/permission.enum';
 import { Role } from '../enums/role.enum';
 
 export interface MenuItem {
@@ -26,8 +26,7 @@ export const MENU_ITEMS: MenuItem[] = [
     label: 'Course Management',
     icon: 'school',
     route: '/dashboard/courses',
-    roles: [Role.RH_SMARTEK, Role.TRAINER],
-    permissions: [Permission.COURSES_VIEW, Permission.COURSES_CREATE]
+    roles: [Role.RH_SMARTEK, Role.TRAINER]
   },
 
   // My Courses - LEARNER
@@ -44,8 +43,7 @@ export const MENU_ITEMS: MenuItem[] = [
     label: 'Exam Management',
     icon: 'assignment',
     route: '/dashboard/exams',
-    roles: [Role.RH_SMARTEK, Role.TRAINER],
-    permissions: [Permission.EXAMS_VIEW, Permission.EXAMS_CREATE]
+    roles: [Role.RH_SMARTEK, Role.TRAINER]
   },
 
   // My Exams - LEARNER
@@ -76,18 +74,10 @@ export const MENU_ITEMS: MenuItem[] = [
 
   // Certification & Badge Management - RH_SMARTEK
   {
-    label: 'Certifications',
+    label: 'Certifications & Badges',
     icon: 'workspace_premium',
     route: '/dashboard/certifications',
-    roles: [Role.TRAINER, Role.RH_SMARTEK, Role.ADMIN],
     permissions: [Permission.CERTIFICATIONS_VIEW, Permission.BADGES_VIEW]
-  },
-  {
-    label: 'Badges',
-    icon: 'military_tech',
-    route: '/dashboard/badges',
-    roles: [Role.TRAINER, Role.RH_SMARTEK, Role.ADMIN],
-    permissions: [Permission.BADGES_VIEW]
   },
 
   // My Certifications - LEARNER
@@ -98,20 +88,21 @@ export const MENU_ITEMS: MenuItem[] = [
     roles: [Role.LEARNER],
     permissions: [Permission.CERTIFICATIONS_VIEW]
   },
-  {
-    label: 'My Badges',
-    icon: 'verified',
-    route: '/dashboard/my-badges',
-    roles: [Role.LEARNER],
-    permissions: [Permission.BADGES_VIEW]
-  },
 
-  // Skill Evidence - LEARNER, TRAINER, RH_SMARTEK
+  // Skill Evidence - LEARNER, TRAINER, RH_SMARTEK, ADMIN
   {
     label: 'Skill Evidence',
     icon: 'psychology',
     route: '/dashboard/skill-evidence',
-    permissions: [Permission.SKILL_EVIDENCE_VIEW, Permission.SKILL_EVIDENCE_VIEW_ALL]
+    permissions: [Permission.SKILL_EVIDENCE_VIEW_ALL, Permission.SKILL_EVIDENCE_MANAGE]
+  },
+
+  // Skill Evidence Analytics - ADMIN, RH_SMARTEK
+  {
+    label: 'Evidence Analytics',
+    icon: 'analytics',
+    route: '/dashboard/skill-evidence-analytics',
+    permissions: [Permission.SKILL_EVIDENCE_VIEW_ALL, Permission.SKILL_EVIDENCE_MANAGE]
   },
 
   // Interview Management - RH_COMPANY, RH_SMARTEK
@@ -186,12 +177,12 @@ export const MENU_ITEMS: MenuItem[] = [
     permissions: [Permission.PARTICIPATION_VIEW, Permission.PARTICIPATION_VIEW_ALL]
   },
 
-  // Learning Path - RH_SMARTEK, LEARNER
+  // Learning Path - RH_SMARTEK, ADMIN
   {
     label: 'Learning Paths',
     icon: 'route',
     route: '/dashboard/learning-paths',
-    permissions: [Permission.LEARNING_PATH_VIEW]
+    permissions: [Permission.LEARNING_PATH_VIEW, Permission.LEARNING_PATH_CREATE]
   },
 
   // Divider
