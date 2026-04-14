@@ -109,7 +109,6 @@ public class SkillEvidenceController {
         return ResponseEntity.ok(service.getLearnerAnalytics(learnerId));
     }
 
-    @PreAuthorize("hasRole('ADMIN') or hasRole('RH_SMARTEK')")
     @GetMapping("/analytics/global")
     public ResponseEntity<com.smartek.skillevidenceservice.dto.GlobalAnalyticsDTO> getGlobalAnalytics() {
         return ResponseEntity.ok(service.getGlobalAnalyticsNew());

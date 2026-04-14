@@ -6,7 +6,6 @@ import com.smartek.learningmicroservice.dto.LearningPathResponse;
 import com.smartek.learningmicroservice.entity.LearningPathStatus;
 import com.smartek.learningmicroservice.service.LearningPathService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,11 +15,15 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/learning-paths")
-@RequiredArgsConstructor
 public class LearningPathController {
 
     private final LearningPathService pathService;
     private final SkillEvidenceClient skillEvidenceClient;
+
+    public LearningPathController(LearningPathService pathService, SkillEvidenceClient skillEvidenceClient) {
+        this.pathService = pathService;
+        this.skillEvidenceClient = skillEvidenceClient;
+    }
 
     @PostMapping
     public ResponseEntity<LearningPathResponse> createPath(@Valid @RequestBody LearningPathRequest request) {

@@ -146,6 +146,7 @@ export class JobOffersComponent implements OnInit {
     
     this.offerService.createOffer(this.offerForm).subscribe({
       next: (data) => {
+        if (!Array.isArray(this.offers)) this.offers = [];
         this.offers.push(data);
         this.applyFilter();
         this.closeModal();

@@ -11,6 +11,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class SkillEvidenceService {
   private apiUrl = `${environment.apiUrl}/skill-evidence`;
+  private directUrl = 'http://localhost:8091/api/skill-evidence';
 
   constructor(private http: HttpClient) {}
 

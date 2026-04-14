@@ -20,7 +20,6 @@
         <module>training-service</module>
         <module>exam-service</module>
         <module>offers-service</module>
-        <module>pi-service</module>
     </modules>
     
     <properties>

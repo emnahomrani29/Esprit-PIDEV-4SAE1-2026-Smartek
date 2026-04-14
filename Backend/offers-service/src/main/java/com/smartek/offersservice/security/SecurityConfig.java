@@ -32,6 +32,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/offers/top-viewed").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/offers/company/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/offers/stats/company/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/offers").permitAll()
+                .requestMatchers(HttpMethod.PUT, "/api/offers/**").permitAll()
+                .requestMatchers(HttpMethod.DELETE, "/api/offers/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/offers/my").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 // Tout le reste nécessite une authentification
                 .anyRequest().authenticated()

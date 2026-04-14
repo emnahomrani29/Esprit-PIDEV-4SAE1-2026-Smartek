@@ -75,6 +75,46 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'learner/certifications',
+    loadComponent: () => import('./features/certifications-badges/my-certifications/my-certifications.component').then(m => m.MyCertificationsComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'learner/badges',
+    loadComponent: () => import('./features/certifications-badges/my-badges/my-badges.component').then(m => m.MyBadgesComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'learner/certificate-viewer/:id',
+    loadComponent: () => import('./features/certifications-badges/certificate-viewer/certificate-viewer.component').then(m => m.CertificateViewerComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'learner/skill-evidence',
+    loadComponent: () => import('./features/learner/skill-evidence/learner-skill-evidence.component').then(m => m.LearnerSkillEvidenceComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'learner/skill-evidence-analytics',
+    loadComponent: () => import('./features/learner/skill-evidence-analytics/learner-skill-evidence-analytics.component').then(m => m.LearnerSkillEvidenceAnalyticsComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'learner/learning-path',
+    loadComponent: () => import('./features/learner/learning-path/learner-learning-path.component').then(m => m.LearnerLearningPathComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'learner/learning-style',
+    loadComponent: () => import('./features/learner/learning-style/learner-learning-style.component').then(m => m.LearnerLearningStyleComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'learner/learning-style-quiz',
+    loadComponent: () => import('./features/learner/learning-style-quiz/learner-learning-style-quiz.component').then(m => m.LearnerLearningStyleQuizComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'learner/skill-evidence',
     loadComponent: () => import('./features/learner/skill-evidence/learner-skill-evidence.component').then(m => m.LearnerSkillEvidenceComponent),
     canActivate: [authGuard]

@@ -97,10 +97,10 @@ export const MENU_ITEMS: MenuItem[] = [
     permissions: [Permission.SKILL_EVIDENCE_VIEW_ALL, Permission.SKILL_EVIDENCE_MANAGE]
   },
 
-  // Skill Evidence Analytics - ADMIN, RH_SMARTEK
+  // Global Analytics - ADMIN, RH_SMARTEK
   {
-    label: 'Evidence Analytics',
-    icon: 'analytics',
+    label: 'Global Analytics',
+    icon: 'bar_chart',
     route: '/dashboard/skill-evidence-analytics',
     permissions: [Permission.SKILL_EVIDENCE_VIEW_ALL, Permission.SKILL_EVIDENCE_MANAGE]
   },

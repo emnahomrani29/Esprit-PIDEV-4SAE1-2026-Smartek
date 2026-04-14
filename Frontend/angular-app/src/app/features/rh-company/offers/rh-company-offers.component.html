@@ -245,85 +245,118 @@
 <!-- Offer Modal -->
 <div *ngIf="showOfferModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-    <div class="p-6">
-      <h3 class="text-xl font-bold text-gray-900 mb-5">{{ isEditMode ? 'Modifier' : 'Créer' }} une Offre</h3>
-      <div class="space-y-4">
-        <div class="grid grid-cols-2 gap-3">
-          <div class="col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Titre *</label>
-            <input [(ngModel)]="offerForm.title" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Ex: Développeur Full Stack">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Entreprise *</label>
-            <input [(ngModel)]="offerForm.companyName" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Localisation *</label>
-            <input [(ngModel)]="offerForm.location" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
-          </div>
+    <div class="sticky top-0 bg-white px-6 pt-6 pb-4 border-b border-gray-100 z-10">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-bold text-gray-900">{{ isEditMode ? '✏️ Modifier' : '➕ Nouvelle' }} Offre</h3>
+        <button (click)="showOfferModal=false" class="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+      </div>
+    </div>
+
+    <div class="p-6 space-y-5">
+
+      <!-- Titre -->
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Titre <span class="text-red-500">*</span></label>
+        <input [(ngModel)]="offerForm.title" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Ex: Développeur Full Stack Senior">
+      </div>
+
+      <!-- Company Name + Location -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Entreprise <span class="text-red-500">*</span></label>
+          <input [(ngModel)]="offerForm.companyName" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Nom de l'entreprise">
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-          <textarea [(ngModel)]="offerForm.description" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Description du poste, missions, profil recherché..."></textarea>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Localisation <span class="text-red-500">*</span></label>
+          <input [(ngModel)]="offerForm.location" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Paris, Lyon, Remote...">
         </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Type de contrat</label>
-            <select [(ngModel)]="offerForm.contractType" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
-              <option *ngFor="let c of contractTypes" [value]="c">{{ c }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Domaine</label>
-            <select [(ngModel)]="offerForm.domain" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
-              <option value="">-- Sélectionner --</option>
-              <option *ngFor="let d of domains" [value]="d">{{ d }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Niveau d'expérience</label>
-            <select [(ngModel)]="offerForm.experienceLevel" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
-              <option *ngFor="let e of experienceLevels" [value]="e">{{ e }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Salaire (texte)</label>
-            <input [(ngModel)]="offerForm.salary" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Ex: 35-45k€">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Salaire min (€)</label>
-            <input type="number" [(ngModel)]="offerForm.salaryMin" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="35000">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Salaire max (€)</label>
-            <input type="number" [(ngModel)]="offerForm.salaryMax" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="45000">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre de postes</label>
-            <input type="number" [(ngModel)]="offerForm.positions" min="1" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Date d'expiration</label>
-            <input type="datetime-local" [(ngModel)]="offerForm.expiresAt" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
-          </div>
+      </div>
+
+      <!-- Contract Type + Domain -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Type de contrat</label>
+          <select [(ngModel)]="offerForm.contractType" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+            <option *ngFor="let c of contractTypes" [value]="c">{{ c }}</option>
+          </select>
         </div>
-        <div class="flex items-center gap-6">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Domaine</label>
+          <select [(ngModel)]="offerForm.domain" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+            <option value="">-- Sélectionner --</option>
+            <option *ngFor="let d of domains" [value]="d">{{ d }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Experience Level + Positions -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Niveau d'expérience</label>
+          <select [(ngModel)]="offerForm.experienceLevel" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+            <option *ngFor="let e of experienceLevels" [value]="e">{{ e }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Nombre de postes</label>
+          <input type="number" [(ngModel)]="offerForm.positions" min="1" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="1">
+        </div>
+      </div>
+
+      <!-- Salary (text) + Remote -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Salaire (texte)</label>
+          <input [(ngModel)]="offerForm.salary" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Ex: 35-45k€ / an">
+        </div>
+        <div class="flex flex-col justify-end pb-1">
           <label class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" [(ngModel)]="offerForm.remote" class="w-4 h-4 text-indigo-600 rounded">
-            <span class="text-sm text-gray-700">&#127760; Télétravail possible</span>
+            <input type="checkbox" [(ngModel)]="offerForm.remote" class="w-4 h-4 text-indigo-600 rounded accent-indigo-600">
+            <span class="text-sm text-gray-700 font-medium">🌐 Télétravail possible</span>
           </label>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
-            <select [(ngModel)]="offerForm.status" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
-              <option *ngFor="let s of statusTypes" [value]="s">{{ s }}</option>
-            </select>
-          </div>
         </div>
       </div>
-      <div class="flex gap-3 mt-6">
-        <button (click)="showOfferModal=false" class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg hover:bg-gray-50 text-sm">Annuler</button>
-        <button (click)="saveOffer()" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 text-sm font-medium">{{ isEditMode ? 'Modifier' : 'Créer' }}</button>
+
+      <!-- Salary Min + Salary Max -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Salaire min (€)</label>
+          <input type="number" [(ngModel)]="offerForm.salaryMin" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="30000">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Salaire max (€)</label>
+          <input type="number" [(ngModel)]="offerForm.salaryMax" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="50000">
+        </div>
       </div>
+
+      <!-- Status + Expires At -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Statut</label>
+          <select [(ngModel)]="offerForm.status" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+            <option *ngFor="let s of statusTypes" [value]="s">{{ s }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Date d'expiration</label>
+          <input type="datetime-local" [(ngModel)]="offerForm.expiresAt" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Description <span class="text-red-500">*</span></label>
+        <textarea [(ngModel)]="offerForm.description" rows="4" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Décrivez le poste, les missions, le profil recherché..."></textarea>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="sticky bottom-0 bg-white px-6 py-4 border-t border-gray-100 flex gap-3">
+      <button (click)="showOfferModal=false" class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-lg hover:bg-gray-50 text-sm font-medium transition">Annuler</button>
+      <button (click)="saveOffer()" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-lg hover:bg-indigo-700 text-sm font-semibold transition shadow-sm">
+        {{ isEditMode ? '✏️ Modifier' : '➕ Créer l\'offre' }}
+      </button>
     </div>
   </div>
 </div>

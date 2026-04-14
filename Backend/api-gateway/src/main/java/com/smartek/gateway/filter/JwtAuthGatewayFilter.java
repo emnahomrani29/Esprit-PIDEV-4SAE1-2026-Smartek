@@ -42,6 +42,7 @@ public class JwtAuthGatewayFilter implements GlobalFilter, Ordered {
         "/api/offers/health",
         "/api/offers/top-viewed",
         "/api/offers/search",
+        "/api/skill-evidence/analytics",
         "/actuator"
     );
 

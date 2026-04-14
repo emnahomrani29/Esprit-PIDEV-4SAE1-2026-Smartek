@@ -4,7 +4,6 @@ import com.smartek.learningmicroservice.dto.LearningStylePreferenceRequest;
 import com.smartek.learningmicroservice.dto.LearningStylePreferenceResponse;
 import com.smartek.learningmicroservice.service.LearningStylePreferenceService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,10 +11,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/learning-style-preferences")
-@RequiredArgsConstructor
 public class LearningStylePreferenceController {
 
     private final LearningStylePreferenceService service;
+
+    public LearningStylePreferenceController(LearningStylePreferenceService service) {
+        this.service = service;
+    }
 
     /**
      * CREATE or UPDATE (upsert) - le plus courant pour ce type d'entité

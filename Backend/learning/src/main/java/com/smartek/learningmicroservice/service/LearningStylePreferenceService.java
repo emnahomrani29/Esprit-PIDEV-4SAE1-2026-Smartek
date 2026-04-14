@@ -4,7 +4,6 @@ import com.smartek.learningmicroservice.dto.LearningStylePreferenceRequest;
 import com.smartek.learningmicroservice.dto.LearningStylePreferenceResponse;
 import com.smartek.learningmicroservice.entity.LearningStylePreference;
 import com.smartek.learningmicroservice.repository.LearningStylePreferenceRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,10 +12,13 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class LearningStylePreferenceService {
 
     private final LearningStylePreferenceRepository repository;
+
+    public LearningStylePreferenceService(LearningStylePreferenceRepository repository) {
+        this.repository = repository;
+    }
 
     @Transactional
     public LearningStylePreferenceResponse createOrUpdatePreference(

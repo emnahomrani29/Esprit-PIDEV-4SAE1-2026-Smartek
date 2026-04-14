@@ -5,7 +5,6 @@ import com.smartek.learningmicroservice.dto.LearningPathResponse;
 import com.smartek.learningmicroservice.entity.LearningPath;
 import com.smartek.learningmicroservice.entity.LearningPathStatus;
 import com.smartek.learningmicroservice.repository.LearningPathRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,10 +12,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class LearningPathService {
 
     private final LearningPathRepository pathRepository;
+
+    public LearningPathService(LearningPathRepository pathRepository) {
+        this.pathRepository = pathRepository;
+    }
 
     @Transactional
     public LearningPathResponse createPath(LearningPathRequest request) {

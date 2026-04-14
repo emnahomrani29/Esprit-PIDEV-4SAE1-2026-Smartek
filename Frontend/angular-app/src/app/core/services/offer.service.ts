@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Offer, OfferRequest } from '../models/offer.model';
 import { environment } from '../../../environments/environment';
 
@@ -13,7 +14,9 @@ export class OfferService {
   constructor(private http: HttpClient) {}
 
   getAllOffers(): Observable<Offer[]> {
-    return this.http.get<Offer[]>(this.apiUrl);
+    return this.http.get<any>(this.apiUrl).pipe(
+      map(res => Array.isArray(res) ? res : (res?.content ?? []))
+    );
   }
 
   getOfferById(id: number): Observable<Offer> {
@@ -21,11 +24,15 @@ export class OfferService {
   }
 
   getOffersByCompanyId(companyId: number): Observable<Offer[]> {
-    return this.http.get<Offer[]>(`${this.apiUrl}/company/${companyId}`);
+    return this.http.get<any>(`${this.apiUrl}/company/${companyId}`).pipe(
+      map(res => Array.isArray(res) ? res : (res?.content ?? []))
+    );
   }
 
   getOffersByStatus(status: string): Observable<Offer[]> {
-    return this.http.get<Offer[]>(`${this.apiUrl}/status/${status}`);
+    return this.http.get<any>(`${this.apiUrl}/status/${status}`).pipe(
+      map(res => Array.isArray(res) ? res : (res?.content ?? []))
+    );
   }
 
   createOffer(offer: OfferRequest): Observable<Offer> {
