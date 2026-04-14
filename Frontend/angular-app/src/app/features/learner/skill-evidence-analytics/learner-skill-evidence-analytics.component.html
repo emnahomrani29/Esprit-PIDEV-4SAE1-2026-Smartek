@@ -1,0 +1,173 @@
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 px-4 pb-12" style="padding-top: 100px;">
+  <div class="max-w-6xl mx-auto">
+
+    <!-- Header -->
+    <div class="mb-10 pt-4">
+      <h1 class="text-4xl font-bold text-gray-800 mb-2">📊 Mes Analytics</h1>
+      <p class="text-gray-600">Visualisez vos performances et votre progression</p>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="flex justify-center items-center py-20">
+      <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="errorMessage" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
+      {{ errorMessage }}
+    </div>
+
+    <ng-container *ngIf="analytics && !isLoading">
+
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-3xl">🧠</span>
+            <span class="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full font-medium">Total</span>
+          </div>
+          <p class="text-4xl font-bold text-gray-800">{{ analytics.totalCount }}</p>
+          <p class="text-gray-500 text-sm mt-1">Preuves soumises</p>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500 hover:shadow-lg transition">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-3xl">✅</span>
+            <span class="text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full font-medium">Approuvées</span>
+          </div>
+          <p class="text-4xl font-bold text-green-600">{{ analytics.approvedCount }}</p>
+          <p class="text-gray-500 text-sm mt-1">Validées par l'admin</p>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-400 hover:shadow-lg transition">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-3xl">⏳</span>
+            <span class="text-xs text-yellow-700 bg-yellow-100 px-2 py-1 rounded-full font-medium">En attente</span>
+          </div>
+          <p class="text-4xl font-bold text-yellow-600">{{ analytics.pendingCount }}</p>
+          <p class="text-gray-500 text-sm mt-1">En cours de révision</p>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-red-500 hover:shadow-lg transition">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-3xl">❌</span>
+            <span class="text-xs text-red-700 bg-red-100 px-2 py-1 rounded-full font-medium">Rejetées</span>
+          </div>
+          <p class="text-4xl font-bold text-red-600">{{ analytics.rejectedCount }}</p>
+          <p class="text-gray-500 text-sm mt-1">À améliorer</p>
+        </div>
+      </div>
+
+      <!-- Taux + Score -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+
+        <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+          <h3 class="text-gray-800 font-semibold text-lg mb-4">🎯 Taux d'approbation</h3>
+          <div class="flex items-center gap-6">
+            <div class="relative w-24 h-24 flex-shrink-0">
+              <svg class="w-24 h-24 -rotate-90" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e5e7eb" stroke-width="3"/>
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#22c55e" stroke-width="3"
+                  stroke-dasharray="100" [attr.stroke-dashoffset]="100 - getApprovalRate()"
+                  stroke-linecap="round"/>
+              </svg>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span class="text-lg font-bold text-gray-800">{{ getApprovalRate() }}%</span>
+              </div>
+            </div>
+            <div class="flex-1">
+              <p class="text-3xl font-bold text-green-600">{{ getApprovalRate() }}%</p>
+              <p class="text-gray-500 text-sm mb-3">des preuves approuvées</p>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-green-500 h-2 rounded-full" [style.width.%]="getApprovalRate()"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+          <h3 class="text-gray-800 font-semibold text-lg mb-4">⭐ Score moyen</h3>
+          <div class="flex items-end gap-3 mb-4">
+            <p class="text-6xl font-bold text-yellow-500">
+              {{ analytics.averageScore !== null && analytics.averageScore !== undefined ? (analytics.averageScore | number:'1.0-1') : '—' }}
+            </p>
+            <p class="text-2xl text-gray-400 mb-2">/100</p>
+          </div>
+          <div *ngIf="analytics.averageScore !== null && analytics.averageScore !== undefined">
+            <div class="w-full bg-gray-200 rounded-full h-3">
+              <div class="h-3 rounded-full"
+                [style.width.%]="analytics.averageScore"
+                [class]="analytics.averageScore >= 70 ? 'bg-green-500' : analytics.averageScore >= 40 ? 'bg-yellow-400' : 'bg-red-500'">
+              </div>
+            </div>
+            <div class="flex justify-between text-xs text-gray-400 mt-1">
+              <span>0</span><span>50</span><span>100</span>
+            </div>
+          </div>
+          <p *ngIf="analytics.averageScore === null || analytics.averageScore === undefined"
+            class="text-gray-400 text-sm">Aucune preuve approuvée avec score</p>
+        </div>
+
+      </div>
+
+      <!-- Catégories -->
+      <div class="bg-white rounded-lg shadow p-6 mb-8" *ngIf="getCategoryEntries().length > 0">
+        <h3 class="text-gray-800 font-semibold text-lg mb-6">📂 Répartition par catégorie</h3>
+        <div class="space-y-4">
+          <div *ngFor="let entry of getCategoryEntries(); let i = index">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-gray-700 text-sm font-medium">{{ getCategoryLabel(entry.key) }}</span>
+              <span class="text-gray-800 font-bold text-sm">
+                {{ entry.value }}
+                <span class="text-gray-400 font-normal">
+                  ({{ analytics!.totalCount > 0 ? ((entry.value / analytics!.totalCount) * 100 | number:'1.0-0') : 0 }}%)
+                </span>
+              </span>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-3">
+              <div class="h-3 rounded-full" [style.width.%]="analytics!.totalCount > 0 ? (entry.value / analytics!.totalCount * 100) : 0"
+                [class]="getCategoryBarColor(i)"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline scores -->
+      <div class="bg-white rounded-lg shadow p-6" *ngIf="analytics.scoreTrend && analytics.scoreTrend.length > 0">
+        <h3 class="text-gray-800 font-semibold text-lg mb-6">📈 Évolution des scores</h3>
+        <div class="space-y-3">
+          <div *ngFor="let point of analytics.scoreTrend; let i = index"
+            class="flex items-center gap-4 bg-gray-50 rounded-xl p-4 hover:bg-blue-50 transition">
+            <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              {{ i + 1 }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-gray-800 font-medium truncate">{{ point.title }}</p>
+              <p class="text-gray-400 text-xs">{{ point.date | date:'dd MMMM yyyy' }}</p>
+            </div>
+            <div class="flex items-center gap-3 flex-shrink-0">
+              <div class="w-24 bg-gray-200 rounded-full h-2">
+                <div class="h-2 rounded-full" [style.width.%]="point.score"
+                  [class]="point.score >= 70 ? 'bg-green-500' : point.score >= 40 ? 'bg-yellow-400' : 'bg-red-500'"></div>
+              </div>
+              <span class="text-lg font-bold"
+                [class]="point.score >= 70 ? 'text-green-600' : point.score >= 40 ? 'text-yellow-600' : 'text-red-600'">
+                {{ point.score }}/100
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty trend -->
+      <div *ngIf="!analytics.scoreTrend || analytics.scoreTrend.length === 0"
+        class="bg-white rounded-lg shadow p-8 text-center">
+        <div class="text-6xl mb-4">📈</div>
+        <p class="text-gray-600 text-lg">Aucun score disponible pour l'instant</p>
+        <p class="text-gray-400 text-sm mt-2">Les scores apparaîtront ici une fois vos preuves approuvées</p>
+      </div>
+
+    </ng-container>
+
+  </div>
+</div>

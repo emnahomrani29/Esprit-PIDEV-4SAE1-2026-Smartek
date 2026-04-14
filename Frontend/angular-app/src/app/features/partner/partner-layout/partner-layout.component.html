@@ -1,0 +1,30 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Navigation avec icônes -->
+  <nav class="bg-white border-b border-gray-200">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center space-x-1">
+        <a 
+          routerLink="/partner/sponsorship" 
+          routerLinkActive="border-b-4 border-orange-600 text-orange-600"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="flex items-center gap-2 px-6 py-4 text-gray-700 hover:text-orange-600 hover:bg-gray-50 transition-colors border-b-4 border-transparent">
+          <span class="text-xl">🤝</span>
+          <span class="font-medium">Sponsoring</span>
+        </a>
+        <a 
+          routerLink="/partner/events" 
+          routerLinkActive="border-b-4 border-orange-600 text-orange-600"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="flex items-center gap-2 px-6 py-4 text-gray-700 hover:text-orange-600 hover:bg-gray-50 transition-colors border-b-4 border-transparent">
+          <span class="text-xl">🎯</span>
+          <span class="font-medium">Événements</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <main>
+    <router-outlet></router-outlet>
+  </main>
+</div>

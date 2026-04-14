@@ -1,0 +1,392 @@
+<div class="container mx-auto px-4 py-8">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-800">Course Management</h1>
+      <p class="text-gray-600 mt-2">Manage your courses</p>
+    </div>
+    <button 
+      (click)="openCreateModal()"
+      class="bg-gradient-to-r from-primary to-accent text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all flex items-center gap-2">
+      <span class="material-icons">add</span>
+      Create Course
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading && courses.length === 0" class="text-center py-12">
+    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+    <p class="mt-4 text-gray-600">Loading courses...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && courses.length === 0" class="text-center py-12 bg-white rounded-xl shadow-sm">
+    <span class="material-icons text-6xl text-gray-300">school</span>
+    <h3 class="text-xl font-semibold text-gray-700 mt-4">No courses yet</h3>
+    <p class="text-gray-500 mt-2">Create your first course to get started</p>
+  </div>
+
+  <!-- Courses Grid -->
+  <div *ngIf="courses.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div *ngFor="let course of courses" class="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all overflow-hidden">
+      <div class="p-6">
+        <div class="flex items-start justify-between mb-4">
+          <div class="flex-1">
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">{{ course.title }}</h3>
+            <p class="text-gray-600 text-sm line-clamp-3">{{ course.content }}</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-2 text-sm text-gray-500 mb-4">
+          <span class="material-icons text-sm">calendar_today</span>
+          <span>{{ course.duration }}</span>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <button 
+            (click)="openChaptersModal(course)"
+            class="w-full bg-purple-50 text-purple-600 px-4 py-2 rounded-lg hover:bg-purple-100 transition-all flex items-center justify-center gap-2">
+            <span class="material-icons text-sm">menu_book</span>
+            Gérer les chapitres
+          </button>
+          <div class="flex gap-2">
+            <button 
+              (click)="openEditModal(course)"
+              class="flex-1 bg-blue-50 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-100 transition-all flex items-center justify-center gap-2">
+              <span class="material-icons text-sm">edit</span>
+              Edit
+            </button>
+            <button 
+              (click)="deleteCourse(course.courseId!)"
+              class="flex-1 bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition-all flex items-center justify-center gap-2">
+              <span class="material-icons text-sm">delete</span>
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Course Modal -->
+<div *ngIf="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold text-gray-800">
+          {{ isEditMode ? 'Edit Course' : 'Create New Course' }}
+        </h2>
+        <button (click)="closeModal()" class="text-gray-400 hover:text-gray-600">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+    </div>
+
+    <form [formGroup]="courseForm" (ngSubmit)="onSubmit()" class="p-6">
+      <!-- Title -->
+      <div class="mb-6">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          Course Title <span class="text-red-500">*</span>
+        </label>
+        <input 
+          type="text" 
+          formControlName="title"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+          placeholder="Enter course title">
+        <div *ngIf="courseForm.get('title')?.invalid && courseForm.get('title')?.touched" class="text-red-500 text-sm mt-1">
+          Title is required
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="mb-6">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          Course Content <span class="text-red-500">*</span>
+        </label>
+        <textarea 
+          formControlName="content"
+          rows="6"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+          placeholder="Enter course content and description"></textarea>
+        <div *ngIf="courseForm.get('content')?.invalid && courseForm.get('content')?.touched" class="text-red-500 text-sm mt-1">
+          Content is required
+        </div>
+      </div>
+
+      <!-- Duration -->
+      <div class="mb-6">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          Duration (End Date) <span class="text-red-500">*</span>
+        </label>
+        <input 
+          type="date" 
+          formControlName="duration"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+        <div *ngIf="courseForm.get('duration')?.invalid && courseForm.get('duration')?.touched" class="text-red-500 text-sm mt-1">
+          Duration is required
+        </div>
+      </div>
+
+      <!-- Chapters Section -->
+      <div class="mb-6">
+        <div class="flex justify-between items-center mb-4">
+          <label class="block text-sm font-semibold text-gray-700">
+            Chapitres (optionnel)
+          </label>
+          <button 
+            type="button"
+            (click)="addChapter()"
+            class="bg-purple-50 text-purple-600 px-4 py-2 rounded-lg hover:bg-purple-100 transition-all flex items-center gap-2 text-sm">
+            <span class="material-icons text-sm">add</span>
+            Ajouter un chapitre
+          </button>
+        </div>
+
+        <div *ngIf="chapters.length === 0" class="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+          <span class="material-icons text-4xl text-gray-400">menu_book</span>
+          <p class="text-gray-500 mt-2">Aucun chapitre ajouté</p>
+          <p class="text-gray-400 text-sm">Cliquez sur "Ajouter un chapitre" pour commencer</p>
+        </div>
+
+        <div *ngIf="chapters.length > 0" class="space-y-3">
+          <div *ngFor="let chapter of chapters; let i = index" class="border border-purple-200 rounded-lg p-4 bg-purple-50">
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="bg-purple-600 text-white px-2 py-1 rounded text-xs font-semibold">
+                    Chapitre {{ chapter.orderIndex }}
+                  </span>
+                  <h4 class="font-semibold text-gray-800">{{ chapter.title }}</h4>
+                </div>
+                <p *ngIf="chapter.description" class="text-sm text-gray-600 mb-2">{{ chapter.description }}</p>
+                <div *ngIf="chapter.pdfFile" class="flex items-center gap-2 text-sm text-gray-700">
+                  <span class="material-icons text-sm text-red-600">picture_as_pdf</span>
+                  <span>{{ chapter.pdfFile.name }}</span>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button 
+                  type="button"
+                  (click)="openEditChapterModal(i)"
+                  class="text-blue-600 hover:text-blue-800">
+                  <span class="material-icons text-sm">edit</span>
+                </button>
+                <button 
+                  type="button"
+                  (click)="removeChapter(i)"
+                  class="text-red-500 hover:text-red-700">
+                  <span class="material-icons text-sm">delete</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-4">
+        <button 
+          type="button"
+          (click)="closeModal()"
+          class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all">
+          Cancel
+        </button>
+        <button 
+          type="submit"
+          [disabled]="courseForm.invalid || loading"
+          class="flex-1 bg-gradient-to-r from-primary to-accent text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+          {{ isEditMode ? 'Update Course' : 'Create Course' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Chapter Modal -->
+<div *ngIf="showChapterModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+  <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full">
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xl font-bold text-gray-800">
+          {{ editingChapterIndex !== null ? 'Modifier le chapitre' : 'Nouveau chapitre' }}
+        </h2>
+        <button (click)="closeChapterModal()" class="text-gray-400 hover:text-gray-600">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+    </div>
+
+    <form [formGroup]="chapterForm" (ngSubmit)="saveChapter()" class="p-6">
+      <!-- Title -->
+      <div class="mb-4">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          Titre du chapitre <span class="text-red-500">*</span>
+        </label>
+        <input 
+          type="text" 
+          formControlName="title"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          placeholder="Ex: Introduction aux bases">
+        <div *ngIf="chapterForm.get('title')?.invalid && chapterForm.get('title')?.touched" class="text-red-500 text-sm mt-1">
+          Le titre est obligatoire
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="mb-4">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          Description
+        </label>
+        <textarea 
+          formControlName="description"
+          rows="3"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          placeholder="Description du chapitre..."></textarea>
+      </div>
+
+      <!-- Order -->
+      <div class="mb-4">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          Ordre <span class="text-red-500">*</span>
+        </label>
+        <input 
+          type="number" 
+          formControlName="orderIndex"
+          min="1"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+      </div>
+
+      <!-- PDF Upload -->
+      <div class="mb-6">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          Fichier PDF (optionnel)
+        </label>
+        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-purple-500 transition-colors">
+          <div class="text-center">
+            <span class="material-icons text-4xl text-gray-400 mb-2">upload_file</span>
+            <div class="mb-2">
+              <label for="chapter-pdf-upload" class="cursor-pointer text-purple-600 hover:text-purple-700 font-medium">
+                Choisir un fichier PDF
+              </label>
+              <input 
+                id="chapter-pdf-upload"
+                type="file" 
+                accept=".pdf"
+                (change)="onChapterModalFileSelected($event)"
+                class="hidden">
+            </div>
+            <p class="text-sm text-gray-500">ou glissez-déposez un fichier ici</p>
+            <p class="text-xs text-gray-400 mt-1">PDF uniquement, max 10MB</p>
+          </div>
+          <div *ngIf="selectedChapterFile" class="mt-4 flex items-center justify-between bg-purple-50 p-3 rounded-lg">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-red-600">picture_as_pdf</span>
+              <span class="text-sm font-medium text-gray-700">{{ selectedChapterFile.name }}</span>
+            </div>
+            <button 
+              type="button"
+              (click)="selectedChapterFile = null"
+              class="text-red-500 hover:text-red-700">
+              <span class="material-icons text-sm">close</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-4">
+        <button 
+          type="button"
+          (click)="closeChapterModal()"
+          class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all">
+          Annuler
+        </button>
+        <button 
+          type="submit"
+          [disabled]="chapterForm.invalid"
+          class="flex-1 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+          {{ editingChapterIndex !== null ? 'Mettre à jour' : 'Ajouter' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- Chapters List Modal -->
+<div *ngIf="showChaptersListModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+  <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-800">
+            Chapitres du cours
+          </h2>
+          <p class="text-gray-600 mt-1">{{ currentCourseForChapters?.title }}</p>
+        </div>
+        <button (click)="closeChaptersModal()" class="text-gray-400 hover:text-gray-600">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <p class="text-gray-600">{{ courseChapters.length }} chapitre(s)</p>
+        <button 
+          (click)="openAddChapterModal()"
+          class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-all flex items-center gap-2">
+          <span class="material-icons text-sm">add</span>
+          Ajouter un chapitre
+        </button>
+      </div>
+
+      <div *ngIf="loadingChapters" class="text-center py-8">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        <p class="mt-2 text-gray-600">Chargement...</p>
+      </div>
+
+      <div *ngIf="!loadingChapters && courseChapters.length === 0" class="text-center py-12 bg-gray-50 rounded-lg">
+        <span class="material-icons text-6xl text-gray-300">menu_book</span>
+        <h3 class="text-lg font-semibold text-gray-700 mt-4">Aucun chapitre</h3>
+        <p class="text-gray-500 mt-2">Ajoutez le premier chapitre à ce cours</p>
+      </div>
+
+      <div *ngIf="!loadingChapters && courseChapters.length > 0" class="space-y-3">
+        <div *ngFor="let chapter of courseChapters" class="border border-gray-200 rounded-lg p-4 hover:border-purple-300 transition-all">
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="bg-purple-600 text-white px-2 py-1 rounded text-xs font-semibold">
+                  Chapitre {{ chapter.orderIndex }}
+                </span>
+                <h4 class="font-semibold text-gray-800">{{ chapter.title }}</h4>
+              </div>
+              <p *ngIf="chapter.description" class="text-sm text-gray-600 mb-2">{{ chapter.description }}</p>
+              <div *ngIf="chapter.pdfFileName" class="flex items-center gap-2 text-sm text-gray-700">
+                <span class="material-icons text-sm text-red-600">picture_as_pdf</span>
+                <span>{{ chapter.pdfFileName }}</span>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button 
+                (click)="deleteChapterFromList(chapter.chapterId!)"
+                class="text-red-500 hover:text-red-700">
+                <span class="material-icons text-sm">delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-6 border-t border-gray-200">
+      <button 
+        (click)="closeChaptersModal()"
+        class="w-full px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>

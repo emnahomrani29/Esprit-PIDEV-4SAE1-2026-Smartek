@@ -1,0 +1,402 @@
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8">
+  <div class="container mx-auto max-w-7xl px-4">
+    <!-- Header -->
+    <div class="mb-8 text-center">
+      <div class="flex items-center justify-center gap-4 mb-4">
+        <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+          📅 Weekly Planning
+        </h1>
+        <button
+          (click)="refreshPlanning()"
+          [disabled]="loading"
+          class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+          title="Refresh Planning"
+        >
+          <svg 
+            class="w-5 h-5" 
+            [class.animate-spin]="loading"
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          <span *ngIf="!loading">Update</span>
+          <span *ngIf="loading">Updating...</span>
+        </button>
+      </div>
+      <p class="text-gray-600 text-lg">Organize your trainings, exams and events</p>
+    </div>
+
+    <!-- Navigation semaine -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+      <div class="flex items-center justify-between">
+        <button
+          (click)="previousWeek()"
+          class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+          Previous Week
+        </button>
+
+        <div class="text-center">
+          <h2 class="text-2xl font-bold text-gray-800">
+            {{ formatDate(currentWeekStart.toISOString().split('T')[0]) }}
+          </h2>
+          <p class="text-gray-600">
+            from {{ formatDate(weekDays[0].date) }} to {{ formatDate(weekDays[6].date) }}
+          </p>
+        </div>
+
+        <button
+          (click)="nextWeek()"
+          class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+        >
+          Next Week
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div *ngIf="weeklyPlanning && weeklyPlanning.stats" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
+      <div class="bg-white rounded-xl shadow-lg p-4 text-center">
+        <div class="text-2xl font-bold text-blue-600">{{ getStats().totalSessions }}</div>
+        <div class="text-sm text-gray-600">Total Sessions</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-lg p-4 text-center">
+        <div class="text-2xl font-bold text-indigo-600">{{ getStats().trainingSessions }}</div>
+        <div class="text-sm text-gray-600">Trainings</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-lg p-4 text-center">
+        <div class="text-2xl font-bold text-red-600">{{ getStats().examSessions }}</div>
+        <div class="text-sm text-gray-600">Exams</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-lg p-4 text-center">
+        <div class="text-2xl font-bold text-green-600">{{ getStats().eventSessions }}</div>
+        <div class="text-sm text-gray-600">Events</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-lg p-4 text-center">
+        <div class="text-2xl font-bold text-purple-600">{{ getStats().publishedSessions }}</div>
+        <div class="text-sm text-gray-600">Published</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-lg p-4 text-center">
+        <div class="text-2xl font-bold text-orange-600">{{ getStats().draftSessions }}</div>
+        <div class="text-sm text-gray-600">Drafts</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-lg p-4 text-center">
+        <div class="text-2xl font-bold text-teal-600">{{ getStats().totalHours | number:'1.1-1' }}h</div>
+        <div class="text-sm text-gray-600">Total Hours</div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex gap-4 mb-8">
+      <button
+        (click)="publishWeeklyPlanning()"
+        class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:shadow-lg transition-all font-semibold"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Publish Week
+      </button>
+      <button
+        (click)="unpublishWeeklyPlanning()"
+        class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:shadow-lg transition-all font-semibold"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Unpublish Week
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-12">
+      <div class="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+    </div>
+
+    <!-- Planning Grid -->
+    <div *ngIf="!loading" class="grid grid-cols-1 lg:grid-cols-7 gap-6">
+      <div *ngFor="let day of weekDays" class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <!-- Day Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-4 text-white">
+          <h3 class="text-lg font-bold">{{ day.label }}</h3>
+          <p class="text-sm opacity-90">{{ formatDate(day.date) }}</p>
+        </div>
+
+        <!-- Day Content -->
+        <div class="p-4 min-h-[400px]">
+          <!-- Add Button -->
+          <button
+            (click)="openAddModal(day.date)"
+            class="w-full mb-4 p-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-gray-600 hover:text-blue-600"
+          >
+            <svg class="w-6 h-6 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            Add
+          </button>
+
+          <!-- Items -->
+          <div class="space-y-3">
+            <div 
+              *ngFor="let item of getItemsForDay(day.date)" 
+              class="relative p-3 rounded-lg border-l-4 shadow-sm hover:shadow-md transition-shadow"
+              [style.border-left-color]="item.color"
+              [style.background-color]="item.color + '10'"
+            >
+              <!-- Status Badge -->
+              <div class="absolute top-2 right-2">
+                <span 
+                  *ngIf="item.published"
+                  class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                >
+                  ✅ Published
+                </span>
+                <span 
+                  *ngIf="!item.published"
+                  class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
+                >
+                  📝 Draft
+                </span>
+              </div>
+
+              <!-- Item Content -->
+              <div class="pr-20">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-lg">{{ getTypeIcon(item.type) }}</span>
+                  <h4 class="font-semibold text-gray-800">{{ item.title }}</h4>
+                </div>
+                
+                <div class="text-sm text-gray-600 space-y-1">
+                  <div class="flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {{ formatTime(item.startTime) }} - {{ formatTime(item.endTime) }}
+                  </div>
+                  
+                  <div *ngIf="item.location" class="flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    </svg>
+                    {{ item.location }}
+                  </div>
+                  
+                  <div *ngIf="item.maxParticipants" class="flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    {{ item.currentParticipants || 0 }} / {{ item.maxParticipants }}
+                  </div>
+                </div>
+
+                <p *ngIf="item.description" class="text-sm text-gray-500 mt-2">{{ item.description }}</p>
+              </div>
+
+              <!-- Remove Button -->
+              <button
+                (click)="removeItem(item)"
+                class="absolute bottom-2 right-2 p-1 text-red-500 hover:text-red-700 hover:bg-red-100 rounded"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal d'ajout -->
+<div *ngIf="showAddModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
+      <h2 class="text-2xl font-bold">Add Item</h2>
+      <p class="text-sm mt-1">{{ selectedDay ? formatDate(selectedDay) : '' }}</p>
+    </div>
+
+    <div class="p-6">
+      <!-- Type Selection -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-3">Item Type</label>
+        <div class="grid grid-cols-3 gap-3">
+          <label class="relative cursor-pointer">
+            <input
+              type="radio"
+              [(ngModel)]="selectedType"
+              value="TRAINING"
+              (change)="onTypeChange()"
+              name="type"
+              class="peer sr-only"
+            />
+            <div class="p-4 border-2 rounded-lg peer-checked:border-blue-600 peer-checked:bg-blue-50 transition-all text-center">
+              <div class="text-2xl mb-2">📚</div>
+              <div class="font-semibold">Training</div>
+            </div>
+          </label>
+
+          <label class="relative cursor-pointer">
+            <input
+              type="radio"
+              [(ngModel)]="selectedType"
+              value="EXAM"
+              (change)="onTypeChange()"
+              name="type"
+              class="peer sr-only"
+            />
+            <div class="p-4 border-2 rounded-lg peer-checked:border-red-600 peer-checked:bg-red-50 transition-all text-center">
+              <div class="text-2xl mb-2">📝</div>
+              <div class="font-semibold">Exam</div>
+            </div>
+          </label>
+
+          <label class="relative cursor-pointer">
+            <input
+              type="radio"
+              [(ngModel)]="selectedType"
+              value="EVENT"
+              (change)="onTypeChange()"
+              name="type"
+              class="peer sr-only"
+            />
+            <div class="p-4 border-2 rounded-lg peer-checked:border-green-600 peer-checked:bg-green-50 transition-all text-center">
+              <div class="text-2xl mb-2">🎯</div>
+              <div class="font-semibold">Event</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Item Selection -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Select {{ selectedType === 'TRAINING' ? 'a training' : selectedType === 'EXAM' ? 'an exam' : 'an event' }}
+        </label>
+        <select
+          [(ngModel)]="selectedItem"
+          (change)="onItemSelect()"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+          <option [ngValue]="null">-- Select --</option>
+          <option 
+            *ngFor="let training of trainings" 
+            [ngValue]="training"
+            [hidden]="selectedType !== 'TRAINING'"
+          >
+            {{ training.title }} ({{ training.category }})
+          </option>
+          <option 
+            *ngFor="let exam of exams" 
+            [ngValue]="exam"
+            [hidden]="selectedType !== 'EXAM'"
+          >
+            {{ exam.title }} ({{ exam.duration }}min)
+          </option>
+          <option 
+            *ngFor="let event of events" 
+            [ngValue]="event"
+            [hidden]="selectedType !== 'EVENT'"
+          >
+            {{ event.title }} ({{ event.mode }})
+          </option>
+        </select>
+      </div>
+
+      <!-- Form Fields -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Title *</label>
+          <input
+            type="text"
+            [(ngModel)]="newItem.title"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            required
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+          <input
+            type="text"
+            [(ngModel)]="newItem.location"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Start Time *</label>
+          <input
+            type="time"
+            [(ngModel)]="newItem.startTime"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            required
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">End Time *</label>
+          <input
+            type="time"
+            [(ngModel)]="newItem.endTime"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            required
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Max Participants</label>
+          <input
+            type="number"
+            [(ngModel)]="newItem.maxParticipants"
+            min="1"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Color</label>
+          <input
+            type="color"
+            [(ngModel)]="newItem.color"
+            class="w-full h-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+        <textarea
+          [(ngModel)]="newItem.description"
+          rows="3"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        ></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-4">
+        <button
+          (click)="closeAddModal()"
+          class="flex-1 px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="addItem()"
+          class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all font-semibold"
+        >
+          Add
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

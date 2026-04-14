@@ -1,0 +1,196 @@
+/* You can add global styles to this file, and also import other style files */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  section {
+    @apply py-14;
+  }
+
+  h1 {
+    @apply text-black md:text-7xl sm:text-6xl text-5xl;
+  }
+
+  h2 {
+    @apply text-black sm:text-5xl text-4xl;
+  }
+}
+
+@layer utilities {
+  .container {
+    @apply max-w-7xl mx-auto w-full px-4;
+  }
+}
+
+/* Dashboard Styles */
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700');
+
+/* Nucleo Icons */
+@font-face {
+  font-family: 'Nucleo';
+  src: url('/dashboard-assets/fonts/nucleo.eot');
+  src: url('/dashboard-assets/fonts/nucleo.eot') format('embedded-opentype'),
+       url('/dashboard-assets/fonts/nucleo.woff2') format('woff2'),
+       url('/dashboard-assets/fonts/nucleo.woff') format('woff'),
+       url('/dashboard-assets/fonts/nucleo.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.ni {
+  font-family: 'Nucleo';
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.ni-money-coins:before { content: "\ea26"; }
+.ni-world:before { content: "\ea63"; }
+.ni-paper-diploma:before { content: "\ea2a"; }
+.ni-cart:before { content: "\ea0e"; }
+.ni-bell-55:before { content: "\ea08"; }
+.ni-html5:before { content: "\ea1d"; }
+
+/* Dashboard specific utilities */
+.xl\:ml-68\.5 {
+  margin-left: 17.125rem;
+}
+
+.max-w-62\.5 {
+  max-width: 15.625rem;
+}
+
+.h-19\.5 {
+  height: 4.875rem;
+}
+
+.z-990 {
+  z-index: 990;
+}
+
+.ease-nav-brand {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.shadow-soft-xl {
+  box-shadow: 0 20px 27px 0 rgba(0, 0, 0, 0.05);
+}
+
+.shadow-soft-2xl {
+  box-shadow: 0 20px 27px 0 rgba(0, 0, 0, 0.05);
+}
+
+.rounded-2xl {
+  border-radius: 1rem;
+}
+
+.text-xxs {
+  font-size: 0.65rem;
+}
+
+.leading-5\.6 {
+  line-height: 1.4rem;
+}
+
+.py-2\.7 {
+  padding-top: 0.675rem;
+  padding-bottom: 0.675rem;
+}
+
+.pl-8\.75 {
+  padding-left: 2.1875rem;
+}
+
+.w-1\/100 {
+  width: 1%;
+}
+
+.ml-11\.252 {
+  margin-left: 2.813rem;
+}
+
+.pt-1\.4 {
+  padding-top: 0.35rem;
+}
+
+.lg\:max-w-120 {
+  max-width: 30rem;
+}
+
+.-top-1\.5 {
+  top: -0.375rem;
+}
+
+.w-6\.5 {
+  width: 1.625rem;
+}
+
+.h-6\.5 {
+  height: 1.625rem;
+}
+
+.h-0\.75 {
+  height: 0.1875rem;
+}
+
+.-mt-0\.38 {
+  margin-top: -0.095rem;
+}
+
+.duration-600 {
+  transition-duration: 600ms;
+}
+
+
+/* Custom Animations */
+@keyframes blob {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(20px, -50px) scale(1.1);
+  }
+  50% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  75% {
+    transform: translate(50px, 50px) scale(1.05);
+  }
+}
+
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-down {
+  animation: fade-in-down 0.3s ease-out;
+}

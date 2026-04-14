@@ -1,0 +1,375 @@
+<div class="container mx-auto px-4 py-8">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-800">Training Management</h1>
+      <p class="text-gray-600 mt-2">{{ isLearner ? 'Découvrez les formations disponibles' : 'Gérer les formations et leurs cours' }}</p>
+    </div>
+    <div class="flex items-center gap-4">
+      <!-- Dropdown Formations Inscrites -->
+      <div class="relative" *ngIf="isLearner">
+        <button 
+          (click)="toggleEnrolledDropdown()"
+          class="bg-white border-2 border-primary text-primary px-6 py-3 rounded-lg hover:bg-primary hover:text-white transition-all flex items-center gap-2">
+          <span class="material-icons">school</span>
+          Mes Inscriptions ({{ enrolledTrainings.length }})
+          <span class="material-icons text-sm">{{ showEnrolledDropdown ? 'expand_less' : 'expand_more' }}</span>
+        </button>
+        
+        <!-- Dropdown Menu -->
+        <div *ngIf="showEnrolledDropdown" 
+             class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto">
+          <div class="p-4 border-b border-gray-200 bg-gray-50">
+            <h3 class="font-semibold text-gray-800">Formations inscrites</h3>
+          </div>
+          
+          <div *ngIf="enrolledTrainings.length === 0" class="p-6 text-center text-gray-500">
+            <span class="material-icons text-4xl text-gray-300 mb-2">inbox</span>
+            <p class="text-sm">Aucune inscription</p>
+          </div>
+          
+          <div *ngIf="enrolledTrainings.length > 0" class="divide-y divide-gray-100">
+            <div *ngFor="let training of enrolledTrainings" 
+                 class="p-4 hover:bg-gray-50 transition-all">
+              <div class="flex items-start gap-3">
+                <span class="material-icons text-primary mt-1">check_circle</span>
+                <div class="flex-1">
+                  <h4 class="font-semibold text-gray-800 text-sm">{{ training.title }}</h4>
+                  <div class="flex items-center gap-2 mt-1">
+                    <span [class]="'px-2 py-0.5 rounded text-xs font-semibold ' + getLevelColor(training.level)">
+                      {{ training.level }}
+                    </span>
+                    <span class="text-xs text-gray-500">{{ training.category }}</span>
+                  </div>
+                  <div class="flex items-center gap-1 text-xs text-gray-500 mt-2">
+                    <span class="material-icons text-xs">menu_book</span>
+                    <span>{{ training.courseIds?.length || 0 }} cours</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="p-3 border-t border-gray-200 bg-gray-50">
+            <a routerLink="/dashboard/my-training" 
+               (click)="showEnrolledDropdown = false"
+               class="block text-center text-primary hover:text-accent text-sm font-semibold">
+              Voir toutes mes formations →
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <button 
+        *ngIf="!isLearner"
+        (click)="openCreateModal()"
+        class="bg-gradient-to-r from-primary to-accent text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all flex items-center gap-2">
+        <span class="material-icons">add</span>
+        Créer une Formation
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading && trainings.length === 0" class="text-center py-12">
+    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+    <p class="mt-4 text-gray-600">Chargement des formations...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && trainings.length === 0" class="text-center py-12 bg-white rounded-xl shadow-sm">
+    <span class="material-icons text-6xl text-gray-300">school</span>
+    <h3 class="text-xl font-semibold text-gray-700 mt-4">Aucune formation</h3>
+    <p class="text-gray-500 mt-2">Créez votre première formation pour commencer</p>
+  </div>
+
+  <!-- Trainings Grid -->
+  <div *ngIf="trainings.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div *ngFor="let training of trainings" class="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all overflow-hidden relative">
+      <!-- Badge "Inscrit" -->
+      <div *ngIf="isLearner && isEnrolled(training.trainingId)" 
+           class="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 z-10">
+        <span class="material-icons text-xs">check_circle</span>
+        Inscrit
+      </div>
+      
+      <div class="p-6">
+        <div class="flex items-start justify-between mb-4">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-2">
+              <span [class]="'px-2 py-1 rounded text-xs font-semibold ' + getLevelColor(training.level)">
+                {{ training.level }}
+              </span>
+              <span class="px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800">
+                {{ training.category }}
+              </span>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">{{ training.title }}</h3>
+            <p class="text-gray-600 text-sm line-clamp-3">{{ training.description }}</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-2 text-sm text-gray-500 mb-4">
+          <span class="material-icons text-sm">calendar_today</span>
+          <span>{{ training.duration }}</span>
+        </div>
+
+        <div class="mb-4">
+          <div class="flex items-center gap-2 text-sm text-gray-700 mb-2">
+            <span class="material-icons text-sm">menu_book</span>
+            <span class="font-semibold">{{ training.courseIds?.length || 0 }} cours</span>
+          </div>
+          <div *ngIf="training.courses && training.courses.length > 0" class="space-y-1">
+            <div *ngFor="let course of training.courses.slice(0, 2)" class="text-xs text-gray-600 pl-6">
+              • {{ course.title }}
+            </div>
+            <div *ngIf="training.courses.length > 2" class="text-xs text-gray-500 pl-6">
+              +{{ training.courses.length - 2 }} autres cours
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <!-- Bouton S'inscrire pour LEARNER -->
+          <button 
+            *ngIf="isLearner && !isEnrolled(training.trainingId)"
+            (click)="enrollTraining(training.trainingId)"
+            class="w-full bg-gradient-to-r from-primary to-accent text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-2">
+            <span class="material-icons text-sm">add_circle</span>
+            S'inscrire
+          </button>
+          
+          <!-- Bouton Déjà inscrit (désactivé) -->
+          <button 
+            *ngIf="isLearner && isEnrolled(training.trainingId)"
+            disabled
+            class="w-full bg-green-100 text-green-700 px-4 py-2 rounded-lg cursor-not-allowed flex items-center justify-center gap-2">
+            <span class="material-icons text-sm">check_circle</span>
+            Déjà inscrit
+          </button>
+
+          <!-- Boutons d'administration pour non-LEARNER -->
+          <ng-container *ngIf="!isLearner">
+            <button 
+              (click)="openCourseSelectionModal(training)"
+              class="w-full bg-purple-50 text-purple-600 px-4 py-2 rounded-lg hover:bg-purple-100 transition-all flex items-center justify-center gap-2">
+              <span class="material-icons text-sm">library_add</span>
+              Gérer les cours
+            </button>
+            <div class="flex gap-2">
+              <button 
+                (click)="openEditModal(training)"
+                class="flex-1 bg-blue-50 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-100 transition-all flex items-center justify-center gap-2">
+                <span class="material-icons text-sm">edit</span>
+                Modifier
+              </button>
+              <button 
+                (click)="deleteTraining(training.trainingId!)"
+                class="flex-1 bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition-all flex items-center justify-center gap-2">
+                <span class="material-icons text-sm">delete</span>
+                Supprimer
+              </button>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Training Modal -->
+<div *ngIf="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold text-gray-800">
+          {{ isEditMode ? 'Modifier la Formation' : 'Nouvelle Formation' }}
+        </h2>
+        <button (click)="closeModal()" class="text-gray-400 hover:text-gray-600">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+    </div>
+
+    <form [formGroup]="trainingForm" (ngSubmit)="onSubmit()" class="p-6">
+      <!-- Title -->
+      <div class="mb-6">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          Titre <span class="text-red-500">*</span>
+        </label>
+        <input 
+          type="text" 
+          formControlName="title"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+          placeholder="Ex: Formation Complète Angular">
+        <div *ngIf="trainingForm.get('title')?.invalid && trainingForm.get('title')?.touched" class="text-red-500 text-sm mt-1">
+          Le titre est obligatoire
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="mb-6">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          Description
+        </label>
+        <textarea 
+          formControlName="description"
+          rows="4"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+          placeholder="Description de la formation..."></textarea>
+      </div>
+
+      <!-- Category & Level -->
+      <div class="grid grid-cols-2 gap-4 mb-6">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            Catégorie <span class="text-red-500">*</span>
+          </label>
+          <select 
+            formControlName="category"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+            <option value="">Sélectionner...</option>
+            <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            Niveau <span class="text-red-500">*</span>
+          </label>
+          <select 
+            formControlName="level"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+            <option value="">Sélectionner...</option>
+            <option *ngFor="let lvl of levels" [value]="lvl">{{ lvl }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Duration -->
+      <div class="mb-6">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          Date de fin <span class="text-red-500">*</span>
+        </label>
+        <input 
+          type="date" 
+          formControlName="duration"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+      </div>
+
+      <!-- Course Selection Preview -->
+      <div class="mb-6">
+        <div class="flex justify-between items-center mb-2">
+          <label class="block text-sm font-semibold text-gray-700">
+            Cours sélectionnés ({{ selectedCourseIds.length }})
+          </label>
+          <button 
+            type="button"
+            (click)="openCourseSelectionFromForm()"
+            class="bg-purple-50 text-purple-600 px-4 py-2 rounded-lg hover:bg-purple-100 transition-all flex items-center gap-2 text-sm">
+            <span class="material-icons text-sm">library_add</span>
+            Sélectionner des cours
+          </button>
+        </div>
+        <div class="bg-gray-50 rounded-lg p-4 min-h-[60px]">
+          <div *ngIf="selectedCourseIds.length === 0" class="text-gray-500 text-sm text-center py-2">
+            Aucun cours sélectionné - Cliquez sur "Sélectionner des cours" pour ajouter
+          </div>
+          <div *ngIf="selectedCourseIds.length > 0" class="flex flex-wrap gap-2">
+            <span *ngFor="let courseId of selectedCourseIds" class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+              {{ getCourseTitle(courseId) }}
+              <button type="button" (click)="toggleCourseSelection(courseId)" class="hover:text-purple-900">
+                <span class="material-icons text-sm">close</span>
+              </button>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-4">
+        <button 
+          type="button"
+          (click)="closeModal()"
+          class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all">
+          Annuler
+        </button>
+        <button 
+          type="submit"
+          [disabled]="trainingForm.invalid || loading"
+          class="flex-1 bg-gradient-to-r from-primary to-accent text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+          {{ isEditMode ? 'Mettre à jour' : 'Créer' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Course Selection Modal -->
+<div *ngIf="showCourseModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+  <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold text-gray-800">
+          Sélectionner les cours
+        </h2>
+        <button (click)="closeCourseModal()" class="text-gray-400 hover:text-gray-600">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <p class="text-gray-600 mt-2">{{ selectedCourseIds.length }} cours sélectionné(s)</p>
+    </div>
+
+    <div class="p-6">
+      <div *ngIf="availableCourses.length === 0" class="text-center py-8 text-gray-500">
+        Aucun cours disponible
+      </div>
+
+      <div class="space-y-3">
+        <div *ngFor="let course of availableCourses" 
+             (click)="toggleCourseSelection(course.courseId!)"
+             class="border rounded-lg p-4 cursor-pointer transition-all"
+             [class.border-purple-500]="isCourseSelected(course.courseId!)"
+             [class.bg-purple-50]="isCourseSelected(course.courseId!)"
+             [class.border-gray-300]="!isCourseSelected(course.courseId!)"
+             [class.hover:border-purple-300]="!isCourseSelected(course.courseId!)">
+          <div class="flex items-start gap-3">
+            <div class="flex-shrink-0 mt-1">
+              <div class="w-5 h-5 rounded border-2 flex items-center justify-center"
+                   [class.border-purple-500]="isCourseSelected(course.courseId!)"
+                   [class.bg-purple-500]="isCourseSelected(course.courseId!)"
+                   [class.border-gray-300]="!isCourseSelected(course.courseId!)">
+                <span *ngIf="isCourseSelected(course.courseId!)" class="material-icons text-white text-sm">check</span>
+              </div>
+            </div>
+            <div class="flex-1">
+              <h4 class="font-semibold text-gray-800">{{ course.title }}</h4>
+              <p class="text-sm text-gray-600 mt-1 line-clamp-2">{{ course.content }}</p>
+              <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                <span class="material-icons text-xs">calendar_today</span>
+                <span>{{ course.duration }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-6 border-t border-gray-200">
+      <div class="flex gap-4">
+        <button 
+          type="button"
+          (click)="closeCourseModal()"
+          class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all">
+          Annuler
+        </button>
+        <button 
+          type="button"
+          (click)="saveCourseSelection()"
+          [disabled]="loading"
+          class="flex-1 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-all disabled:opacity-50">
+          Enregistrer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

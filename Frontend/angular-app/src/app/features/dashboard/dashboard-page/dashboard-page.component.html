@@ -1,0 +1,225 @@
+<!-- Welcome Section -->
+<div class="flex flex-wrap -mx-3 mb-6">
+  <div class="w-full px-3">
+    <div class="relative flex flex-col min-w-0 break-words bg-gradient-to-r from-primary to-accent shadow-soft-xl rounded-2xl bg-clip-border p-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center overflow-hidden shadow-lg">
+            <img *ngIf="getUserImage()" [src]="getUserImage()" alt="User avatar" class="w-full h-full object-cover">
+            <span *ngIf="!getUserImage()" class="text-primary font-bold text-2xl">{{ getUserInitial() }}</span>
+          </div>
+          <div class="text-white">
+            <h2 class="text-2xl font-bold mb-1">Welcome, {{ currentUser?.firstName || 'User' }}!</h2>
+            <p class="text-sm text-white/70 mt-1">Role: {{ formatRole(currentUser?.role) }}</p>
+          </div>
+        </div>
+        <div class="text-right text-white">
+          <p class="text-sm text-white/80">Experience</p>
+          <p class="text-3xl font-bold">{{ getExperience() }} years</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="flex flex-wrap -mx-3">
+  <!-- Card 1 -->
+  <div class="w-full max-w-full px-3 mb-6 sm:w-1/2 sm:flex-none xl:mb-0 xl:w-1/4">
+    <div class="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
+      <div class="flex-auto p-4">
+        <div class="flex flex-row -mx-3">
+          <div class="flex-none w-2/3 max-w-full px-3">
+            <div>
+              <p class="mb-0 font-sans text-sm font-semibold leading-normal">Today's Money</p>
+              <h5 class="mb-0 font-bold">
+                $53,000
+                <span class="text-sm leading-normal font-weight-bolder text-lime-500">+55%</span>
+              </h5>
+            </div>
+          </div>
+          <div class="px-3 text-right basis-1/3">
+            <div class="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-purple-700 to-pink-500">
+              <i class="ni leading-none ni-money-coins text-lg relative top-3.5 text-white"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 2 -->
+  <div class="w-full max-w-full px-3 mb-6 sm:w-1/2 sm:flex-none xl:mb-0 xl:w-1/4">
+    <div class="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
+      <div class="flex-auto p-4">
+        <div class="flex flex-row -mx-3">
+          <div class="flex-none w-2/3 max-w-full px-3">
+            <div>
+              <p class="mb-0 font-sans text-sm font-semibold leading-normal">Today's Users</p>
+              <h5 class="mb-0 font-bold">
+                2,300
+                <span class="text-sm leading-normal font-weight-bolder text-lime-500">+3%</span>
+              </h5>
+            </div>
+          </div>
+          <div class="px-3 text-right basis-1/3">
+            <div class="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-blue-600 to-cyan-400">
+              <i class="ni leading-none ni-world text-lg relative top-3.5 text-white"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 3 -->
+  <div class="w-full max-w-full px-3 mb-6 sm:w-1/2 sm:flex-none xl:mb-0 xl:w-1/4">
+    <div class="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
+      <div class="flex-auto p-4">
+        <div class="flex flex-row -mx-3">
+          <div class="flex-none w-2/3 max-w-full px-3">
+            <div>
+              <p class="mb-0 font-sans text-sm font-semibold leading-normal">New Clients</p>
+              <h5 class="mb-0 font-bold">
+                +3,462
+                <span class="text-sm leading-normal text-red-600 font-weight-bolder">-2%</span>
+              </h5>
+            </div>
+          </div>
+          <div class="px-3 text-right basis-1/3">
+            <div class="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-green-600 to-lime-400">
+              <i class="ni leading-none ni-paper-diploma text-lg relative top-3.5 text-white"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 4 -->
+  <div class="w-full max-w-full px-3 sm:w-1/2 sm:flex-none xl:w-1/4">
+    <div class="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
+      <div class="flex-auto p-4">
+        <div class="flex flex-row -mx-3">
+          <div class="flex-none w-2/3 max-w-full px-3">
+            <div>
+              <p class="mb-0 font-sans text-sm font-semibold leading-normal">Sales</p>
+              <h5 class="mb-0 font-bold">
+                $103,430
+                <span class="text-sm leading-normal font-weight-bolder text-lime-500">+5%</span>
+              </h5>
+            </div>
+          </div>
+          <div class="px-3 text-right basis-1/3">
+            <div class="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-red-600 to-rose-400">
+              <i class="ni leading-none ni-cart text-lg relative top-3.5 text-white"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Projects Table -->
+<div class="flex flex-wrap mt-6 -mx-3">
+  <div class="w-full max-w-full px-3 mt-0 lg:w-7/12 lg:flex-none">
+    <div class="border-black/12.5 shadow-soft-xl relative z-20 flex min-w-0 flex-col break-words rounded-2xl border-0 border-solid bg-white bg-clip-border">
+      <div class="border-black/12.5 mb-0 rounded-t-2xl border-b-0 border-solid bg-white p-6 pb-0">
+        <h6>Projects</h6>
+        <p class="text-sm leading-normal">
+          <i class="fa fa-check text-cyan-500"></i>
+          <span class="ml-1 font-semibold">30 done</span> this month
+        </p>
+      </div>
+      <div class="flex-auto p-4">
+        <div class="p-0 overflow-x-auto">
+          <table class="items-center w-full mb-0 align-top border-gray-200 text-slate-500">
+            <thead class="align-bottom">
+              <tr>
+                <th class="px-6 py-3 font-bold text-left uppercase align-middle bg-transparent border-b border-gray-200 shadow-none text-xxs border-b-solid tracking-none whitespace-nowrap text-slate-400 opacity-70">Companies</th>
+                <th class="px-6 py-3 pl-2 font-bold text-left uppercase align-middle bg-transparent border-b border-gray-200 shadow-none text-xxs border-b-solid tracking-none whitespace-nowrap text-slate-400 opacity-70">Members</th>
+                <th class="px-6 py-3 font-bold text-center uppercase align-middle bg-transparent border-b border-gray-200 shadow-none text-xxs border-b-solid tracking-none whitespace-nowrap text-slate-400 opacity-70">Budget</th>
+                <th class="px-6 py-3 font-bold text-center uppercase align-middle bg-transparent border-b border-gray-200 shadow-none text-xxs border-b-solid tracking-none whitespace-nowrap text-slate-400 opacity-70">Completion</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="p-2 align-middle bg-transparent border-b whitespace-nowrap shadow-transparent">
+                  <div class="flex px-2 py-1">
+                    <div>
+                      <img src="/dashboard-assets/img/small-logos/logo-xd.svg" class="inline-flex items-center justify-center mr-4 text-sm text-white transition-all duration-200 ease-soft-in-out h-9 w-9 rounded-xl" alt="xd" />
+                    </div>
+                    <div class="flex flex-col justify-center">
+                      <h6 class="mb-0 text-sm leading-normal">Soft UI XD Version</h6>
+                    </div>
+                  </div>
+                </td>
+                <td class="p-2 align-middle bg-transparent border-b whitespace-nowrap shadow-transparent">
+                  <div class="mt-2 avatar-group">
+                    <a href="javascript:;" class="relative z-20 inline-flex items-center justify-center w-6 h-6 text-xs text-white transition-all duration-200 border-2 border-white border-solid rounded-circle ease-soft-in-out hover:z-30" data-target="tooltip_trigger" data-placement="bottom">
+                      <img src="/dashboard-assets/img/team-1.jpg" class="w-full rounded-circle" alt="team1" />
+                    </a>
+                    <a href="javascript:;" class="relative z-20 inline-flex items-center justify-center w-6 h-6 -ml-4 text-xs text-white transition-all duration-200 border-2 border-white border-solid rounded-circle ease-soft-in-out hover:z-30" data-target="tooltip_trigger" data-placement="bottom">
+                      <img src="/dashboard-assets/img/team-2.jpg" class="w-full rounded-circle" alt="team2" />
+                    </a>
+                  </div>
+                </td>
+                <td class="p-2 text-sm leading-normal text-center align-middle bg-transparent border-b whitespace-nowrap shadow-transparent">
+                  <span class="text-xs font-semibold leading-tight">$14,000</span>
+                </td>
+                <td class="p-2 align-middle bg-transparent border-b whitespace-nowrap shadow-transparent">
+                  <div class="w-3/4 mx-auto">
+                    <div>
+                      <div>
+                        <span class="text-xs font-semibold leading-tight">60%</span>
+                      </div>
+                    </div>
+                    <div class="text-xs h-0.75 flex overflow-visible rounded-lg bg-gray-200">
+                      <div class="duration-600 ease-soft bg-gradient-to-tl from-blue-600 to-cyan-400 -mt-0.38 -ml-px flex h-1.5 w-3/5 flex-col justify-center overflow-hidden whitespace-nowrap rounded bg-fuchsia-500 text-center text-white transition-all" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orders Overview -->
+  <div class="w-full max-w-full px-3 mt-0 lg:w-5/12 lg:flex-none">
+    <div class="border-black/12.5 shadow-soft-xl relative flex min-w-0 flex-col break-words rounded-2xl border-0 border-solid bg-white bg-clip-border">
+      <div class="p-4 pb-0 mb-0 bg-white border-b-0 rounded-t-2xl">
+        <h6 class="mb-0">Orders overview</h6>
+        <p class="text-sm leading-normal">
+          <i class="fa fa-arrow-up text-lime-500"></i>
+          <span class="font-semibold">24%</span> this month
+        </p>
+      </div>
+      <div class="flex-auto p-4">
+        <div class="before:border-r-2 before:border-r-slate-100 before:absolute before:top-0 before:left-4 before:h-full relative before:content-['']">
+          <div class="relative mb-4 mt-0 after:clear-both after:table after:content-['']">
+            <span class="w-6.5 h-6.5 text-base absolute left-4 z-10 inline-flex -translate-x-1/2 items-center justify-center rounded-full bg-white text-center font-semibold">
+              <i class="ni leading-none ni-bell-55 relative z-10 text-transparent bg-gradient-to-tl from-green-600 to-lime-400 bg-clip-text fill-transparent"></i>
+            </span>
+            <div class="ml-11.252 pt-1.4 lg:max-w-120 relative -top-1.5 w-auto">
+              <h6 class="mb-0 text-sm font-semibold leading-normal text-slate-700">$2400, Design changes</h6>
+              <p class="mt-1 mb-0 text-xs font-semibold leading-tight text-slate-400">22 DEC 7:20 PM</p>
+            </div>
+          </div>
+          <div class="relative mb-4 after:clear-both after:table after:content-['']">
+            <span class="w-6.5 h-6.5 text-base absolute left-4 z-10 inline-flex -translate-x-1/2 items-center justify-center rounded-full bg-white text-center font-semibold">
+              <i class="ni leading-none ni-html5 relative z-10 text-transparent bg-gradient-to-tl from-red-600 to-rose-400 bg-clip-text fill-transparent"></i>
+            </span>
+            <div class="ml-11.252 pt-1.4 lg:max-w-120 relative -top-1.5 w-auto">
+              <h6 class="mb-0 text-sm font-semibold leading-normal text-slate-700">New order #1832412</h6>
+              <p class="mt-1 mb-0 text-xs font-semibold leading-tight text-slate-400">21 DEC 11 PM</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

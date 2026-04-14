@@ -1,0 +1,255 @@
+<div class="w-full p-6">
+  <!-- Header -->
+  <div class="mb-6">
+    <button 
+      (click)="goBack()"
+      class="flex items-center text-primary hover:text-accent mb-4 transition-colors">
+      <span class="material-icons mr-2">arrow_back</span>
+      Retour à mes formations
+    </button>
+    
+    <div *ngIf="training" class="bg-white rounded-xl shadow-md p-6">
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ training.title }}</h1>
+      <p class="text-gray-600 mb-4">{{ training.description }}</p>
+      
+      <!-- Progress Bar -->
+      <div class="mb-4">
+        <div class="flex items-center justify-between text-sm text-gray-600 mb-2">
+          <span class="font-semibold">Progression globale</span>
+          <span class="font-bold text-primary">{{ progress }}%</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-3">
+          <div 
+            class="bg-gradient-to-r from-primary to-accent h-3 rounded-full transition-all duration-500"
+            [style.width.%]="progress">
+          </div>
+        </div>
+        <div class="flex items-center justify-between text-xs text-gray-500 mt-1">
+          <span>{{ completedCourses.size }} / {{ courses.length }} cours terminés</span>
+          <span *ngIf="progress === 100" class="text-green-600 font-semibold flex items-center">
+            <span class="material-icons text-sm mr-1">check_circle</span>
+            Formation terminée !
+          </span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4 text-sm">
+        <span class="flex items-center text-gray-600">
+          <span class="material-icons text-sm mr-1">category</span>
+          {{ training.category }}
+        </span>
+        <span class="flex items-center text-gray-600">
+          <span class="material-icons text-sm mr-1">signal_cellular_alt</span>
+          {{ training.level }}
+        </span>
+        <span class="flex items-center text-gray-600">
+          <span class="material-icons text-sm mr-1">calendar_today</span>
+          {{ training.duration }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Courses List -->
+  <div *ngIf="!isLoading && courses.length > 0" class="space-y-4">
+    <h2 class="text-2xl font-bold text-gray-800 mb-4">Cours de la formation</h2>
+    
+    <div *ngFor="let course of courses; let i = index" 
+         class="bg-white rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden"
+         [class.border-2]="isCourseCompleted(course.courseId)"
+         [class.border-green-500]="isCourseCompleted(course.courseId)">
+      
+      <div class="p-6">
+        <div class="flex items-start gap-4">
+          <!-- Course Number -->
+          <div class="flex-shrink-0">
+            <div 
+              class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg"
+              [class.bg-green-500]="isCourseCompleted(course.courseId)"
+              [class.text-white]="isCourseCompleted(course.courseId)"
+              [class.bg-gray-200]="!isCourseCompleted(course.courseId)"
+              [class.text-gray-600]="!isCourseCompleted(course.courseId)">
+              <span *ngIf="!isCourseCompleted(course.courseId)">{{ i + 1 }}</span>
+              <span *ngIf="isCourseCompleted(course.courseId)" class="material-icons">check</span>
+            </div>
+          </div>
+
+          <!-- Course Content -->
+          <div class="flex-1">
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="text-xl font-bold text-gray-800">{{ course.title }}</h3>
+              <span *ngIf="isCourseCompleted(course.courseId)" 
+                    class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold flex items-center gap-1">
+                <span class="material-icons text-xs">check_circle</span>
+                Terminé
+              </span>
+            </div>
+            
+            <p class="text-gray-600 mb-4">{{ course.content }}</p>
+            
+            <div class="flex items-center gap-4 text-sm text-gray-500 mb-4">
+              <span class="flex items-center">
+                <span class="material-icons text-sm mr-1">schedule</span>
+                {{ course.duration }}
+              </span>
+              <span class="flex items-center">
+                <span class="material-icons text-sm mr-1">person</span>
+                {{ course.instructor }}
+              </span>
+            </div>
+
+            <!-- Quiz Score Display -->
+            <div *ngIf="hasQuiz(course.courseId)" class="mb-4">
+              <div [class]="'p-3 rounded-lg border-2 ' + getQuizScoreBgColor(course.courseId)">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm font-semibold text-gray-700 flex items-center gap-1">
+                    <span class="material-icons text-sm">quiz</span>
+                    Quiz associé
+                  </span>
+                  <span *ngIf="getCourseQuiz(course.courseId)?.hasAttempted" 
+                        class="material-icons text-sm" 
+                        [class]="getQuizScoreColor(course.courseId)">
+                    {{ getQuizScorePercentage(course.courseId) >= getCourseQuiz(course.courseId)?.passingScore ? 'check_circle' : 'cancel' }}
+                  </span>
+                </div>
+                
+                <div *ngIf="getCourseQuiz(course.courseId)?.hasAttempted" class="space-y-2">
+                  <div class="flex items-baseline gap-2">
+                    <span [class]="'text-2xl font-bold ' + getQuizScoreColor(course.courseId)">
+                      {{ getCourseQuiz(course.courseId)?.bestScore }}
+                    </span>
+                    <span class="text-gray-600">/ {{ getCourseQuiz(course.courseId)?.totalMarks }} points</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span [class]="'text-lg font-semibold ' + getQuizScoreColor(course.courseId)">
+                      {{ getQuizScorePercentage(course.courseId) }}%
+                    </span>
+                    <span class="text-xs text-gray-600">
+                      Note de passage: {{ getCourseQuiz(course.courseId)?.passingScore }}%
+                    </span>
+                  </div>
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div [class]="'h-full rounded-full transition-all ' + (getQuizScorePercentage(course.courseId) >= getCourseQuiz(course.courseId)?.passingScore ? 'bg-green-500' : 'bg-red-500')"
+                         [style.width.%]="getQuizScorePercentage(course.courseId)"></div>
+                  </div>
+                </div>
+                
+                <div *ngIf="!getCourseQuiz(course.courseId)?.hasAttempted" class="text-sm text-gray-600">
+                  <span *ngIf="getCourseQuiz(course.courseId)?.isLocked" class="flex items-center gap-1">
+                    <span class="material-icons text-sm">lock</span>
+                    Terminez le cours pour débloquer le quiz
+                  </span>
+                  <span *ngIf="!getCourseQuiz(course.courseId)?.isLocked" class="flex items-center gap-1 text-blue-600">
+                    <span class="material-icons text-sm">play_circle</span>
+                    Quiz disponible - Cliquez pour passer
+                  </span>
+                </div>
+                
+                <button 
+                  *ngIf="!getCourseQuiz(course.courseId)?.isLocked"
+                  (click)="navigateToQuiz(course.courseId)"
+                  class="mt-2 w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2">
+                  <span class="material-icons text-sm">quiz</span>
+                  {{ getCourseQuiz(course.courseId)?.hasAttempted ? 'Voir le quiz' : 'Passer le quiz' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-3">
+              <button 
+                (click)="openCoursePdf(course)"
+                class="flex-1 bg-gradient-to-r from-primary to-accent text-white py-2 px-4 rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center">
+                <span class="material-icons text-sm mr-2">play_circle</span>
+                {{ isCourseCompleted(course.courseId) ? 'Revoir le cours' : 'Commencer le cours' }}
+              </button>
+              
+              <button 
+                (click)="toggleCourseCompletion(course.courseId)"
+                [class.bg-green-500]="isCourseCompleted(course.courseId)"
+                [class.hover:bg-green-600]="isCourseCompleted(course.courseId)"
+                [class.bg-gray-200]="!isCourseCompleted(course.courseId)"
+                [class.hover:bg-gray-300]="!isCourseCompleted(course.courseId)"
+                [class.text-white]="isCourseCompleted(course.courseId)"
+                [class.text-gray-700]="!isCourseCompleted(course.courseId)"
+                class="px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2">
+                <span class="material-icons text-sm">
+                  {{ isCourseCompleted(course.courseId) ? 'check_circle' : 'radio_button_unchecked' }}
+                </span>
+                {{ isCourseCompleted(course.courseId) ? 'Terminé' : 'Marquer comme terminé' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && courses.length === 0" class="text-center py-12">
+    <span class="material-icons text-6xl text-gray-300 mb-4">menu_book</span>
+    <p class="text-gray-500 text-lg mb-4">Aucun cours disponible pour cette formation</p>
+    <button 
+      (click)="goBack()"
+      class="inline-flex items-center bg-gradient-to-r from-primary to-accent text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all">
+      <span class="material-icons mr-2">arrow_back</span>
+      Retour
+    </button>
+  </div>
+</div>
+
+<!-- PDF Modal -->
+<div *ngIf="showPdfModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4" style="z-index: 9999;" (click)="closePdfModal()">
+  <div class="bg-white rounded-xl shadow-2xl w-full h-full max-w-7xl max-h-[95vh] flex flex-col" (click)="$event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="p-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-primary to-accent text-white rounded-t-xl flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <span class="material-icons">picture_as_pdf</span>
+        <div>
+          <h2 class="text-xl font-bold">{{ selectedCourse?.title }}</h2>
+          <p class="text-sm opacity-90">Contenu du cours</p>
+        </div>
+      </div>
+      <button 
+        (click)="closePdfModal()"
+        class="hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-all">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <!-- PDF Viewer -->
+    <div class="flex-1 overflow-hidden bg-gray-100 min-h-0">
+      <iframe 
+        *ngIf="pdfUrl"
+        [src]="pdfUrl | safe: 'resourceUrl'"
+        class="w-full h-full border-0"
+        title="PDF Viewer">
+      </iframe>
+      <div *ngIf="!pdfUrl" class="flex items-center justify-center h-full">
+        <div class="text-center">
+          <span class="material-icons text-6xl text-gray-300 mb-4">error_outline</span>
+          <p class="text-gray-500">Impossible de charger le PDF</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="p-4 border-t border-gray-200 flex items-center justify-between bg-gray-50 rounded-b-xl flex-shrink-0">
+      <div class="text-sm text-gray-600">
+        <span class="material-icons text-sm align-middle mr-1">info</span>
+        Utilisez les contrôles du navigateur pour naviguer dans le PDF
+      </div>
+      <button 
+        (click)="closePdfModal()"
+        class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg transition-all flex items-center gap-2">
+        <span class="material-icons text-sm">close</span>
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>

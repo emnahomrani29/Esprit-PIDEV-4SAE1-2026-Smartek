@@ -1,0 +1,17 @@
+// Certificate viewer styles
+.border-gold-500 {
+  border-color: #d4af37;
+}
+
+// Print styles for better PDF output
+@media print {
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  
+  #certificate-content {
+    box-shadow: none;
+    page-break-inside: avoid;
+  }
+}

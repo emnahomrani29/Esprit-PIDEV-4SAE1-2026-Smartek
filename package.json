@@ -1,0 +1,25 @@
+{
+  "name": "smartek-pi",
+  "version": "1.0.0",
+  "description": "SMARTEK PI - Projet Intégré combinant gestion des offres, formations, cours et examens",
+  "scripts": {
+    "start:backend": "cd Backend && start-all.bat",
+    "stop:backend": "cd Backend && stop-all.bat",
+    "check:services": "cd Backend && check-services.bat",
+    "start:frontend": "cd Frontend/angular-app && ng serve",
+    "install:frontend": "cd Frontend/angular-app && npm install"
+  },
+  "keywords": [
+    "smartek",
+    "microservices",
+    "spring-boot",
+    "angular",
+    "formation",
+    "offres-emploi"
+  ],
+  "author": "SMARTEK Team",
+  "license": "ISC",
+  "dependencies": {
+    "pdfkit": "^0.18.0"
+  }
+}

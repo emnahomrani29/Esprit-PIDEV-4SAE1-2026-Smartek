@@ -1,0 +1,62 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Navigation avec icônes -->
+  <nav class="bg-white border-b border-gray-200">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center space-x-1 overflow-x-auto">
+        <a 
+          routerLink="/rh-smartek/certifications" 
+          routerLinkActive="border-b-4 border-purple-600 text-purple-600"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="flex items-center gap-2 px-6 py-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 transition-colors border-b-4 border-transparent whitespace-nowrap">
+          <span class="text-xl">🎓</span>
+          <span class="font-medium">Certifications</span>
+        </a>
+        <a 
+          routerLink="/rh-smartek/courses" 
+          routerLinkActive="border-b-4 border-purple-600 text-purple-600"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="flex items-center gap-2 px-6 py-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 transition-colors border-b-4 border-transparent whitespace-nowrap">
+          <span class="text-xl">📚</span>
+          <span class="font-medium">Cours</span>
+        </a>
+        <a 
+          routerLink="/rh-smartek/exams" 
+          routerLinkActive="border-b-4 border-purple-600 text-purple-600"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="flex items-center gap-2 px-6 py-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 transition-colors border-b-4 border-transparent whitespace-nowrap">
+          <span class="text-xl">📝</span>
+          <span class="font-medium">Examens</span>
+        </a>
+        <a 
+          routerLink="/rh-smartek/interviews" 
+          routerLinkActive="border-b-4 border-purple-600 text-purple-600"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="flex items-center gap-2 px-6 py-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 transition-colors border-b-4 border-transparent whitespace-nowrap">
+          <span class="text-xl">🎤</span>
+          <span class="font-medium">Entretiens</span>
+        </a>
+        <a 
+          routerLink="/rh-smartek/schedule" 
+          routerLinkActive="border-b-4 border-purple-600 text-purple-600"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="flex items-center gap-2 px-6 py-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 transition-colors border-b-4 border-transparent whitespace-nowrap">
+          <span class="text-xl">📅</span>
+          <span class="font-medium">Planning</span>
+        </a>
+        <a 
+          routerLink="/rh-smartek/events" 
+          routerLinkActive="border-b-4 border-purple-600 text-purple-600"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="flex items-center gap-2 px-6 py-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 transition-colors border-b-4 border-transparent whitespace-nowrap">
+          <span class="text-xl">🎯</span>
+          <span class="font-medium">Événements</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <main>
+    <router-outlet></router-outlet>
+  </main>
+</div>

@@ -1,0 +1,53 @@
+<aside class="max-w-62.5 ease-nav-brand z-990 fixed inset-y-0 my-4 ml-4 block w-full -translate-x-full flex-col items-center justify-between rounded-2xl border-0 bg-white p-0 antialiased shadow-xl transition-transform duration-200 xl:left-0 xl:translate-x-0 flex overflow-hidden">
+  <div class="h-19.5 border-b border-gray-100 flex-shrink-0 w-full">
+    <a class="block px-8 py-6 m-0 text-sm whitespace-nowrap" href="/dashboard">
+      <div class="flex items-center">
+        <span class="font-bold text-2xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">SMARTEK</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="flex-1 w-full overflow-y-auto">
+    <ul class="flex flex-col pl-0 mb-0 space-y-1 p-4">
+      <ng-container *ngFor="let item of menuItems">
+        <!-- Divider -->
+        <li *ngIf="item.divider" class="w-full my-2">
+          <hr class="border-gray-200">
+        </li>
+
+        <!-- Header -->
+        <li *ngIf="item.header" class="w-full mt-6">
+          <h6 class="pl-6 ml-2 text-xs font-bold leading-tight uppercase text-gray-400">{{ item.header }}</h6>
+        </li>
+
+        <!-- Menu Item -->
+        <li *ngIf="!item.divider && !item.header" class="w-full">
+          <a 
+            [routerLink]="[item.route]" 
+            routerLinkActive="bg-gradient-to-r from-primary to-accent text-white shadow-lg" 
+            [routerLinkActiveOptions]="{exact: item.route === '/dashboard'}"
+            class="py-3 text-sm ease-nav-brand flex items-center whitespace-nowrap rounded-xl px-4 font-semibold text-slate-700 transition-all hover:bg-gray-50">
+            <div class="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary/10 to-accent/10">
+              <span class="material-icons text-primary text-base">{{ item.icon }}</span>
+            </div>
+            <span class="duration-300 opacity-100 pointer-events-none ease-soft">{{ item.label }}</span>
+          </a>
+        </li>
+      </ng-container>
+    </ul>
+  </div>
+
+  <!-- User Profile at bottom -->
+  <div class="p-4 border-t border-gray-100 flex-shrink-0 w-full">
+    <div class="flex items-center space-x-3 p-3 rounded-xl bg-gradient-to-r from-primary/5 to-accent/5">
+      <div class="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center overflow-hidden">
+        <img *ngIf="getUserImage()" [src]="getUserImage()" alt="User avatar" class="w-full h-full object-cover">
+        <span *ngIf="!getUserImage()" class="text-white font-semibold">{{ getUserInitial() }}</span>
+      </div>
+      <div class="flex-1">
+        <p class="text-sm font-semibold text-text">{{ currentUser?.firstName || 'User' }}</p>
+        <p class="text-xs text-gray-500 truncate">{{ formatRole(currentUser?.role) }}</p>
+      </div>
+    </div>
+  </div>
+</aside>

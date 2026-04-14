@@ -1,0 +1,384 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 py-12 relative overflow-hidden">
+  <!-- Animated background elements -->
+  <div class="absolute top-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+  <div class="absolute top-0 right-0 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+  <div class="absolute bottom-0 left-1/2 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+  
+  <div class="container mx-auto max-w-7xl px-4 relative z-10">
+    <!-- Header -->
+    <div class="mb-12 text-center animate-fade-in-up">
+      <h1 class="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4 gradient-animate">
+        My Courses
+      </h1>
+      <p class="text-gray-600 text-xl">Explore all your courses by training</p>
+      
+      <!-- Expand/Collapse All Buttons -->
+      <div *ngIf="!isLoading && trainingsWithCourses.length > 0" class="flex justify-center gap-4 mt-6">
+        <button 
+          (click)="expandAll()"
+          class="px-6 py-2 bg-white text-blue-600 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all flex items-center gap-2 group">
+          <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+          Tout ouvrir
+        </button>
+        <button 
+          (click)="collapseAll()"
+          class="px-6 py-2 bg-white text-gray-600 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all flex items-center gap-2 group">
+          <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+          </svg>
+          Tout fermer
+        </button>
+      </div>
+    </div>
+
+    <!-- Barre de recherche et tri -->
+    <div *ngIf="!isLoading && trainingsWithCourses.length > 0" class="mb-8 bg-white rounded-2xl shadow-lg p-6 animate-fade-in">
+      <div class="flex flex-col md:flex-row gap-4">
+        <!-- Recherche -->
+        <div class="flex-1">
+          <div class="relative">
+            <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input
+              type="text"
+              [(ngModel)]="searchTerm"
+              (ngModelChange)="onSearchChange($event)"
+              placeholder="Rechercher une formation ou un cours..."
+              class="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors">
+          </div>
+        </div>
+
+        <!-- Tri -->
+        <div class="flex gap-2">
+          <button
+            (click)="onSortChange('name')"
+            [class.bg-blue-600]="sortBy === 'name'"
+            [class.text-white]="sortBy === 'name'"
+            [class.bg-gray-100]="sortBy !== 'name'"
+            [class.text-gray-700]="sortBy !== 'name'"
+            class="px-4 py-3 rounded-xl font-semibold transition-all hover:shadow-md flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
+            </svg>
+            Nom
+            <svg *ngIf="sortBy === 'name'" class="w-4 h-4" [class.rotate-180]="sortOrder === 'desc'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+            </svg>
+          </button>
+
+          <button
+            (click)="onSortChange('progress')"
+            [class.bg-blue-600]="sortBy === 'progress'"
+            [class.text-white]="sortBy === 'progress'"
+            [class.bg-gray-100]="sortBy !== 'progress'"
+            [class.text-gray-700]="sortBy !== 'progress'"
+            class="px-4 py-3 rounded-xl font-semibold transition-all hover:shadow-md flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+            Progrès
+            <svg *ngIf="sortBy === 'progress'" class="w-4 h-4" [class.rotate-180]="sortOrder === 'desc'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+            </svg>
+          </button>
+
+          <button
+            (click)="onSortChange('date')"
+            [class.bg-blue-600]="sortBy === 'date'"
+            [class.text-white]="sortBy === 'date'"
+            [class.bg-gray-100]="sortBy !== 'date'"
+            [class.text-gray-700]="sortBy !== 'date'"
+            class="px-4 py-3 rounded-xl font-semibold transition-all hover:shadow-md flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            Date
+            <svg *ngIf="sortBy === 'date'" class="w-4 h-4" [class.rotate-180]="sortOrder === 'desc'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Résultats de recherche -->
+      <div *ngIf="searchTerm" class="mt-4 text-sm text-gray-600">
+        {{ displayedTrainings.length }} résultat(s) trouvé(s)
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="flex justify-center items-center py-20 animate-fade-in">
+      <div class="relative">
+        <div class="animate-spin rounded-full h-20 w-20 border-b-4 border-blue-600"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          <svg class="w-8 h-8 text-blue-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage && !isLoading" class="max-w-2xl mx-auto bg-red-50 border-l-4 border-red-500 text-red-700 px-6 py-4 rounded-lg mb-6 animate-fade-in">
+      <div class="flex items-center">
+        <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+        {{ errorMessage }}
+      </div>
+    </div>
+
+    <!-- Trainings with Courses -->
+    <div *ngIf="!isLoading && !errorMessage && trainingsWithCourses.length > 0" class="space-y-12">
+      <div *ngFor="let trainingData of displayedTrainings; let i = index" 
+           class="animate-fade-in-up"
+           [class.stagger-1]="i % 3 === 0"
+           [class.stagger-2]="i % 3 === 1"
+           [class.stagger-3]="i % 3 === 2">
+        
+        <!-- Training Header Card -->
+        <div class="bg-white rounded-3xl shadow-2xl overflow-hidden mb-8 course-card cursor-pointer hover:shadow-3xl transition-all duration-300"
+             (click)="toggleTrainingExpansion(trainingData)">
+          <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-8 relative overflow-hidden">
+            <!-- Decorative elements -->
+            <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+            <div class="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+            
+            <div class="relative z-10">
+              <div class="flex items-start justify-between mb-4">
+                <div class="flex-1 flex items-start gap-4">
+                  <!-- Expand/Collapse Icon -->
+                  <div class="flex-shrink-0 mt-1">
+                    <svg 
+                      class="w-8 h-8 text-white transition-transform duration-300"
+                      [class.rotate-180]="trainingData.isExpanded"
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </div>
+                  
+                  <div class="flex-1">
+                    <h2 class="text-3xl md:text-4xl font-bold text-white mb-2">{{ trainingData.training.title }}</h2>
+                    <p class="text-blue-100 text-lg">{{ trainingData.training.description }}</p>
+                  </div>
+                </div>
+                <span [class]="'px-4 py-2 rounded-full text-sm font-bold shadow-lg backdrop-blur-sm ' + getStatusColor(trainingData.enrollment.status)">
+                  {{ getStatusLabel(trainingData.enrollment.status) }}
+                </span>
+              </div>
+
+              <!-- Progress Bar -->
+              <div class="mt-6">
+                <div class="flex items-center justify-between text-sm text-white mb-2">
+                  <span class="font-semibold">Progression globale</span>
+                  <span class="font-bold text-xl">{{ trainingData.progress }}%</span>
+                </div>
+                <div class="w-full bg-white/20 rounded-full h-4 overflow-hidden backdrop-blur-sm">
+                  <div 
+                    class="progress-bar bg-white h-4 rounded-full shadow-inner"
+                    [style.width.%]="trainingData.progress">
+                  </div>
+                </div>
+                <div class="flex items-center justify-between text-sm text-blue-100 mt-2">
+                  <span>{{ trainingData.completedCourses.size }} / {{ trainingData.courses.length }} cours terminés</span>
+                  <span *ngIf="trainingData.progress === 100" class="text-white font-semibold flex items-center">
+                    <svg class="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    Formation terminée !
+                  </span>
+                </div>
+              </div>
+
+              <!-- Training Info -->
+              <div class="flex items-center gap-6 text-sm text-white mt-6 flex-wrap">
+                <span class="flex items-center backdrop-blur-sm bg-white/10 px-3 py-2 rounded-lg">
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                  </svg>
+                  {{ trainingData.training.category }}
+                </span>
+                <span class="flex items-center backdrop-blur-sm bg-white/10 px-3 py-2 rounded-lg">
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                  </svg>
+                  {{ trainingData.training.level }}
+                </span>
+                <span class="flex items-center backdrop-blur-sm bg-white/10 px-3 py-2 rounded-lg">
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  {{ trainingData.training.duration }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Courses Grid - Avec animation d'accordéon -->
+        <div 
+          *ngIf="trainingData.courses.length > 0 && trainingData.isExpanded" 
+          class="grid grid-cols-1 lg:grid-cols-2 gap-6 accordion-content"
+          [@slideDown]>
+          <div *ngFor="let course of trainingData.courses; let j = index" 
+               class="course-card bg-white rounded-2xl shadow-lg overflow-hidden animate-slide-in-right"
+               [class.stagger-1]="j % 4 === 0"
+               [class.stagger-2]="j % 4 === 1"
+               [class.stagger-3]="j % 4 === 2"
+               [class.stagger-4]="j % 4 === 3"
+               [class.ring-4]="isCourseCompleted(trainingData, course.courseId)"
+               [class.ring-green-400]="isCourseCompleted(trainingData, course.courseId)">
+            
+            <div class="p-6">
+              <div class="flex items-start gap-4 mb-4">
+                <!-- Course Number Badge -->
+                <div class="flex-shrink-0">
+                  <div 
+                    class="w-14 h-14 rounded-xl flex items-center justify-center font-bold text-lg shadow-lg transition-all duration-300"
+                    [class.bg-gradient-to-br]="isCourseCompleted(trainingData, course.courseId)"
+                    [class.from-green-400]="isCourseCompleted(trainingData, course.courseId)"
+                    [class.to-green-600]="isCourseCompleted(trainingData, course.courseId)"
+                    [class.text-white]="isCourseCompleted(trainingData, course.courseId)"
+                    [class.bg-gray-200]="!isCourseCompleted(trainingData, course.courseId)"
+                    [class.text-gray-600]="!isCourseCompleted(trainingData, course.courseId)"
+                    [class.pulse-ring]="isCourseCompleted(trainingData, course.courseId)">
+                    <span *ngIf="!isCourseCompleted(trainingData, course.courseId)">{{ j + 1 }}</span>
+                    <svg *ngIf="isCourseCompleted(trainingData, course.courseId)" class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                </div>
+
+                <!-- Course Content -->
+                <div class="flex-1">
+                  <div class="flex items-start justify-between mb-2">
+                    <h3 class="text-xl font-bold text-gray-800 flex-1">{{ course.title }}</h3>
+                    <span *ngIf="isCourseCompleted(trainingData, course.courseId)" 
+                          class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold flex items-center gap-1 shadow-sm ml-2">
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                      </svg>
+                      Terminé
+                    </span>
+                  </div>
+                  
+                  <p class="text-gray-600 mb-4 line-clamp-2">{{ course.content }}</p>
+                  
+                  <div class="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                    <span class="flex items-center">
+                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      {{ course.duration }}
+                    </span>
+                    <span class="flex items-center">
+                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                      </svg>
+                      {{ course.chapters?.length || 0 }} chapitres
+                    </span>
+                  </div>
+                  
+                  <!-- Actions -->
+                  <div class="flex gap-3">
+                    <button 
+                      (click)="openCoursePdf(trainingData, course)"
+                      class="btn-primary flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2.5 px-4 rounded-xl font-semibold flex items-center justify-center group">
+                      <svg class="w-4 h-4 mr-2 group-hover:animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                      </svg>
+                      <span class="group-hover:tracking-wide transition-all">Voir</span>
+                    </button>
+                    
+                    <button 
+                      (click)="toggleCourseCompletion(trainingData, course.courseId)"
+                      [class.bg-green-500]="isCourseCompleted(trainingData, course.courseId)"
+                      [class.hover:bg-green-600]="isCourseCompleted(trainingData, course.courseId)"
+                      [class.bg-gray-200]="!isCourseCompleted(trainingData, course.courseId)"
+                      [class.hover:bg-gray-300]="!isCourseCompleted(trainingData, course.courseId)"
+                      [class.text-white]="isCourseCompleted(trainingData, course.courseId)"
+                      [class.text-gray-700]="!isCourseCompleted(trainingData, course.courseId)"
+                      class="px-4 py-2.5 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty courses state -->
+        <div *ngIf="trainingData.courses.length === 0" class="text-center py-12 bg-white rounded-2xl shadow-lg">
+          <svg class="w-20 h-20 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          <p class="text-gray-500 text-lg">Aucun cours disponible dans cette formation</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State - No trainings -->
+    <div *ngIf="!isLoading && !errorMessage && trainingsWithCourses.length === 0" 
+         class="text-center py-20 max-w-2xl mx-auto animate-scale-in">
+      <div class="bg-white rounded-3xl shadow-2xl p-12 relative overflow-hidden">
+        <!-- Decorative elements -->
+        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full -translate-y-1/2 translate-x-1/2 opacity-50"></div>
+        <div class="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-purple-100 to-pink-100 rounded-full translate-y-1/2 -translate-x-1/2 opacity-50"></div>
+        
+        <div class="relative z-10">
+          <svg class="w-32 h-32 mx-auto text-gray-300 mb-6 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          <h3 class="text-2xl font-bold text-gray-800 mb-3">Aucune formation inscrite</h3>
+          <p class="text-gray-600 text-lg mb-8">Inscrivez-vous à une formation pour accéder aux cours</p>
+          <a 
+            href="/learner-training"
+            class="inline-flex items-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl font-semibold hover:shadow-xl transition-all transform hover:scale-105 group">
+            <svg class="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+            <span class="group-hover:tracking-wide transition-all">Voir mes formations</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PDF Modal -->
+<div *ngIf="showPdfModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4 modal-backdrop animate-fade-in">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col animate-modal-fade-in">
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between p-6 border-b bg-gradient-to-r from-blue-600 to-indigo-600">
+      <div class="text-white">
+        <h3 class="text-2xl font-bold">{{ selectedCourse?.title }}</h3>
+        <p class="text-blue-100 text-sm mt-1">{{ selectedTraining?.training?.title }}</p>
+      </div>
+      <button 
+        (click)="closePdfModal()"
+        class="text-white hover:bg-white/20 transition-colors p-2 rounded-full">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    
+    <!-- PDF Viewer -->
+    <div class="flex-1 overflow-hidden">
+      <iframe 
+        *ngIf="pdfUrl"
+        [src]="pdfUrl | safe:'resourceUrl'"
+        class="w-full h-full"
+        frameborder="0">
+      </iframe>
+    </div>
+  </div>
+</div>

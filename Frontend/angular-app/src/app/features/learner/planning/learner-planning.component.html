@@ -1,0 +1,262 @@
+<div class="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 py-8">
+  <div class="container mx-auto max-w-7xl px-4">
+    <!-- Header -->
+    <div class="mb-8 text-center">
+      <h1 class="text-4xl font-bold bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+        📅 Weekly Planning
+      </h1>
+      <p class="text-gray-600 text-lg">Discover available trainings, exams and events</p>
+    </div>
+
+    <!-- Week Navigation -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+      <div class="flex items-center justify-between">
+        <button
+          (click)="previousWeek()"
+          class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+          Previous Week
+        </button>
+
+        <div class="text-center">
+          <h2 class="text-2xl font-bold text-gray-800">
+            Week of {{ formatDate(weekDays[0].date) }}
+          </h2>
+          <p class="text-gray-600">
+            to {{ formatDate(weekDays[6].date) }}
+          </p>
+        </div>
+
+        <div class="flex gap-2">
+          <!-- Update/Refresh Button -->
+          <button
+            (click)="refreshPlanning()"
+            [disabled]="loading"
+            class="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors disabled:opacity-50"
+            title="Refresh planning"
+          >
+            <svg class="w-5 h-5" [class.animate-spin]="loading" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Update
+          </button>
+
+          <button
+            (click)="nextWeek()"
+            class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            Next Week
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advanced Filters and Search -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+      <div class="flex flex-col lg:flex-row gap-4">
+        <!-- Dynamic Search -->
+        <div class="relative flex-1">
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="applyFilters()"
+            placeholder="Search by title, description, location, or type..."
+            class="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <svg class="absolute left-3 top-3.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        
+        <!-- Type Filter -->
+        <select 
+          [(ngModel)]="selectedType" 
+          (change)="applyFilters()" 
+          class="px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+          <option value="ALL">All Types</option>
+          <option value="TRAINING">📚 Trainings</option>
+          <option value="EXAM">📝 Exams</option>
+          <option value="EVENT">🎯 Events</option>
+        </select>
+
+        <!-- Sort Options -->
+        <select 
+          [(ngModel)]="sortBy" 
+          (change)="applyFilters()" 
+          class="px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+          <option value="time">Sort by Time</option>
+          <option value="title">Sort by Title</option>
+          <option value="type">Sort by Type</option>
+          <option value="location">Sort by Location</option>
+          <option value="availability">Sort by Availability</option>
+        </select>
+
+        <!-- Sort Order -->
+        <button
+          (click)="setSortBy(sortBy)"
+          class="px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center gap-2"
+          title="Toggle sort order"
+        >
+          <span>{{ sortOrder === 'asc' ? 'Ascending' : 'Descending' }}</span>
+          <span class="text-lg">{{ getSortIcon(sortBy) }}</span>
+        </button>
+      </div>
+
+      <!-- Results Summary -->
+      <div class="mt-4 text-sm text-gray-600">
+        <span *ngIf="!loading">
+          Showing {{ filteredItems.length }} of {{ publishedItems.length }} sessions
+          <span *ngIf="searchTerm.trim()"> for "{{ searchTerm }}"</span>
+          <span *ngIf="selectedType !== 'ALL'"> in {{ selectedType.toLowerCase() }}s</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-12">
+      <div class="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+      <p class="mt-4 text-gray-600">Loading planning...</p>
+    </div>
+
+    <!-- Planning Grid -->
+    <div *ngIf="!loading" class="grid grid-cols-1 lg:grid-cols-7 gap-6">
+      <div *ngFor="let day of weekDays" class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <!-- Day Header -->
+        <div class="bg-gradient-to-r from-green-600 to-blue-600 p-4 text-white">
+          <h3 class="text-lg font-bold">{{ day.label }}</h3>
+          <p class="text-sm opacity-90">{{ formatDate(day.date) }}</p>
+          <div class="text-xs mt-1 opacity-75">
+            {{ getItemsForDay(day.date).length }} session(s)
+          </div>
+        </div>
+
+        <!-- Day Content -->
+        <div class="p-4 min-h-[300px]">
+          <!-- Items -->
+          <div class="space-y-3">
+            <div 
+              *ngFor="let item of getItemsForDay(day.date)" 
+              class="relative p-4 rounded-lg border-l-4 shadow-sm hover:shadow-md transition-all cursor-pointer"
+              [style.border-left-color]="item.color"
+              [style.background-color]="item.color + '10'"
+            >
+              <!-- Type Badge -->
+              <div class="absolute top-3 right-3">
+                <span [class]="getTypeBadgeClass(item.type)" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
+                  {{ getTypeIcon(item.type) }} {{ item.type }}
+                </span>
+              </div>
+
+              <!-- Item Content -->
+              <div class="pr-20">
+                <h4 class="font-bold text-gray-800 mb-2">{{ item.title }}</h4>
+                
+                <div class="text-sm text-gray-600 space-y-1 mb-3">
+                  <div class="flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {{ formatTime(item.startTime) }} - {{ formatTime(item.endTime) }}
+                  </div>
+                  
+                  <div *ngIf="item.location" class="flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    </svg>
+                    {{ item.location }}
+                  </div>
+                  
+                  <div *ngIf="item.maxParticipants" class="flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    {{ item.currentParticipants || 0 }} / {{ item.maxParticipants }}
+                    <span 
+                      *ngIf="getAvailableSpots(item) > 0" 
+                      class="text-green-600 font-medium"
+                    >
+                      ({{ getAvailableSpots(item) }} spots available)
+                    </span>
+                    <span 
+                      *ngIf="getAvailableSpots(item) === 0" 
+                      class="text-red-600 font-medium"
+                    >
+                      (Full)
+                    </span>
+                  </div>
+                </div>
+
+                <p *ngIf="item.description" class="text-sm text-gray-500 mb-3">{{ item.description }}</p>
+
+                <!-- Registration Buttons -->
+                <div class="space-y-2">
+                  <button
+                    *ngIf="canRegister(item)"
+                    (click)="register(item)"
+                    class="w-full px-4 py-2 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all font-semibold text-sm"
+                  >
+                    Register
+                  </button>
+
+                  <button
+                    *ngIf="isRegistered(item)"
+                    (click)="unregister(item)"
+                    class="w-full px-4 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:shadow-lg transition-all font-semibold text-sm"
+                  >
+                    Unregister
+                  </button>
+
+                  <button
+                    *ngIf="!canRegister(item) && !isRegistered(item)"
+                    disabled
+                    class="w-full px-4 py-2 bg-gray-300 text-gray-600 rounded-lg font-semibold text-sm cursor-not-allowed"
+                  >
+                    Full
+                  </button>
+
+                  <div
+                    *ngIf="isRegistered(item)"
+                    class="w-full px-4 py-2 bg-green-100 text-green-800 rounded-lg font-semibold text-sm text-center border border-green-300"
+                  >
+                    ✅ Registered
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="getItemsForDay(day.date).length === 0" class="text-center py-8 text-gray-500">
+              <svg class="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z"/>
+              </svg>
+              <p class="text-sm">No sessions</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State Global -->
+    <div *ngIf="!loading && filteredItems.length === 0" class="bg-white rounded-3xl shadow-2xl p-12 text-center">
+      <div class="text-6xl mb-4">📅</div>
+      <h3 class="text-3xl font-bold text-gray-800 mb-3">No sessions available</h3>
+      <p class="text-gray-600">
+        {{ selectedType !== 'ALL' ? 'No sessions of this type for this week' : 'No sessions scheduled for this week' }}
+      </p>
+      <button
+        (click)="refreshPlanning()"
+        class="mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+      >
+        Refresh Planning
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,46 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-800">Certification Templates</h1>
+    <div class="space-x-2">
+      <button (click)="awardCertification()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+        Award Certification
+      </button>
+      <button (click)="createCertification()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+        Create New Certification
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    {{ error }}
+  </div>
+
+  <div *ngIf="loading" class="text-center py-8">
+    <p class="text-gray-600">Loading certifications...</p>
+  </div>
+
+  <div *ngIf="!loading && certifications.length === 0" class="text-center py-8">
+    <p class="text-gray-600">No certification templates found. Create your first certification!</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div *ngFor="let cert of certifications" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+      <div class="flex items-start justify-between mb-4">
+        <div class="flex-1">
+          <h3 class="text-xl font-semibold text-gray-800 mb-2">{{ cert.title }}</h3>
+        </div>
+      </div>
+      
+      <p class="text-gray-600 mb-4">{{ cert.description }}</p>
+
+      <div class="flex space-x-2">
+        <button (click)="editCertification(cert.id!)" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-sm">
+          Edit
+        </button>
+        <button (click)="deleteCertification(cert.id!)" class="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-sm">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,59 @@
+// Styles pour le planning hebdomadaire
+.planning-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1rem;
+}
+
+.day-column {
+  min-height: 400px;
+}
+
+.planning-item {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.add-button {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.02);
+  }
+}
+
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+}
+
+.type-selector {
+  input[type="radio"]:checked + .type-card {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.stats-card {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+@media (max-width: 1024px) {
+  .planning-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .planning-grid {
+    grid-template-columns: 1fr;
+  }
+}

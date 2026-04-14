@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Rapide - Rôles SMARTEK</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .role-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        button {
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .role-btn {
+            background: #3b82f6;
+            color: white;
+        }
+        .role-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+        .logout-btn {
+            background: #ef4444;
+            color: white;
+            width: 100%;
+        }
+        .logout-btn:hover {
+            background: #dc2626;
+        }
+        .status {
+            background: #f0f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3b82f6;
+        }
+        .info {
+            background: #fef3c7;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #f59e0b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Rapide - Rôles SMARTEK</h1>
+        
+        <div class="status" id="status">
+            <strong>Statut:</strong> Non authentifié
+        </div>
+
+        <h2>Simuler un rôle:</h2>
+        <div class="role-grid">
+            <button class="role-btn" onclick="simulateRole('ADMIN', '/admin/users')">
+                👨‍💼 ADMIN
+            </button>
+            <button class="role-btn" onclick="simulateRole('LEARNER', '/learner/courses')">
+                🎓 LEARNER
+            </button>
+            <button class="role-btn" onclick="simulateRole('TRAINER', '/trainer/courses')">
+                👨‍🏫 TRAINER
+            </button>
+            <button class="role-btn" onclick="simulateRole('RH_SMARTEK', '/rh-smartek/certifications')">
+                👔 RH SMARTEK
+            </button>
+            <button class="role-btn" onclick="simulateRole('RH_COMPANY', '/rh-company/offers')">
+                🏢 RH COMPANY
+            </button>
+            <button class="role-btn" onclick="simulateRole('PARTNER', '/partner/sponsorship')">
+                🤝 PARTNER
+            </button>
+        </div>
+
+        <button class="logout-btn" onclick="logout()">
+            🚪 Se Déconnecter
+        </button>
+
+        <div class="info">
+            <strong>ℹ️ Instructions:</strong>
+            <ol>
+                <li>Cliquez sur un rôle pour simuler une connexion</li>
+                <li>Vous serez redirigé vers http://localhost:4200</li>
+                <li>Le rôle sera automatiquement appliqué</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function updateStatus() {
+            const userInfo = localStorage.getItem('userInfo');
+            const statusDiv = document.getElementById('status');
+            
+            if (userInfo) {
+                const user = JSON.parse(userInfo);
+                statusDiv.innerHTML = `
+                    <strong>Statut:</strong> ✅ Authentifié<br>
+                    <strong>Rôle:</strong> ${user.role}<br>
+                    <strong>Email:</strong> ${user.email}
+                `;
+            } else {
+                statusDiv.innerHTML = '<strong>Statut:</strong> ❌ Non authentifié';
+            }
+        }
+
+        function simulateRole(role, path) {
+            const mockAuthResponse = {
+                token: 'mock-token-' + Date.now(),
+                userId: Math.floor(Math.random() * 1000),
+                email: `test-${role.toLowerCase()}@smartek.com`,
+                firstName: `Test ${role}`,
+                role: role,
+                message: 'Mock login successful'
+            };
+
+            localStorage.setItem('token', mockAuthResponse.token);
+            localStorage.setItem('userInfo', JSON.stringify(mockAuthResponse));
+            
+            alert(`✅ Rôle ${role} simulé!\nRedirection vers ${path}...`);
+            
+            // Rediriger vers l'application Angular
+            window.location.href = 'http://localhost:4200' + path;
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userInfo');
+            updateStatus();
+            alert('✅ Déconnexion réussie!');
+        }
+
+        // Mettre à jour le statut au chargement
+        updateStatus();
+    </script>
+</body>
+</html>

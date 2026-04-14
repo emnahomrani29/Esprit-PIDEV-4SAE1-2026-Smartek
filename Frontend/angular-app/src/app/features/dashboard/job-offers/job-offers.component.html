@@ -1,0 +1,414 @@
+<div class="container mx-auto p-6">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-800">Gestion des Offres</h1>
+    <button 
+      (click)="openCreateModal()"
+      class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition">
+      <span>+</span>
+      Nouvelle Offre
+    </button>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Filter -->
+  <div class="bg-white rounded-lg shadow p-4 mb-6">
+    <div class="flex items-center gap-4">
+      <label class="font-semibold text-gray-700">Filtrer par statut:</label>
+      <select 
+        [(ngModel)]="filterStatus" 
+        (change)="onFilterChange()"
+        class="border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option value="ALL">Tous</option>
+        <option value="ACTIVE">Actif</option>
+        <option value="CLOSED">Fermé</option>
+        <option value="DRAFT">Brouillon</option>
+      </select>
+      <span class="text-gray-600">{{ filteredOffers.length }} offre(s)</span>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-8">
+    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <p class="mt-4 text-gray-600">Chargement...</p>
+  </div>
+
+  <!-- Offers List -->
+  <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div *ngFor="let offer of filteredOffers" 
+         class="bg-white rounded-lg shadow hover:shadow-lg transition p-6 border border-gray-200">
+      <!-- Status Badge -->
+      <div class="flex justify-between items-start mb-3">
+        <span 
+          [class]="'px-3 py-1 rounded-full text-xs font-semibold ' + 
+                   (offer.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 
+                    offer.status === 'CLOSED' ? 'bg-red-100 text-red-800' : 
+                    'bg-gray-100 text-gray-800')">
+          {{ offer.status }}
+        </span>
+        <span class="text-xs text-gray-500">{{ offer.contractType }}</span>
+      </div>
+
+      <!-- Title -->
+      <h3 class="text-xl font-bold text-gray-800 mb-2">{{ offer.title }}</h3>
+      
+      <!-- Company & Location -->
+      <div class="text-sm text-gray-600 mb-3">
+        <p class="font-semibold">{{ offer.companyName }}</p>
+        <p>📍 {{ offer.location }}</p>
+        <p *ngIf="offer.salary" class="text-green-600 font-semibold">💰 {{ offer.salary }}</p>
+      </div>
+
+      <!-- Description -->
+      <p class="text-gray-700 text-sm mb-4 line-clamp-3">{{ offer.description }}</p>
+
+      <!-- Dates -->
+      <div class="text-xs text-gray-500 mb-4">
+        <p>Créé le: {{ offer.createdAt | date:'dd/MM/yyyy' }}</p>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-2">
+        <button 
+          (click)="viewApplications(offer)"
+          class="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition text-sm">
+          Candidatures
+        </button>
+        <button 
+          (click)="openEditModal(offer)"
+          class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition text-sm">
+          Modifier
+        </button>
+        <button 
+          (click)="deleteOffer(offer.id!)"
+          class="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition text-sm">
+          Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredOffers.length === 0" class="text-center py-12 bg-white rounded-lg shadow">
+    <p class="text-gray-500 text-lg">Aucune offre trouvée</p>
+    <button 
+      (click)="openCreateModal()"
+      class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition">
+      Créer la première offre
+    </button>
+  </div>
+</div>
+
+<!-- Applications Modal -->
+<div *ngIf="showApplicationsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
+  <div class="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] flex flex-col">
+    <!-- Modal Header -->
+    <div class="flex justify-between items-center p-6 border-b bg-white rounded-t-lg flex-shrink-0">
+      <div class="flex items-center gap-4">
+        <button 
+          (click)="closeApplicationsModal()" 
+          class="text-gray-600 hover:text-gray-800 transition">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <div>
+          <h2 class="text-2xl font-bold text-gray-800">Candidatures</h2>
+          <p class="text-gray-600 text-sm mt-1">{{ selectedOffer?.title }} - {{ applications.length }} candidature(s)</p>
+        </div>
+      </div>
+      <button (click)="closeApplicationsModal()" class="text-gray-500 hover:text-gray-700 text-3xl leading-none">&times;</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6 overflow-y-auto flex-1">
+      <!-- Loading -->
+      <div *ngIf="loadingApplications" class="text-center py-8">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <p class="mt-4 text-gray-600">Chargement des candidatures...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!loadingApplications && applications.length === 0" class="text-center py-12">
+        <p class="text-gray-500 text-lg">Aucune candidature pour cette offre</p>
+      </div>
+
+      <!-- Applications List -->
+      <div *ngIf="!loadingApplications && applications.length > 0" class="space-y-4">
+        <div *ngFor="let app of applications" 
+             class="bg-gray-50 rounded-lg p-6 border border-gray-200 hover:shadow-md transition">
+          
+          <!-- Header -->
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h3 class="text-xl font-bold text-gray-800">{{ app.learnerName }}</h3>
+              <p class="text-gray-600">{{ app.learnerEmail }}</p>
+            </div>
+            <span 
+              [class]="'px-3 py-1 rounded-full text-xs font-semibold ' + 
+                       (app.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' : 
+                        app.status === 'REJECTED' ? 'bg-red-100 text-red-800' : 
+                        'bg-yellow-100 text-yellow-800')">
+              {{ app.status }}
+            </span>
+          </div>
+
+          <!-- Cover Letter -->
+          <div class="mb-4">
+            <h4 class="font-semibold text-gray-700 mb-2">Lettre de motivation:</h4>
+            <p class="text-gray-700 bg-white p-4 rounded border border-gray-200 whitespace-pre-wrap">
+              {{ app.coverLetter || 'Aucune lettre de motivation fournie' }}
+            </p>
+          </div>
+
+          <!-- CV -->
+          <div class="mb-4">
+            <h4 class="font-semibold text-gray-700 mb-2">CV:</h4>
+            <button 
+              (click)="downloadCV(app)"
+              class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition text-sm inline-flex items-center gap-2">
+              <span>📄</span>
+              Télécharger {{ app.cvFileName }}
+            </button>
+          </div>
+
+          <!-- Date -->
+          <div class="mb-4 text-sm text-gray-500">
+            <p>Candidature envoyée le: {{ app.appliedAt | date:'dd/MM/yyyy à HH:mm' }}</p>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex flex-wrap gap-2">
+            <button 
+              *ngIf="app.status !== 'ACCEPTED'"
+              (click)="updateApplicationStatus(app.id!, 'ACCEPTED')"
+              class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition text-sm">
+              ✓ Accepter
+            </button>
+            <button 
+              *ngIf="app.status === 'ACCEPTED'"
+              (click)="openInterviewModal(app)"
+              class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded transition text-sm">
+              📅 Planifier un entretien
+            </button>
+            <button 
+              *ngIf="app.status !== 'REJECTED'"
+              (click)="updateApplicationStatus(app.id!, 'REJECTED')"
+              class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition text-sm">
+              ✗ Rejeter
+            </button>
+            <button 
+              *ngIf="app.status !== 'PENDING'"
+              (click)="updateApplicationStatus(app.id!, 'PENDING')"
+              class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition text-sm">
+              ↻ En attente
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div *ngIf="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <!-- Modal Header -->
+    <div class="flex justify-between items-center p-6 border-b">
+      <h2 class="text-2xl font-bold text-gray-800">
+        {{ isEditMode ? 'Modifier l\'offre' : 'Nouvelle offre' }}
+      </h2>
+      <button (click)="closeModal()" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+    </div>
+
+    <!-- Modal Body -->
+    <form (ngSubmit)="saveOffer()" class="p-6 space-y-4">
+      <!-- Title -->
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Titre *</label>
+        <input 
+          type="text" 
+          [(ngModel)]="offerForm.title" 
+          name="title"
+          required
+          class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Ex: Développeur Full Stack">
+      </div>
+
+      <!-- Company Name -->
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Entreprise *</label>
+        <input 
+          type="text" 
+          [(ngModel)]="offerForm.companyName" 
+          name="companyName"
+          required
+          class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Ex: SMARTEK">
+      </div>
+
+      <!-- Location -->
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Localisation *</label>
+        <input 
+          type="text" 
+          [(ngModel)]="offerForm.location" 
+          name="location"
+          required
+          class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Ex: Paris, France">
+      </div>
+
+      <!-- Contract Type & Salary -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Type de contrat *</label>
+          <select 
+            [(ngModel)]="offerForm.contractType" 
+            name="contractType"
+            required
+            class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option *ngFor="let type of contractTypes" [value]="type">{{ type }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Salaire</label>
+          <input 
+            type="text" 
+            [(ngModel)]="offerForm.salary" 
+            name="salary"
+            class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Ex: 45K-55K">
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Statut *</label>
+        <select 
+          [(ngModel)]="offerForm.status" 
+          name="status"
+          required
+          class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option *ngFor="let status of statusTypes" [value]="status">{{ status }}</option>
+        </select>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Description *</label>
+        <textarea 
+          [(ngModel)]="offerForm.description" 
+          name="description"
+          required
+          rows="6"
+          class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Décrivez l'offre en détail..."></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-4 pt-4">
+        <button 
+          type="submit"
+          [disabled]="loading"
+          class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition disabled:opacity-50">
+          {{ isEditMode ? 'Mettre à jour' : 'Créer' }}
+        </button>
+        <button 
+          type="button"
+          (click)="closeModal()"
+          class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg transition">
+          Annuler
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Interview Modal -->
+<div *ngIf="showInterviewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
+  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <!-- Modal Header -->
+    <div class="flex justify-between items-center p-6 border-b">
+      <div>
+        <h2 class="text-2xl font-bold text-gray-800">Planifier un entretien</h2>
+        <p class="text-gray-600 text-sm mt-1">{{ selectedApplication?.learnerName }}</p>
+      </div>
+      <button (click)="closeInterviewModal()" class="text-gray-500 hover:text-gray-700 text-3xl leading-none">&times;</button>
+    </div>
+
+    <!-- Modal Body -->
+    <form (ngSubmit)="scheduleInterview()" class="p-6 space-y-4">
+      <!-- Date and Time -->
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Date et heure de l'entretien *</label>
+        <input 
+          type="datetime-local" 
+          [(ngModel)]="interviewForm.interviewDate" 
+          name="interviewDate"
+          required
+          class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+
+      <!-- Location -->
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Lieu de l'entretien *</label>
+        <input 
+          type="text" 
+          [(ngModel)]="interviewForm.location" 
+          name="location"
+          required
+          class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Ex: Bureau Paris, 123 Rue de la Paix ou En ligne">
+      </div>
+
+      <!-- Meeting Link -->
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Lien de visioconférence (optionnel)</label>
+        <input 
+          type="url" 
+          [(ngModel)]="interviewForm.meetingLink" 
+          name="meetingLink"
+          class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Ex: https://meet.google.com/xxx-xxxx-xxx">
+      </div>
+
+      <!-- Notes -->
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Notes (optionnel)</label>
+        <textarea 
+          [(ngModel)]="interviewForm.notes" 
+          name="notes"
+          rows="4"
+          class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Informations complémentaires pour le candidat..."></textarea>
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        {{ errorMessage }}
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-4 pt-4">
+        <button 
+          type="submit"
+          [disabled]="loading"
+          class="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg transition disabled:opacity-50">
+          📅 Planifier l'entretien
+        </button>
+        <button 
+          type="button"
+          (click)="closeInterviewModal()"
+          class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg transition">
+          Annuler
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

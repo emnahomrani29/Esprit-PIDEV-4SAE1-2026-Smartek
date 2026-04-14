@@ -1,0 +1,44 @@
+<div class="page-header-wrapper">
+  <!-- Animated Background -->
+  <div class="header-background">
+    <div class="animated-shapes">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+      <div class="shape shape-4"></div>
+    </div>
+  </div>
+
+  <!-- Header Content -->
+  <div class="header-content">
+    <div class="container mx-auto px-6 py-12">
+      <div class="flex items-center justify-between">
+        <!-- Title Section -->
+        <div class="header-text">
+          <div class="icon-wrapper animate-bounce-slow">
+            <span class="header-icon">{{ icon }}</span>
+          </div>
+          <h1 class="header-title" [class]="'bg-gradient-to-r ' + gradient + ' bg-clip-text text-transparent'">
+            {{ title }}
+          </h1>
+          <p class="header-subtitle">{{ subtitle }}</p>
+        </div>
+
+        <!-- Stats Section (Optional) -->
+        <div *ngIf="showStats && stats.length > 0" class="stats-grid">
+          <div *ngFor="let stat of stats" class="stat-card">
+            <div class="stat-value">{{ stat.value }}</div>
+            <div class="stat-label">{{ stat.label }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wave Divider -->
+  <div class="wave-divider">
+    <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+      <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="wave-fill"></path>
+    </svg>
+  </div>
+</div>

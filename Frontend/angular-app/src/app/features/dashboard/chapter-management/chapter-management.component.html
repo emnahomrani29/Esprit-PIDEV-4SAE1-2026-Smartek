@@ -1,0 +1,137 @@
+<div class="chapter-management-container">
+  <!-- Header -->
+  <div class="header">
+    <button (click)="goBack()" class="back-button">
+      ← Retour aux cours
+    </button>
+    <h1 class="title">Gestion des Chapitres</h1>
+    <p class="subtitle" *ngIf="course">Cours: {{ course.title }}</p>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button (click)="openCreateModal()" class="btn btn-primary">
+      + Ajouter un chapitre
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading && chapters.length === 0" class="loading">
+    Chargement des chapitres...
+  </div>
+
+  <!-- Chapters List -->
+  <div class="chapters-list" *ngIf="!loading || chapters.length > 0">
+    <div *ngIf="chapters.length === 0" class="empty-state">
+      <p>Aucun chapitre pour ce cours</p>
+      <button (click)="openCreateModal()" class="btn btn-primary">
+        Créer le premier chapitre
+      </button>
+    </div>
+
+    <div *ngFor="let chapter of chapters" class="chapter-card">
+      <div class="chapter-header">
+        <div class="chapter-info">
+          <span class="chapter-order">Chapitre {{ chapter.orderIndex }}</span>
+          <h3 class="chapter-title">{{ chapter.title }}</h3>
+        </div>
+        <div class="chapter-actions">
+          <button (click)="openEditModal(chapter)" class="btn btn-sm btn-secondary">
+            Modifier
+          </button>
+          <button (click)="deleteChapter(chapter.chapterId!)" class="btn btn-sm btn-danger">
+            Supprimer
+          </button>
+        </div>
+      </div>
+
+      <p class="chapter-description" *ngIf="chapter.description">
+        {{ chapter.description }}
+      </p>
+
+      <!-- PDF Section -->
+      <div class="pdf-section">
+        <div *ngIf="chapter.pdfFileName" class="pdf-info">
+          <span class="pdf-icon">📄</span>
+          <span class="pdf-name">{{ chapter.pdfFileName }}</span>
+        </div>
+        
+        <div class="pdf-upload">
+          <label [for]="'file-' + chapter.chapterId" class="btn btn-sm btn-outline">
+            {{ chapter.pdfFileName ? 'Remplacer le PDF' : 'Ajouter un PDF' }}
+          </label>
+          <input 
+            [id]="'file-' + chapter.chapterId"
+            type="file" 
+            accept=".pdf"
+            (change)="onFileSelected($event, chapter.chapterId!)"
+            style="display: none"
+          />
+          <span *ngIf="uploadingChapterId === chapter.chapterId" class="uploading">
+            Upload en cours...
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div *ngIf="showModal" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditMode ? 'Modifier le chapitre' : 'Nouveau chapitre' }}</h2>
+        <button (click)="closeModal()" class="close-button">&times;</button>
+      </div>
+
+      <form [formGroup]="chapterForm" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label for="title">Titre du chapitre *</label>
+          <input 
+            id="title"
+            type="text" 
+            formControlName="title"
+            class="form-control"
+            placeholder="Ex: Introduction aux bases"
+          />
+          <div *ngIf="chapterForm.get('title')?.invalid && chapterForm.get('title')?.touched" class="error">
+            Le titre est obligatoire
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea 
+            id="description"
+            formControlName="description"
+            class="form-control"
+            rows="4"
+            placeholder="Description du chapitre..."
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="orderIndex">Ordre *</label>
+          <input 
+            id="orderIndex"
+            type="number" 
+            formControlName="orderIndex"
+            class="form-control"
+            min="1"
+          />
+          <div *ngIf="chapterForm.get('orderIndex')?.invalid && chapterForm.get('orderIndex')?.touched" class="error">
+            L'ordre doit être supérieur à 0
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" (click)="closeModal()" class="btn btn-secondary">
+            Annuler
+          </button>
+          <button type="submit" [disabled]="chapterForm.invalid || loading" class="btn btn-primary">
+            {{ loading ? 'Enregistrement...' : (isEditMode ? 'Mettre à jour' : 'Créer') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

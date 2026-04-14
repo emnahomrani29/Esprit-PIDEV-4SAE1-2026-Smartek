@@ -1,0 +1,354 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50 to-pink-50 py-12">
+  <div class="container mx-auto max-w-7xl px-4">
+    <!-- Header -->
+    <div class="mb-12 text-center">
+      <h1 class="text-5xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 bg-clip-text text-transparent mb-4">
+        🎫 Événements
+      </h1>
+      <p class="text-gray-600 text-xl">Découvrez et participez aux événements de formation</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex justify-center mb-8">
+      <div class="bg-white rounded-xl shadow-lg p-2 inline-flex gap-2">
+        <button
+          (click)="switchTab('available')"
+          [class]="activeTab === 'available' 
+            ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-3 rounded-lg font-semibold transition-all' 
+            : 'bg-white text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all'"
+        >
+          📋 Événements Disponibles
+        </button>
+        <button
+          (click)="switchTab('registered')"
+          [class]="activeTab === 'registered' 
+            ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-3 rounded-lg font-semibold transition-all' 
+            : 'bg-white text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all'"
+        >
+          ✅ Mes Inscriptions
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+      <div class="flex flex-col md:flex-row gap-4">
+        <div class="relative flex-1">
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="applyFilters()"
+            placeholder="Rechercher..."
+            class="w-full pl-10 pr-4 py-3 border rounded-lg"
+          />
+          <svg class="absolute left-3 top-3.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <select [(ngModel)]="selectedMode" (change)="applyFilters()" class="px-4 py-3 border rounded-lg">
+          <option value="ALL">Tous les modes</option>
+          <option value="PHYSICAL">Présentiel</option>
+          <option value="ONLINE">En ligne</option>
+          <option value="HYBRID">Hybride</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-12">
+      <div class="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600"></div>
+    </div>
+
+    <!-- Events Grid -->
+    <div *ngIf="!loading && filteredEvents.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div *ngFor="let event of filteredEvents" class="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white">
+          <h3 class="text-2xl font-bold mb-2">{{ event.title }}</h3>
+          <div class="flex gap-2">
+            <span [class]="getStatusBadgeClass(event.status)" class="px-3 py-1 rounded-full text-xs">
+              {{ event.status }}
+            </span>
+            <span [class]="getModeBadgeClass(event.mode)" class="px-3 py-1 rounded-full text-xs">
+              {{ event.mode }}
+            </span>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <p *ngIf="event.description" class="text-gray-600 mb-4">{{ event.description }}</p>
+          
+          <div class="space-y-3 mb-6">
+            <div class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              <span>{{ event.startDate | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+            
+            <div class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+              </svg>
+              <span>{{ event.location }}</span>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+              </svg>
+              <span>{{ event.currentParticipations || 0 }} / {{ event.maxParticipations }}</span>
+            </div>
+
+            <div *ngIf="event.isPaid" class="flex items-center gap-3 text-gray-700">
+              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span class="font-bold">{{ event.price }} €</span>
+            </div>
+          </div>
+
+          <button
+            *ngIf="canRegister(event)"
+            (click)="openRegistrationModal(event)"
+            class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg hover:shadow-lg transition-all font-semibold mb-2"
+          >
+            S'inscrire
+          </button>
+
+          <button
+            *ngIf="isUserRegistered(event.eventId!)"
+            disabled
+            class="w-full bg-green-100 text-green-800 py-3 rounded-lg font-semibold cursor-not-allowed mb-2 flex items-center justify-center gap-2"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Déjà inscrit
+          </button>
+
+          <button
+            *ngIf="isFull(event) && !isUserRegistered(event.eventId!)"
+            disabled
+            class="w-full bg-gray-300 text-gray-600 py-3 rounded-lg font-semibold cursor-not-allowed mb-2"
+          >
+            Complet
+          </button>
+
+          <!-- Details Button -->
+          <button
+            (click)="openDetailsModal(event)"
+            class="w-full bg-gray-100 text-gray-800 py-3 rounded-lg hover:bg-gray-200 transition-all font-semibold flex items-center justify-center gap-2"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Voir les détails
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && filteredEvents.length === 0" class="bg-white rounded-3xl shadow-2xl p-12 text-center">
+      <h3 class="text-3xl font-bold text-gray-800 mb-3">
+        {{ activeTab === 'registered' ? 'Aucune inscription' : 'Aucun événement disponible' }}
+      </h3>
+      <p class="text-gray-600">
+        {{ activeTab === 'registered' ? 'Vous n\'êtes inscrit à aucun événement pour le moment' : 'Revenez plus tard' }}
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div *ngIf="showRegistrationModal && selectedEvent" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full">
+    <div class="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white">
+      <h2 class="text-3xl font-bold">Inscription</h2>
+      <p class="text-sm mt-2">{{ selectedEvent.title }}</p>
+    </div>
+
+    <div class="p-8">
+      <div class="bg-gray-50 rounded-xl p-6 mb-6">
+        <h3 class="text-xl font-bold mb-4">Détails</h3>
+        <div class="space-y-3">
+          <p><strong>Date:</strong> {{ formatDate(selectedEvent.startDate) }}</p>
+          <p><strong>Lieu:</strong> {{ selectedEvent.location }}</p>
+          <p><strong>Prix:</strong> {{ selectedEvent.isPaid ? selectedEvent.price + ' €' : 'Gratuit' }}</p>
+        </div>
+      </div>
+
+      <!-- Mode Selection for Hybrid Events -->
+      <div *ngIf="selectedEvent.mode === 'HYBRID'" class="mb-6">
+        <label class="block text-lg font-semibold text-gray-700 mb-3">Mode de participation</label>
+        <div class="grid grid-cols-2 gap-4">
+          <label class="relative cursor-pointer">
+            <input
+              type="radio"
+              [(ngModel)]="registrationMode"
+              value="PHYSICAL"
+              name="mode"
+              class="peer sr-only"
+            />
+            <div class="p-4 border-2 rounded-lg peer-checked:border-purple-600 peer-checked:bg-purple-50 transition-all">
+              <div class="flex items-center gap-3">
+                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+                <span class="font-semibold">Présentiel</span>
+              </div>
+            </div>
+          </label>
+
+          <label class="relative cursor-pointer">
+            <input
+              type="radio"
+              [(ngModel)]="registrationMode"
+              value="ONLINE"
+              name="mode"
+              class="peer sr-only"
+            />
+            <div class="p-4 border-2 rounded-lg peer-checked:border-purple-600 peer-checked:bg-purple-50 transition-all">
+              <div class="flex items-center gap-3">
+                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                <span class="font-semibold">En ligne</span>
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="flex gap-4">
+        <button
+          (click)="closeRegistrationModal()"
+          class="flex-1 bg-gray-200 px-6 py-3 rounded-lg"
+        >
+          Annuler
+        </button>
+        <button
+          (click)="registerForEvent()"
+          class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg"
+        >
+          Confirmer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Details Modal -->
+<div *ngIf="showDetailsModal && selectedEvent" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white">
+      <h2 class="text-3xl font-bold">{{ selectedEvent.title }}</h2>
+      <div class="flex gap-2 mt-3">
+        <span [class]="getStatusBadgeClass(selectedEvent.status)" class="px-3 py-1 rounded-full text-xs font-semibold">
+          {{ selectedEvent.status }}
+        </span>
+        <span [class]="getModeBadgeClass(selectedEvent.mode)" class="px-3 py-1 rounded-full text-xs font-semibold">
+          {{ selectedEvent.mode }}
+        </span>
+      </div>
+    </div>
+
+    <div class="p-8">
+      <!-- Description -->
+      <div *ngIf="selectedEvent.description" class="mb-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-3">Description</h3>
+        <p class="text-gray-600 leading-relaxed">{{ selectedEvent.description }}</p>
+      </div>
+
+      <!-- Event Details -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="bg-gray-50 rounded-xl p-4">
+          <div class="flex items-center gap-3 mb-2">
+            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <h4 class="font-semibold text-gray-800">Date et heure</h4>
+          </div>
+          <p class="text-gray-600 ml-9">{{ formatDate(selectedEvent.startDate) }}</p>
+          <p class="text-gray-500 text-sm ml-9 mt-1">Fin: {{ selectedEvent.endDate | date:'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+
+        <div class="bg-gray-50 rounded-xl p-4">
+          <div class="flex items-center gap-3 mb-2">
+            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            </svg>
+            <h4 class="font-semibold text-gray-800">Lieu</h4>
+          </div>
+          <p class="text-gray-600 ml-9">{{ selectedEvent.location }}</p>
+        </div>
+
+        <div class="bg-gray-50 rounded-xl p-4">
+          <div class="flex items-center gap-3 mb-2">
+            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+            <h4 class="font-semibold text-gray-800">Participants</h4>
+          </div>
+          <p class="text-gray-600 ml-9">{{ selectedEvent.currentParticipations || 0 }} / {{ selectedEvent.maxParticipations }}</p>
+          <div class="w-full bg-gray-200 rounded-full h-2 mt-2 ml-9">
+            <div 
+              class="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full"
+              [style.width.%]="((selectedEvent.currentParticipations || 0) / selectedEvent.maxParticipations) * 100"
+            ></div>
+          </div>
+        </div>
+
+        <div class="bg-gray-50 rounded-xl p-4">
+          <div class="flex items-center gap-3 mb-2">
+            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <h4 class="font-semibold text-gray-800">Tarif</h4>
+          </div>
+          <p class="text-gray-600 ml-9">
+            <span *ngIf="selectedEvent.isPaid" class="text-2xl font-bold text-purple-600">{{ selectedEvent.price }} €</span>
+            <span *ngIf="!selectedEvent.isPaid" class="text-2xl font-bold text-green-600">Gratuit</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Capacities for Hybrid Events -->
+      <div *ngIf="selectedEvent.mode === 'HYBRID'" class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+        <h4 class="font-semibold text-blue-800 mb-3">Capacités par mode</h4>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-sm text-blue-700">Présentiel</p>
+            <p class="text-lg font-bold text-blue-900">{{ selectedEvent.physicalRegistered || 0 }} / {{ selectedEvent.physicalCapacity }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-blue-700">En ligne</p>
+            <p class="text-lg font-bold text-blue-900">{{ selectedEvent.onlineRegistered || 0 }} / {{ selectedEvent.onlineCapacity }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Registration Status -->
+      <div *ngIf="isUserRegistered(selectedEvent.eventId!)" class="bg-green-50 border-l-4 border-green-500 p-4 mb-6">
+        <div class="flex items-center gap-3">
+          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <div>
+            <p class="font-semibold text-green-800">Vous êtes inscrit à cet événement</p>
+            <p class="text-sm text-green-700">Vous recevrez une confirmation par email</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Close Button -->
+      <button
+        (click)="closeDetailsModal()"
+        class="w-full bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+      >
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,369 @@
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="container mx-auto px-4 max-w-7xl">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">My Performance</h1>
+      <p class="text-gray-600">Track your learning progress and achievements</p>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="flex justify-center items-center py-20">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+
+    <!-- Content -->
+    <div *ngIf="!loading">
+      <!-- Tabs -->
+      <div class="bg-white rounded-lg shadow-sm mb-6">
+        <div class="border-b border-gray-200">
+          <nav class="flex space-x-8 px-6" aria-label="Tabs">
+            <button
+              (click)="setActiveTab('overview')"
+              [class.border-blue-600]="activeTab === 'overview'"
+              [class.text-blue-600]="activeTab === 'overview'"
+              [class.border-transparent]="activeTab !== 'overview'"
+              [class.text-gray-500]="activeTab !== 'overview'"
+              class="py-4 px-1 border-b-2 font-medium text-sm hover:text-blue-600 hover:border-blue-300 transition-colors">
+              Overview
+            </button>
+            <button
+              (click)="setActiveTab('courses')"
+              [class.border-blue-600]="activeTab === 'courses'"
+              [class.text-blue-600]="activeTab === 'courses'"
+              [class.border-transparent]="activeTab !== 'courses'"
+              [class.text-gray-500]="activeTab !== 'courses'"
+              class="py-4 px-1 border-b-2 font-medium text-sm hover:text-blue-600 hover:border-blue-300 transition-colors">
+              Courses Analytics
+            </button>
+            <button
+              (click)="setActiveTab('trainings')"
+              [class.border-blue-600]="activeTab === 'trainings'"
+              [class.text-blue-600]="activeTab === 'trainings'"
+              [class.border-transparent]="activeTab !== 'trainings'"
+              [class.text-gray-500]="activeTab !== 'trainings'"
+              class="py-4 px-1 border-b-2 font-medium text-sm hover:text-blue-600 hover:border-blue-300 transition-colors">
+              Training Analytics
+            </button>
+            <button
+              (click)="setActiveTab('exams')"
+              [class.border-blue-600]="activeTab === 'exams'"
+              [class.text-blue-600]="activeTab === 'exams'"
+              [class.border-transparent]="activeTab !== 'exams'"
+              [class.text-gray-500]="activeTab !== 'exams'"
+              class="py-4 px-1 border-b-2 font-medium text-sm hover:text-blue-600 hover:border-blue-300 transition-colors">
+              Exam Results
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Overview Tab -->
+      <div *ngIf="activeTab === 'overview'">
+        <!-- Key Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <!-- Total Courses -->
+          <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-500">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-gray-600 text-sm font-medium">Total Courses</span>
+              <span class="text-2xl">📚</span>
+            </div>
+            <p class="text-3xl font-bold text-gray-900">{{ stats.courses.enrolled }}</p>
+            <p class="text-sm text-gray-500 mt-1">{{ stats.courses.completed }} completed</p>
+          </div>
+
+          <!-- Completion Rate -->
+          <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-green-500">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-gray-600 text-sm font-medium">Completion Rate</span>
+              <span class="text-2xl">✅</span>
+            </div>
+            <p class="text-3xl font-bold text-gray-900">{{ stats.courses.completionRate }}%</p>
+            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+              <div [class]="getProgressColor(stats.courses.completionRate)" 
+                   [style.width.%]="stats.courses.completionRate" 
+                   class="h-2 rounded-full transition-all"></div>
+            </div>
+          </div>
+
+          <!-- Average Score -->
+          <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-purple-500">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-gray-600 text-sm font-medium">Average Score</span>
+              <span class="text-2xl">📊</span>
+            </div>
+            <p class="text-3xl font-bold text-gray-900">{{ stats.exams.averageScore }}%</p>
+            <p class="text-sm text-gray-500 mt-1">{{ stats.exams.passed }}/{{ stats.exams.attempted }} passed</p>
+          </div>
+
+          <!-- Learning Streak -->
+          <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-orange-500">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-gray-600 text-sm font-medium">Learning Streak</span>
+              <span class="text-2xl">🔥</span>
+            </div>
+            <p class="text-3xl font-bold text-gray-900">{{ stats.overall.streak }}</p>
+            <p class="text-sm text-gray-500 mt-1">days in a row</p>
+          </div>
+        </div>
+
+        <!-- Progress Overview -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <!-- Course Progress -->
+          <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Course Progress</h3>
+            <div class="space-y-4">
+              <div>
+                <div class="flex justify-between text-sm mb-1">
+                  <span class="text-gray-600">Completed</span>
+                  <span class="font-medium text-green-600">{{ stats.courses.completed }}</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                  <div class="bg-green-500 h-2 rounded-full" 
+                       [style.width.%]="(stats.courses.completed / stats.courses.enrolled) * 100"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1">
+                  <span class="text-gray-600">In Progress</span>
+                  <span class="font-medium text-blue-600">{{ stats.courses.inProgress }}</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                  <div class="bg-blue-500 h-2 rounded-full" 
+                       [style.width.%]="(stats.courses.inProgress / stats.courses.enrolled) * 100"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam Performance -->
+          <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Exam Performance</h3>
+            <div class="space-y-4">
+              <div>
+                <div class="flex justify-between text-sm mb-1">
+                  <span class="text-gray-600">Success Rate</span>
+                  <span class="font-medium text-green-600">{{ stats.exams.successRate }}%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                  <div [class]="getProgressColor(stats.exams.successRate)" 
+                       class="h-2 rounded-full" 
+                       [style.width.%]="stats.exams.successRate"></div>
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-4 mt-4">
+                <div class="text-center">
+                  <p class="text-2xl font-bold text-gray-900">{{ stats.exams.available }}</p>
+                  <p class="text-xs text-gray-500">Available</p>
+                </div>
+                <div class="text-center">
+                  <p class="text-2xl font-bold text-blue-600">{{ stats.exams.attempted }}</p>
+                  <p class="text-xs text-gray-500">Attempted</p>
+                </div>
+                <div class="text-center">
+                  <p class="text-2xl font-bold text-green-600">{{ stats.exams.passed }}</p>
+                  <p class="text-xs text-gray-500">Passed</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Additional Stats -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Learning Insights</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="text-center p-4 bg-blue-50 rounded-lg">
+              <p class="text-3xl font-bold text-blue-600">{{ stats.overall.totalHours }}</p>
+              <p class="text-sm text-gray-600 mt-1">Total Hours</p>
+            </div>
+            <div class="text-center p-4 bg-purple-50 rounded-lg">
+              <p [class]="getRankColor(stats.overall.rank)" class="text-3xl font-bold">{{ stats.overall.rank }}</p>
+              <p class="text-sm text-gray-600 mt-1">Current Rank</p>
+            </div>
+            <div class="text-center p-4 bg-green-50 rounded-lg">
+              <p class="text-3xl font-bold text-green-600">{{ stats.courses.completionRate }}%</p>
+              <p class="text-sm text-gray-600 mt-1">Overall Progress</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Courses Analytics Tab -->
+      <div *ngIf="activeTab === 'courses'" class="bg-white rounded-lg shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-6">Detailed Course Analytics</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div class="bg-blue-50 rounded-lg p-6 text-center">
+            <p class="text-4xl font-bold text-blue-600">{{ stats.courses.enrolled }}</p>
+            <p class="text-sm text-gray-600 mt-2">Total Enrolled</p>
+          </div>
+          <div class="bg-green-50 rounded-lg p-6 text-center">
+            <p class="text-4xl font-bold text-green-600">{{ stats.courses.completed }}</p>
+            <p class="text-sm text-gray-600 mt-2">Completed</p>
+          </div>
+          <div class="bg-yellow-50 rounded-lg p-6 text-center">
+            <p class="text-4xl font-bold text-yellow-600">{{ stats.courses.inProgress }}</p>
+            <p class="text-sm text-gray-600 mt-2">In Progress</p>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <div>
+            <h4 class="text-md font-semibold text-gray-800 mb-3">Completion Progress</h4>
+            <div class="bg-gray-100 rounded-lg p-4">
+              <div class="flex justify-between text-sm mb-2">
+                <span class="text-gray-600">Overall Completion Rate</span>
+                <span class="font-semibold text-gray-900">{{ stats.courses.completionRate }}%</span>
+              </div>
+              <div class="w-full bg-gray-300 rounded-full h-3">
+                <div [class]="getProgressColor(stats.courses.completionRate)" 
+                     [style.width.%]="stats.courses.completionRate" 
+                     class="h-3 rounded-full transition-all"></div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 class="text-md font-semibold text-gray-800 mb-3">Chapter Progress</h4>
+            <div class="bg-gray-100 rounded-lg p-4">
+              <div class="flex justify-between text-sm mb-2">
+                <span class="text-gray-600">Chapters Completed</span>
+                <span class="font-semibold text-gray-900">{{ stats.courses.completedChapters }} / {{ stats.courses.totalChapters }}</span>
+              </div>
+              <div class="w-full bg-gray-300 rounded-full h-3">
+                <div class="bg-indigo-500 h-3 rounded-full transition-all" 
+                     [style.width.%]="stats.courses.totalChapters > 0 ? (stats.courses.completedChapters / stats.courses.totalChapters * 100) : 0"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Training Analytics Tab -->
+      <div *ngIf="activeTab === 'trainings'" class="bg-white rounded-lg shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-6">Training Analytics</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div class="bg-purple-50 rounded-lg p-6 text-center">
+            <p class="text-4xl font-bold text-purple-600">{{ stats.trainings.enrolled }}</p>
+            <p class="text-sm text-gray-600 mt-2">Total Enrolled</p>
+          </div>
+          <div class="bg-green-50 rounded-lg p-6 text-center">
+            <p class="text-4xl font-bold text-green-600">{{ stats.trainings.completed }}</p>
+            <p class="text-sm text-gray-600 mt-2">Completed</p>
+          </div>
+          <div class="bg-blue-50 rounded-lg p-6 text-center">
+            <p class="text-4xl font-bold text-blue-600">{{ stats.trainings.averageProgress }}%</p>
+            <p class="text-sm text-gray-600 mt-2">Average Progress</p>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <div>
+            <h4 class="text-md font-semibold text-gray-800 mb-3">Status Breakdown</h4>
+            <div class="bg-gray-100 rounded-lg p-4">
+              <div *ngIf="getStatusBreakdownEntries().length > 0" class="space-y-3">
+                <div *ngFor="let entry of getStatusBreakdownEntries()" class="flex justify-between items-center">
+                  <span class="text-sm text-gray-600">{{ formatStatusLabel(entry.key) }}</span>
+                  <span class="font-semibold text-gray-900 bg-white px-3 py-1 rounded-full text-sm">{{ entry.value }}</span>
+                </div>
+              </div>
+              <p *ngIf="getStatusBreakdownEntries().length === 0" class="text-sm text-gray-500 text-center py-4">
+                No training enrollments yet
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <h4 class="text-md font-semibold text-gray-800 mb-3">Progress Overview</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-blue-50 rounded-lg p-4 text-center">
+                <p class="text-2xl font-bold text-blue-600">{{ stats.trainings.inProgress }}</p>
+                <p class="text-xs text-gray-600 mt-1">In Progress</p>
+              </div>
+              <div class="bg-green-50 rounded-lg p-4 text-center">
+                <p class="text-2xl font-bold text-green-600">{{ stats.trainings.completed }}</p>
+                <p class="text-xs text-gray-600 mt-1">Completed</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Exam Results Tab -->
+      <div *ngIf="activeTab === 'exams'" class="bg-white rounded-lg shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-6">Exam History & Results</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div class="bg-gray-50 rounded-lg p-6 text-center">
+            <p class="text-4xl font-bold text-gray-600">{{ stats.exams.available }}</p>
+            <p class="text-sm text-gray-600 mt-2">Available</p>
+          </div>
+          <div class="bg-blue-50 rounded-lg p-6 text-center">
+            <p class="text-4xl font-bold text-blue-600">{{ stats.exams.attempted }}</p>
+            <p class="text-sm text-gray-600 mt-2">Attempted</p>
+          </div>
+          <div class="bg-green-50 rounded-lg p-6 text-center">
+            <p class="text-4xl font-bold text-green-600">{{ stats.exams.passed }}</p>
+            <p class="text-sm text-gray-600 mt-2">Passed</p>
+          </div>
+          <div class="bg-red-50 rounded-lg p-6 text-center">
+            <p class="text-4xl font-bold text-red-600">{{ stats.exams.failed }}</p>
+            <p class="text-sm text-gray-600 mt-2">Failed</p>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <div>
+            <h4 class="text-md font-semibold text-gray-800 mb-3">Performance Metrics</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="bg-gray-100 rounded-lg p-4">
+                <div class="flex justify-between text-sm mb-2">
+                  <span class="text-gray-600">Average Score</span>
+                  <span class="font-semibold text-gray-900">{{ stats.exams.averageScore }}%</span>
+                </div>
+                <div class="w-full bg-gray-300 rounded-full h-3">
+                  <div [class]="getProgressColor(stats.exams.averageScore)" 
+                       [style.width.%]="stats.exams.averageScore" 
+                       class="h-3 rounded-full transition-all"></div>
+                </div>
+              </div>
+              
+              <div class="bg-gray-100 rounded-lg p-4">
+                <div class="flex justify-between text-sm mb-2">
+                  <span class="text-gray-600">Success Rate</span>
+                  <span class="font-semibold text-gray-900">{{ stats.exams.successRate }}%</span>
+                </div>
+                <div class="w-full bg-gray-300 rounded-full h-3">
+                  <div [class]="getProgressColor(stats.exams.successRate)" 
+                       [style.width.%]="stats.exams.successRate" 
+                       class="h-3 rounded-full transition-all"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 class="text-md font-semibold text-gray-800 mb-3">Exam Statistics</h4>
+            <div class="bg-gray-100 rounded-lg p-4">
+              <div class="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p class="text-2xl font-bold text-gray-900">{{ stats.exams.totalAttempts }}</p>
+                  <p class="text-xs text-gray-600 mt-1">Total Attempts</p>
+                </div>
+                <div>
+                  <p class="text-2xl font-bold text-green-600">{{ stats.exams.passed }}</p>
+                  <p class="text-xs text-gray-600 mt-1">Passed</p>
+                </div>
+                <div>
+                  <p class="text-2xl font-bold text-red-600">{{ stats.exams.failed }}</p>
+                  <p class="text-xs text-gray-600 mt-1">Failed</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

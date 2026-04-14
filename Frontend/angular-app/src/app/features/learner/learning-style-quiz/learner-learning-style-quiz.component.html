@@ -1,0 +1,182 @@
+<div class="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 px-4 pb-12" style="padding-top: 100px;">
+  <div class="max-w-3xl mx-auto">
+
+    <!-- ===== INTRO ===== -->
+    <div *ngIf="currentStep === 'intro'" class="text-center pt-8">
+      <div class="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6"
+        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+        <span class="material-icons text-white text-5xl">psychology</span>
+      </div>
+      <h1 class="text-4xl font-bold text-gray-800 mb-4">Learning Style Quiz</h1>
+      <p class="text-gray-600 text-lg mb-8 max-w-xl mx-auto leading-relaxed">
+        Discover your preferred learning style in just <strong>{{ questions.length }} questions</strong>.
+        Your results will help personalize your learning experience.
+      </p>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        <div *ngFor="let styleType of introStyles" class="bg-white rounded-xl p-4 shadow-sm text-center">
+          <span class="text-3xl">{{ getStyleInfo(styleType).emoji }}</span>
+          <p class="text-sm font-semibold text-gray-700 mt-2">{{ getStyleInfo(styleType).label }}</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-5 shadow-sm mb-8 text-left max-w-md mx-auto">
+        <h3 class="font-semibold text-gray-800 mb-3">ℹ️ How it works</h3>
+        <ul class="space-y-2 text-sm text-gray-600">
+          <li class="flex items-center gap-2"><span class="text-indigo-500">✓</span> {{ questions.length }} situational questions</li>
+          <li class="flex items-center gap-2"><span class="text-indigo-500">✓</span> Takes about 3-5 minutes</li>
+          <li class="flex items-center gap-2"><span class="text-indigo-500">✓</span> No right or wrong answers</li>
+          <li class="flex items-center gap-2"><span class="text-indigo-500">✓</span> Save your result to your profile</li>
+        </ul>
+      </div>
+
+      <button (click)="startQuiz()"
+        class="text-white px-10 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition transform hover:scale-105"
+        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+        Start the Quiz →
+      </button>
+    </div>
+
+    <!-- ===== QUIZ ===== -->
+    <div *ngIf="currentStep === 'quiz'" class="pt-6">
+
+      <!-- Progress -->
+      <div class="mb-8">
+        <div class="flex justify-between text-sm text-gray-500 mb-2">
+          <span>Question {{ currentQuestionIndex + 1 }} of {{ questions.length }}</span>
+          <span>{{ getProgress() }}% complete</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-3">
+          <div class="h-3 rounded-full transition-all duration-500"
+            style="background: linear-gradient(to right, #667eea, #764ba2)"
+            [style.width.%]="getProgress()"></div>
+        </div>
+      </div>
+
+      <!-- Question Card -->
+      <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+            {{ currentQuestionIndex + 1 }}
+          </div>
+          <h2 class="text-xl font-bold text-gray-800">{{ questions[currentQuestionIndex].question }}</h2>
+        </div>
+
+        <div class="space-y-3">
+          <button *ngFor="let option of questions[currentQuestionIndex].options"
+            (click)="selectAnswer(option.style)"
+            [class]="answers[currentQuestionIndex] === option.style
+              ? 'border-2 border-indigo-500 bg-indigo-50 text-indigo-800'
+              : 'border-2 border-gray-200 bg-white text-gray-700 hover:border-indigo-300 hover:bg-indigo-50'"
+            class="w-full text-left px-5 py-4 rounded-xl transition-all duration-200 font-medium text-sm flex items-center gap-3">
+            <span class="text-xl">{{ option.text.split(' ')[0] }}</span>
+            <span>{{ option.text.substring(option.text.indexOf(' ') + 1) }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="flex justify-between">
+        <button *ngIf="currentQuestionIndex > 0" (click)="currentQuestionIndex = currentQuestionIndex - 1"
+          class="px-5 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition text-sm">
+          ← Previous
+        </button>
+        <div></div>
+        <button *ngIf="answers[currentQuestionIndex] && currentQuestionIndex < questions.length - 1"
+          (click)="currentQuestionIndex = currentQuestionIndex + 1"
+          class="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm">
+          Next →
+        </button>
+        <button *ngIf="answers[currentQuestionIndex] && currentQuestionIndex === questions.length - 1"
+          (click)="calculateResult()"
+          class="px-6 py-2 text-white rounded-lg font-semibold transition text-sm"
+          style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+          See my result ✨
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== RESULT ===== -->
+    <div *ngIf="currentStep === 'result' && result" class="pt-6">
+
+      <!-- Result Header -->
+      <div class="rounded-2xl p-8 text-center mb-6 shadow-lg"
+        [style.background]="'linear-gradient(135deg, ' + getStyleInfo(result).color + '22, ' + getStyleInfo(result).color + '44)'">
+        <div class="text-6xl mb-4">{{ getStyleInfo(result).emoji }}</div>
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">You are a</h1>
+        <h2 class="text-4xl font-bold mb-3" [style.color]="getStyleInfo(result).color">
+          {{ getStyleInfo(result).label }}
+        </h2>
+        <p class="text-gray-600 text-base leading-relaxed max-w-lg mx-auto">
+          {{ getStyleInfo(result).description }}
+        </p>
+      </div>
+
+      <!-- Score breakdown -->
+      <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        <h3 class="font-bold text-gray-800 mb-4">📊 Your Score Breakdown</h3>
+        <div class="space-y-3">
+          <div *ngFor="let score of getScoreBreakdown()">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-sm font-medium text-gray-700">
+                {{ getStyleInfo(score.style).emoji }} {{ getStyleInfo(score.style).label }}
+              </span>
+              <span class="text-sm font-bold" [style.color]="getStyleInfo(score.style).color">
+                {{ score.count }}/{{ questions.length }} ({{ score.percentage }}%)
+              </span>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-3">
+              <div class="h-3 rounded-full transition-all duration-700"
+                [style.background-color]="getStyleInfo(score.style).color"
+                [style.width.%]="score.percentage"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Strengths & Tips -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+          <h3 class="font-bold text-gray-800 mb-4">💪 Your Strengths</h3>
+          <ul class="space-y-2">
+            <li *ngFor="let s of getStyleInfo(result).strengths" class="flex items-start gap-2 text-sm text-gray-700">
+              <span [style.color]="getStyleInfo(result).color" class="mt-0.5 font-bold">✓</span> {{ s }}
+            </li>
+          </ul>
+        </div>
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+          <h3 class="font-bold text-gray-800 mb-4">💡 Learning Tips</h3>
+          <ul class="space-y-2">
+            <li *ngFor="let tip of getStyleInfo(result).tips" class="flex items-start gap-2 text-sm text-gray-700">
+              <span [style.color]="getStyleInfo(result).color" class="mt-0.5">→</span> {{ tip }}
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Save / Retake -->
+      <div class="bg-white rounded-2xl shadow-lg p-6 text-center">
+        <div *ngIf="saveSuccess" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-4">
+          ✅ Result saved! Redirecting to your profile...
+        </div>
+        <div *ngIf="saveError" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
+          {{ saveError }}
+        </div>
+
+        <div *ngIf="!saveSuccess" class="flex flex-col sm:flex-row gap-3 justify-center">
+          <button (click)="saveResult()" [disabled]="isSaving"
+            class="text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition disabled:opacity-50"
+            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+            {{ isSaving ? 'Saving...' : '💾 Save to my profile' }}
+          </button>
+          <button (click)="retakeQuiz()"
+            class="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition">
+            🔄 Retake the quiz
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

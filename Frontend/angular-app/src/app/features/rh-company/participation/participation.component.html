@@ -1,0 +1,40 @@
+<div class="container mx-auto px-4 py-6">
+  <h2 class="text-2xl font-bold text-gray-900 mb-6">Participation aux Formations</h2>
+  <div *ngIf="loading" class="flex justify-center py-12">
+    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+  </div>
+  <div *ngIf="enrollments.length > 0" class="mb-6 bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+    <h3 class="font-semibold text-indigo-800 mb-2">Mes Inscriptions ({{ enrollments.length }})</h3>
+    <div class="flex flex-wrap gap-2">
+      <span *ngFor="let e of enrollments" class="text-xs bg-white border border-indigo-200 text-indigo-700 px-3 py-1 rounded-full">Formation #{{ e.trainingId }}</span>
+    </div>
+  </div>
+  <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div *ngFor="let training of trainings" class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition">
+      <div class="flex items-start justify-between mb-3">
+        <h3 class="font-semibold text-gray-900 text-base">{{ training.title }}</h3>
+        <span class="text-xs px-2 py-1 rounded-full ml-2" [class]="statusColor(training.status)">{{ training.status }}</span>
+      </div>
+      <p *ngIf="training.description" class="text-xs text-gray-500 line-clamp-2 mb-4">{{ training.description }}</p>
+      <div class="flex gap-2">
+        <button *ngIf="!isEnrolled(training.id)" (click)="openEnroll(training)" class="flex-1 bg-indigo-600 text-white text-sm py-2 rounded-lg hover:bg-indigo-700 transition">S inscrire</button>
+        <button *ngIf="isEnrolled(training.id)" (click)="unenroll(training.id)" class="flex-1 bg-red-50 text-red-600 text-sm py-2 rounded-lg hover:bg-red-100 transition">Se desinscrire</button>
+        <span *ngIf="isEnrolled(training.id)" class="text-xs bg-green-100 text-green-700 px-3 py-2 rounded-lg">Inscrit</span>
+      </div>
+    </div>
+    <div *ngIf="trainings.length===0" class="col-span-3 text-center py-16 text-gray-400">
+      <p class="text-5xl mb-3">??</p>
+      <p>Aucune formation disponible</p>
+    </div>
+  </div>
+</div>
+<div *ngIf="showEnrollModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+    <h3 class="text-xl font-bold text-gray-900 mb-2">Confirmer l inscription</h3>
+    <p class="text-sm text-gray-500 mb-5">Formation : <span class="font-medium text-gray-900">{{ selectedTraining?.title }}</span></p>
+    <div class="flex gap-3">
+      <button (click)="showEnrollModal=false" class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm">Annuler</button>
+      <button (click)="enroll()" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg text-sm font-medium">Confirmer</button>
+    </div>
+  </div>
+</div>

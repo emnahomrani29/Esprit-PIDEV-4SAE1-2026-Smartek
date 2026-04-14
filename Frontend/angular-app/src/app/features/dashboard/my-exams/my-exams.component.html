@@ -1,0 +1,414 @@
+<div class="w-full p-6">
+  <!-- Header -->
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">Mes Quiz & Examens</h1>
+    <p class="text-gray-600">Quiz débloqués après les cours, Examens débloqués après les formations</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage && !isLoading" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage">
+    <!-- Quiz Section -->
+    <div class="mb-8">
+      <div class="flex items-center mb-4">
+        <span class="material-icons text-primary mr-2">quiz</span>
+        <h2 class="text-2xl font-bold text-gray-800">Quiz (débloqués après les cours)</h2>
+      </div>
+      
+      <div *ngIf="quizzes.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div *ngFor="let exam of quizzes" 
+             class="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden"
+             [class.opacity-60]="exam.isLocked">
+          
+          <!-- Quiz Header -->
+          <div class="h-32 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center relative">
+            <span class="material-icons text-blue-600" style="font-size: 64px;">
+              {{ getExamStatusIcon(exam) }}
+            </span>
+            <div class="absolute top-3 right-3">
+              <span [class]="'px-3 py-1 rounded-full text-xs font-semibold ' + getExamStatusColor(exam)">
+                {{ getExamStatusLabel(exam) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Quiz Content -->
+          <div class="p-6">
+            <div class="flex items-center mb-2">
+              <span class="material-icons text-blue-600 text-sm mr-1">quiz</span>
+              <span class="text-xs font-semibold text-blue-600 uppercase">Quiz</span>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">{{ exam.title }}</h3>
+            
+            <!-- Associated Course -->
+            <div *ngIf="exam.courseName" class="flex items-center gap-2 mb-3 p-2 bg-blue-50 rounded-lg">
+              <span class="material-icons text-blue-600 text-sm">school</span>
+              <span class="text-sm text-blue-800 font-medium">Cours: {{ exam.courseName }}</span>
+            </div>
+            
+            <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ exam.description }}</p>
+
+            <!-- Quiz Info -->
+            <div class="space-y-2 mb-4">
+              <div class="flex items-center text-sm text-gray-600">
+                <span class="material-icons text-sm mr-2">schedule</span>
+                <span>Durée: {{ exam.duration }} minutes</span>
+              </div>
+              <div class="flex items-center text-sm text-gray-600">
+                <span class="material-icons text-sm mr-2">grade</span>
+                <span>Note de passage: {{ exam.passingScore }}%</span>
+              </div>
+              
+              <!-- Score Display -->
+              <div *ngIf="exam.hasAttempted && exam.bestScore !== null" [class]="'p-3 rounded-lg border-2 ' + getScoreBgColor(exam)">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm font-semibold text-gray-700">Votre meilleur score</span>
+                  <span class="material-icons text-sm" [class]="getScoreColor(exam)">
+                    {{ getScorePercentage(exam) >= exam.passingScore ? 'check_circle' : 'cancel' }}
+                  </span>
+                </div>
+                <div class="flex items-baseline gap-2">
+                  <span [class]="'text-3xl font-bold ' + getScoreColor(exam)">{{ exam.bestScore }}</span>
+                  <span class="text-gray-600">/ {{ exam.totalMarks }} points</span>
+                </div>
+                <div class="mt-2 flex items-center justify-between">
+                  <span [class]="'text-lg font-semibold ' + getScoreColor(exam)">{{ getScorePercentage(exam) }}%</span>
+                  <span class="text-xs text-gray-600">{{ exam.attemptsCount }} tentative(s)</span>
+                </div>
+                <div class="mt-2">
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div [class]="'h-full rounded-full transition-all ' + (getScorePercentage(exam) >= exam.passingScore ? 'bg-green-500' : 'bg-red-500')"
+                         [style.width.%]="getScorePercentage(exam)"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Button -->
+            <button 
+              (click)="startExam(exam)"
+              [disabled]="exam.isLocked || exam.hasAttempted"
+              [class]="exam.isLocked || exam.hasAttempted
+                ? 'w-full bg-gray-300 text-gray-500 py-3 px-4 rounded-lg font-semibold cursor-not-allowed flex items-center justify-center'
+                : 'w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center'">
+              <span class="material-icons text-sm mr-2">
+                {{ exam.isLocked ? 'lock' : exam.hasAttempted ? 'check_circle' : 'play_arrow' }}
+              </span>
+              {{ exam.isLocked ? 'Terminez le cours' : exam.hasAttempted ? 'Quiz terminé' : 'Commencer le quiz' }}
+            </button>
+
+            <!-- Lock Message -->
+            <div *ngIf="exam.isLocked" class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p class="text-xs text-yellow-800 flex items-start">
+                <span class="material-icons text-sm mr-1">info</span>
+                <span>Complétez le cours associé pour débloquer ce quiz</span>
+              </p>
+            </div>
+            
+            <!-- Already Attempted Message -->
+            <div *ngIf="exam.hasAttempted" class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p class="text-xs text-blue-800 flex items-start">
+                <span class="material-icons text-sm mr-1">info</span>
+                <span>Vous avez déjà passé ce quiz. Votre score est affiché ci-dessus.</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="quizzes.length === 0" class="text-center py-8 bg-gray-50 rounded-lg">
+        <span class="material-icons text-4xl text-gray-300 mb-2">quiz</span>
+        <p class="text-gray-500">Aucun quiz disponible</p>
+      </div>
+    </div>
+
+    <!-- Exams Section -->
+    <div>
+      <div class="flex items-center mb-4">
+        <span class="material-icons text-accent mr-2">assignment</span>
+        <h2 class="text-2xl font-bold text-gray-800">Examens (débloqués après les formations)</h2>
+      </div>
+      
+      <div *ngIf="exams.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div *ngFor="let exam of exams" 
+             class="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden"
+             [class.opacity-60]="exam.isLocked">
+          
+          <!-- Exam Header -->
+          <div class="h-32 bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center relative">
+            <span class="material-icons text-purple-600" style="font-size: 64px;">
+              {{ getExamStatusIcon(exam) }}
+            </span>
+            <div class="absolute top-3 right-3">
+              <span [class]="'px-3 py-1 rounded-full text-xs font-semibold ' + getExamStatusColor(exam)">
+                {{ getExamStatusLabel(exam) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Exam Content -->
+          <div class="p-6">
+            <div class="flex items-center mb-2">
+              <span class="material-icons text-purple-600 text-sm mr-1">assignment</span>
+              <span class="text-xs font-semibold text-purple-600 uppercase">Examen</span>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">{{ exam.title }}</h3>
+            <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ exam.description }}</p>
+
+            <!-- Exam Info -->
+            <div class="space-y-2 mb-4">
+              <div class="flex items-center text-sm text-gray-600">
+                <span class="material-icons text-sm mr-2">schedule</span>
+                <span>Durée: {{ exam.duration }} minutes</span>
+              </div>
+              <div class="flex items-center text-sm text-gray-600">
+                <span class="material-icons text-sm mr-2">grade</span>
+                <span>Note de passage: {{ exam.passingScore }}%</span>
+              </div>
+              
+              <!-- Score Display -->
+              <div *ngIf="exam.hasAttempted && exam.bestScore !== null" [class]="'p-3 rounded-lg border-2 ' + getScoreBgColor(exam)">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm font-semibold text-gray-700">Votre meilleur score</span>
+                  <span class="material-icons text-sm" [class]="getScoreColor(exam)">
+                    {{ getScorePercentage(exam) >= exam.passingScore ? 'check_circle' : 'cancel' }}
+                  </span>
+                </div>
+                <div class="flex items-baseline gap-2">
+                  <span [class]="'text-3xl font-bold ' + getScoreColor(exam)">{{ exam.bestScore }}</span>
+                  <span class="text-gray-600">/ {{ exam.totalMarks }} points</span>
+                </div>
+                <div class="mt-2 flex items-center justify-between">
+                  <span [class]="'text-lg font-semibold ' + getScoreColor(exam)">{{ getScorePercentage(exam) }}%</span>
+                  <span class="text-xs text-gray-600">{{ exam.attemptsCount }} tentative(s)</span>
+                </div>
+                <div class="mt-2">
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div [class]="'h-full rounded-full transition-all ' + (getScorePercentage(exam) >= exam.passingScore ? 'bg-green-500' : 'bg-red-500')"
+                         [style.width.%]="getScorePercentage(exam)"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Button -->
+            <button 
+              (click)="startExam(exam)"
+              [disabled]="exam.isLocked || exam.hasAttempted"
+              [class]="exam.isLocked || exam.hasAttempted
+                ? 'w-full bg-gray-300 text-gray-500 py-3 px-4 rounded-lg font-semibold cursor-not-allowed flex items-center justify-center'
+                : 'w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center'">
+              <span class="material-icons text-sm mr-2">
+                {{ exam.isLocked ? 'lock' : exam.hasAttempted ? 'check_circle' : 'play_arrow' }}
+              </span>
+              {{ exam.isLocked ? 'Terminez la formation' : exam.hasAttempted ? 'Examen terminé' : 'Commencer l\'examen' }}
+            </button>
+
+            <!-- Lock Message -->
+            <div *ngIf="exam.isLocked" class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p class="text-xs text-yellow-800 flex items-start">
+                <span class="material-icons text-sm mr-1">info</span>
+                <span>Complétez toute la formation pour débloquer cet examen</span>
+              </p>
+            </div>
+            
+            <!-- Already Attempted Message -->
+            <div *ngIf="exam.hasAttempted" class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p class="text-xs text-blue-800 flex items-start">
+                <span class="material-icons text-sm mr-1">info</span>
+                <span>Vous avez déjà passé cet examen. Votre score est affiché ci-dessus.</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="exams.length === 0" class="text-center py-8 bg-gray-50 rounded-lg">
+        <span class="material-icons text-4xl text-gray-300 mb-2">assignment</span>
+        <p class="text-gray-500">Aucun examen disponible</p>
+      </div>
+    </div>
+
+    <!-- Empty State (both empty) -->
+    <div *ngIf="quizzes.length === 0 && exams.length === 0" 
+         class="text-center py-12">
+      <span class="material-icons text-6xl text-gray-300 mb-4">assignment</span>
+      <p class="text-gray-500 text-lg mb-4">Aucun quiz ou examen disponible</p>
+      <p class="text-gray-400 text-sm mb-6">Inscrivez-vous à une formation pour accéder aux quiz et examens</p>
+      <a 
+        routerLink="/dashboard/training"
+        class="inline-flex items-center bg-gradient-to-r from-primary to-accent text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all">
+        <span class="material-icons mr-2">search</span>
+        Découvrir les formations
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Exam Taking Modal -->
+<div *ngIf="showExamModal && currentExam" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden flex flex-col">
+    <!-- Modal Header -->
+    <div class="bg-gradient-to-r from-primary to-accent text-white p-6 flex justify-between items-center">
+      <div>
+        <h2 class="text-2xl font-bold">{{ currentExam.title }}</h2>
+        <p class="text-sm opacity-90 mt-1">Question {{ currentQuestionIndex + 1 }} sur {{ examQuestions.length }}</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <!-- Timer -->
+        <div class="flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg">
+          <span class="material-icons">timer</span>
+          <span class="text-xl font-mono font-bold">{{ getFormattedTime() }}</span>
+        </div>
+        <button (click)="closeExamModal()" class="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-all">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="bg-gray-200 h-2">
+      <div class="bg-green-500 h-full transition-all duration-300" 
+           [style.width.%]="(getAnsweredQuestionsCount() / examQuestions.length) * 100"></div>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="flex-1 overflow-y-auto p-6">
+      <form [formGroup]="examForm">
+        <div formArrayName="answers">
+          <!-- Current Question -->
+          <div class="mb-6">
+            <div class="flex items-start gap-3 mb-4">
+              <div class="flex-shrink-0 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center font-bold">
+                {{ currentQuestionIndex + 1 }}
+              </div>
+              <div class="flex-1">
+                <p class="text-lg font-semibold text-gray-800 mb-2">{{ getCurrentQuestion().questionText }}</p>
+                <div class="flex items-center gap-4 text-sm text-gray-600">
+                  <span class="flex items-center gap-1">
+                    <span class="material-icons text-sm">stars</span>
+                    {{ getCurrentQuestion().marks }} point(s)
+                  </span>
+                  <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
+                    {{ getCurrentQuestion().questionType === 'MULTIPLE_CHOICE' ? 'Choix multiples' : 
+                       getCurrentQuestion().questionType === 'TRUE_FALSE' ? 'Vrai/Faux' : 'Réponse courte' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Answer Options -->
+            <div class="ml-13">
+              <!-- Multiple Choice / True False -->
+              <div *ngIf="isMultipleChoiceQuestion()" class="space-y-3">
+                <div *ngFor="let option of getCurrentQuestion().options; let i = index"
+                     (click)="toggleOption(i)"
+                     [class]="'p-4 border-2 rounded-lg cursor-pointer transition-all ' + 
+                              (isOptionSelected(i) ? 'border-primary bg-primary bg-opacity-10' : 'border-gray-300 hover:border-primary hover:bg-gray-50')">
+                  <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" 
+                           [checked]="isOptionSelected(i)"
+                           class="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary"
+                           (click)="$event.stopPropagation()">
+                    <span class="text-gray-800 font-medium">{{ option.optionText }}</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Short Answer -->
+              <div *ngIf="!isMultipleChoiceQuestion()">
+                <textarea 
+                  [formControlName]="currentQuestionIndex"
+                  rows="4"
+                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                  placeholder="Entrez votre réponse ici..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <!-- Question Navigator -->
+      <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+        <h3 class="text-sm font-semibold text-gray-700 mb-3">Navigation rapide</h3>
+        <div class="grid grid-cols-10 gap-2">
+          <button *ngFor="let question of examQuestions; let i = index"
+                  (click)="goToQuestion(i)"
+                  [class]="'w-10 h-10 rounded-lg font-semibold transition-all ' +
+                           (i === currentQuestionIndex ? 'bg-primary text-white ring-2 ring-primary ring-offset-2' :
+                            isQuestionAnswered(i) ? 'bg-green-500 text-white hover:bg-green-600' :
+                            'bg-gray-200 text-gray-600 hover:bg-gray-300')">
+            {{ i + 1 }}
+          </button>
+        </div>
+        <div class="flex items-center gap-4 mt-3 text-xs text-gray-600">
+          <div class="flex items-center gap-1">
+            <div class="w-4 h-4 bg-green-500 rounded"></div>
+            <span>Répondu</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <div class="w-4 h-4 bg-gray-200 rounded"></div>
+            <span>Non répondu</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <div class="w-4 h-4 bg-primary rounded ring-2 ring-primary ring-offset-1"></div>
+            <span>Question actuelle</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="border-t border-gray-200 p-6 bg-gray-50">
+      <div class="flex justify-between items-center">
+        <div class="text-sm text-gray-600">
+          <span class="font-semibold">{{ getAnsweredQuestionsCount() }}</span> / {{ examQuestions.length }} questions répondues
+        </div>
+        <div class="flex gap-3">
+          <button 
+            *ngIf="currentQuestionIndex > 0"
+            (click)="previousQuestion()"
+            class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-all flex items-center gap-2">
+            <span class="material-icons">arrow_back</span>
+            Précédent
+          </button>
+          
+          <button 
+            *ngIf="currentQuestionIndex < examQuestions.length - 1"
+            (click)="nextQuestion()"
+            class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-all flex items-center gap-2">
+            Suivant
+            <span class="material-icons">arrow_forward</span>
+          </button>
+
+          <button 
+            *ngIf="currentQuestionIndex === examQuestions.length - 1"
+            (click)="submitExam()"
+            [disabled]="isSubmitting"
+            [class]="'px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 ' +
+                     (canSubmit() && !isSubmitting ? 'bg-green-500 text-white hover:bg-green-600' : 
+                      'bg-yellow-500 text-white hover:bg-yellow-600')">
+            <span class="material-icons">{{ isSubmitting ? 'hourglass_empty' : 'check_circle' }}</span>
+            {{ isSubmitting ? 'Soumission...' : 'Soumettre l\'examen' }}
+          </button>
+        </div>
+      </div>
+      
+      <div *ngIf="!canSubmit() && currentQuestionIndex === examQuestions.length - 1" 
+           class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <p class="text-sm text-yellow-800 flex items-start">
+          <span class="material-icons text-sm mr-2">warning</span>
+          <span>Attention : Il reste {{ examQuestions.length - getAnsweredQuestionsCount() }} question(s) sans réponse. Vous pouvez quand même soumettre.</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

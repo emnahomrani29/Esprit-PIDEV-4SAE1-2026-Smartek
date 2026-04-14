@@ -1,0 +1,206 @@
+<div class="container mx-auto p-6">
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">Gestion des Entretiens</h1>
+    <p class="text-gray-600">Planifiez et gérez les entretiens pour les formateurs</p>
+  </div>
+
+  <!-- Filtres -->
+  <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Type d'entretien</label>
+        <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+          <option>Tous</option>
+          <option>Recrutement Trainer</option>
+          <option>Évaluation Performance</option>
+          <option>Suivi Pédagogique</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+        <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+          <option>Tous</option>
+          <option>Planifié</option>
+          <option>En cours</option>
+          <option>Terminé</option>
+          <option>Annulé</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Rechercher</label>
+        <input type="text" placeholder="Nom du formateur..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions rapides -->
+  <div class="flex gap-4 mb-6">
+    <button class="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2">
+      <span>➕</span>
+      Nouvel Entretien Trainer
+    </button>
+    <button class="px-6 py-3 bg-white border-2 border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50 transition-colors">
+      📊 Statistiques
+    </button>
+  </div>
+
+  <!-- Liste des entretiens -->
+  <div class="grid grid-cols-1 gap-4">
+    <!-- Entretien à venir -->
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
+      <div class="flex items-start justify-between">
+        <div class="flex-1">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-semibold">
+              Planifié
+            </span>
+            <span class="text-sm text-gray-500">Recrutement Trainer</span>
+          </div>
+          
+          <h3 class="text-xl font-semibold text-gray-800 mb-2">
+            Entretien - Charlie Trainer
+          </h3>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div class="flex items-center gap-2 text-gray-600">
+              <span>📅</span>
+              <span>28 Février 2026 - 14h00</span>
+            </div>
+            <div class="flex items-center gap-2 text-gray-600">
+              <span>⏱️</span>
+              <span>Durée: 1h30</span>
+            </div>
+            <div class="flex items-center gap-2 text-gray-600">
+              <span>📍</span>
+              <span>Salle de réunion A / Visio</span>
+            </div>
+            <div class="flex items-center gap-2 text-gray-600">
+              <span>👤</span>
+              <span>Intervieweur: Diana RH</span>
+            </div>
+          </div>
+
+          <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+            <p class="text-sm text-gray-700">
+              <strong>Objectif:</strong> Évaluation des compétences pédagogiques et techniques pour le poste de formateur Angular
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2 ml-4">
+          <button class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm">
+            Modifier
+          </button>
+          <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
+            Démarrer
+          </button>
+          <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">
+            Annuler
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Entretien terminé -->
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+      <div class="flex items-start justify-between">
+        <div class="flex-1">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-semibold">
+              Terminé
+            </span>
+            <span class="text-sm text-gray-500">Évaluation Performance</span>
+          </div>
+          
+          <h3 class="text-xl font-semibold text-gray-800 mb-2">
+            Entretien - Marie Formatrice
+          </h3>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div class="flex items-center gap-2 text-gray-600">
+              <span>📅</span>
+              <span>15 Février 2026 - 10h00</span>
+            </div>
+            <div class="flex items-center gap-2 text-gray-600">
+              <span>⏱️</span>
+              <span>Durée: 1h00</span>
+            </div>
+            <div class="flex items-center gap-2 text-gray-600">
+              <span>✅</span>
+              <span>Résultat: Excellent</span>
+            </div>
+            <div class="flex items-center gap-2 text-gray-600">
+              <span>⭐</span>
+              <span>Note: 4.5/5</span>
+            </div>
+          </div>
+
+          <div class="mt-4 p-3 bg-green-50 rounded-lg">
+            <p class="text-sm text-gray-700">
+              <strong>Conclusion:</strong> Excellente performance pédagogique. Recommandé pour des formations avancées.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2 ml-4">
+          <button class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm">
+            Voir Détails
+          </button>
+          <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
+            Rapport
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Entretien en attente -->
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+      <div class="flex items-start justify-between">
+        <div class="flex-1">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
+              À planifier
+            </span>
+            <span class="text-sm text-gray-500">Suivi Pédagogique</span>
+          </div>
+          
+          <h3 class="text-xl font-semibold text-gray-800 mb-2">
+            Entretien - Jean Formateur
+          </h3>
+          
+          <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+            <p class="text-sm text-gray-700">
+              <strong>Action requise:</strong> Planifier un entretien de suivi pédagogique pour évaluer les nouvelles méthodes d'enseignement
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2 ml-4">
+          <button class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm">
+            Planifier
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistiques rapides -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+    <div class="bg-white rounded-lg shadow-md p-4 text-center">
+      <div class="text-3xl font-bold text-purple-600">12</div>
+      <div class="text-sm text-gray-600 mt-1">Entretiens ce mois</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-4 text-center">
+      <div class="text-3xl font-bold text-orange-600">5</div>
+      <div class="text-sm text-gray-600 mt-1">À venir</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-4 text-center">
+      <div class="text-3xl font-bold text-green-600">7</div>
+      <div class="text-sm text-gray-600 mt-1">Terminés</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-4 text-center">
+      <div class="text-3xl font-bold text-blue-600">3</div>
+      <div class="text-sm text-gray-600 mt-1">À planifier</div>
+    </div>
+  </div>
+</div>

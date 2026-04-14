@@ -1,0 +1,292 @@
+version: '3.8'
+
+services:
+
+  # ─────────────────────────────────────────
+  # BASE DE DONNÉES MySQL
+  # ─────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: smartek-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - smartek-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ─────────────────────────────────────────
+  # EUREKA SERVER (Service Discovery)
+  # ─────────────────────────────────────────
+  eureka-server:
+    build:
+      context: ./Backend/eureka-server
+      dockerfile: Dockerfile
+    container_name: smartek-eureka
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+    networks:
+      - smartek-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+  # ─────────────────────────────────────────
+  # CONFIG SERVER
+  # ─────────────────────────────────────────
+  config-server:
+    build:
+      context: ./Backend/config-server
+      dockerfile: Dockerfile
+    container_name: smartek-config
+    restart: unless-stopped
+    ports:
+      - "8888:8888"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # AUTH SERVICE
+  # ─────────────────────────────────────────
+  auth-service:
+    build:
+      context: ./Backend/auth-service
+      dockerfile: Dockerfile
+    container_name: smartek-auth
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartek_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # EVENT SERVICE
+  # ─────────────────────────────────────────
+  event-service:
+    build:
+      context: ./Backend/event-service
+      dockerfile: Dockerfile
+    container_name: smartek-event
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartek_events?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # PLANNING SERVICE
+  # ─────────────────────────────────────────
+  planning-service:
+    build:
+      context: ./Backend/planning-service
+      dockerfile: Dockerfile
+    container_name: smartek-planning
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartek_planning?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # TRAINING SERVICE
+  # ─────────────────────────────────────────
+  training-service:
+    build:
+      context: ./Backend/training-service
+      dockerfile: Dockerfile
+    container_name: smartek-training
+    restart: unless-stopped
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/training_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # OFFERS SERVICE
+  # ─────────────────────────────────────────
+  offers-service:
+    build:
+      context: ./Backend/offers-service
+      dockerfile: Dockerfile
+    container_name: smartek-offers
+    restart: unless-stopped
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/offers_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # EXAM SERVICE
+  # ─────────────────────────────────────────
+  exam-service:
+    build:
+      context: ./Backend/exam-service
+      dockerfile: Dockerfile
+    container_name: smartek-exam
+    restart: unless-stopped
+    ports:
+      - "8087:8087"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/exam_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # COURSE SERVICE
+  # ─────────────────────────────────────────
+  course-service:
+    build:
+      context: ./Backend/course-service
+      dockerfile: Dockerfile
+    container_name: smartek-course
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/course_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # API GATEWAY
+  # ─────────────────────────────────────────
+  api-gateway:
+    build:
+      context: ./Backend/api-gateway
+      dockerfile: Dockerfile
+    container_name: smartek-gateway
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_CLOUD_GATEWAY_GLOBALCORS_CORSCONFIGURATIONS_[/**]_ALLOWEDORIGINS: "http://localhost:4200,http://frontend:80"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+      course-service:
+        condition: service_started
+      training-service:
+        condition: service_started
+      offers-service:
+        condition: service_started
+      exam-service:
+        condition: service_started
+      event-service:
+        condition: service_started
+      planning-service:
+        condition: service_started
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # FRONTEND Angular
+  # ─────────────────────────────────────────
+  frontend:
+    build:
+      context: ./Frontend/angular-app
+      dockerfile: Dockerfile
+    container_name: smartek-frontend
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - smartek-network
+
+# ─────────────────────────────────────────
+# VOLUMES & NETWORKS
+# ─────────────────────────────────────────
+volumes:
+  mysql_data:
+
+networks:
+  smartek-network:
+    driver: bridge
