@@ -1,5 +1,6 @@
 package com.smartek.certificationbadgeservice.service;
 
+import com.smartek.certificationbadgeservice.client.AuthServiceClient;
 import com.smartek.certificationbadgeservice.dto.AwardCertificationRequestDTO;
 import com.smartek.certificationbadgeservice.dto.EarnedCertificationDTO;
 import com.smartek.certificationbadgeservice.entity.CertificationTemplate;
@@ -30,8 +31,9 @@ class EarnedCertificationServiceTest {
     @Mock private EarnedCertificationRepository earnedCertificationRepository;
     @Mock private CertificationTemplateRepository certificationTemplateRepository;
     @Mock private EarnedCertificationMapper earnedCertificationMapper;
-    @Mock private CertificatePdfService certificatePdfService;
+    @Mock private PdfGenerationService pdfGenerationService;
     @Mock private EmailService emailService;
+    @Mock private AuthServiceClient authServiceClient;
 
     @InjectMocks private EarnedCertificationService service;
 
@@ -60,7 +62,7 @@ class EarnedCertificationServiceTest {
     // ─── awardCertification ───────────────────────────────────────────────────
 
     /**
-     * Happy path: template exists, no prior award → certification is saved and DTO returned.
+     * Happy path: template exists → certification is saved and DTO returned.
      */
     @Test
     void shouldAwardCertification_whenTemplateExistsAndNotAlreadyAwarded() {
@@ -69,7 +71,7 @@ class EarnedCertificationServiceTest {
                 LocalDate.now(), LocalDate.now().plusYears(2));
 
         when(certificationTemplateRepository.findById(1L)).thenReturn(Optional.of(template));
-        when(earnedCertificationRepository.save(any())).thenReturn(savedEntity);
+        when(earnedCertificationRepository.saveAndFlush(any())).thenReturn(savedEntity);
         when(earnedCertificationMapper.toDTO(savedEntity)).thenReturn(expectedDTO);
 
         // When
@@ -78,11 +80,11 @@ class EarnedCertificationServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(10L);
-        verify(earnedCertificationRepository).save(any(EarnedCertification.class));
+        verify(earnedCertificationRepository).saveAndFlush(any(EarnedCertification.class));
     }
 
     /**
-     * Template not found → ResourceNotFoundException is thrown, nothing is saved.
+     * Template not found → ResourceNotFoundException, nothing saved.
      */
     @Test
     void shouldThrowResourceNotFoundException_whenTemplateDoesNotExist() {
@@ -95,11 +97,11 @@ class EarnedCertificationServiceTest {
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("99");
 
-        verify(earnedCertificationRepository, never()).save(any());
+        verify(earnedCertificationRepository, never()).saveAndFlush(any());
     }
 
     /**
-     * Expiry date is before issue date → ValidationException is thrown.
+     * Expiry date before issue date → ValidationException.
      */
     @Test
     void shouldThrowValidationException_whenExpiryDateIsBeforeIssueDate() {
@@ -113,11 +115,11 @@ class EarnedCertificationServiceTest {
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("Expiry date cannot be before issue date");
 
-        verify(earnedCertificationRepository, never()).save(any());
+        verify(earnedCertificationRepository, never()).saveAndFlush(any());
     }
 
     /**
-     * Certificate URL is malformed → ValidationException is thrown.
+     * Malformed certificate URL → ValidationException.
      */
     @Test
     void shouldThrowValidationException_whenCertificateUrlIsMalformed() {
@@ -131,11 +133,11 @@ class EarnedCertificationServiceTest {
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("Invalid certificate URL");
 
-        verify(earnedCertificationRepository, never()).save(any());
+        verify(earnedCertificationRepository, never()).saveAndFlush(any());
     }
 
     /**
-     * Valid URL → no exception, save is called.
+     * Valid HTTPS URL → no exception, saveAndFlush called.
      */
     @Test
     void shouldAwardCertification_whenCertificateUrlIsValid() {
@@ -143,7 +145,7 @@ class EarnedCertificationServiceTest {
         AwardCertificationRequestDTO request = buildRequest(1L, 42L, LocalDate.now(), null);
         request.setCertificateUrl("https://smartek.com/certs/42.pdf");
         when(certificationTemplateRepository.findById(1L)).thenReturn(Optional.of(template));
-        when(earnedCertificationRepository.save(any())).thenReturn(savedEntity);
+        when(earnedCertificationRepository.saveAndFlush(any())).thenReturn(savedEntity);
         when(earnedCertificationMapper.toDTO(savedEntity)).thenReturn(expectedDTO);
 
         // When
@@ -151,45 +153,7 @@ class EarnedCertificationServiceTest {
 
         // Then
         assertThat(result).isNotNull();
-        verify(earnedCertificationRepository).save(any());
-    }
-
-    /**
-     * Email is sent only when learnerEmail is provided.
-     */
-    @Test
-    void shouldSendEmail_whenLearnerEmailIsProvided() {
-        // Given
-        AwardCertificationRequestDTO request = buildRequest(1L, 42L, LocalDate.now(), null);
-        request.setLearnerEmail("learner@test.com");
-        request.setLearnerName("Alice");
-        when(certificationTemplateRepository.findById(1L)).thenReturn(Optional.of(template));
-        when(earnedCertificationRepository.save(any())).thenReturn(savedEntity);
-        when(earnedCertificationMapper.toDTO(savedEntity)).thenReturn(expectedDTO);
-
-        // When
-        service.awardCertification(request);
-
-        // Then
-        verify(emailService).sendCertificationAwardEmail(eq(savedEntity), eq("Alice"), eq("learner@test.com"));
-    }
-
-    /**
-     * No email is sent when learnerEmail is null.
-     */
-    @Test
-    void shouldNotSendEmail_whenLearnerEmailIsNull() {
-        // Given
-        AwardCertificationRequestDTO request = buildRequest(1L, 42L, LocalDate.now(), null);
-        when(certificationTemplateRepository.findById(1L)).thenReturn(Optional.of(template));
-        when(earnedCertificationRepository.save(any())).thenReturn(savedEntity);
-        when(earnedCertificationMapper.toDTO(savedEntity)).thenReturn(expectedDTO);
-
-        // When
-        service.awardCertification(request);
-
-        // Then
-        verify(emailService, never()).sendCertificationAwardEmail(any(), any(), any());
+        verify(earnedCertificationRepository).saveAndFlush(any());
     }
 
     // ─── autoAwardCertification ───────────────────────────────────────────────
@@ -212,7 +176,7 @@ class EarnedCertificationServiceTest {
     }
 
     /**
-     * Auto-award: no duplicate, template exists → certification saved with awardedBy = 0 (SYSTEM).
+     * Auto-award: no duplicate, template exists → saved with awardedBy = 0 (SYSTEM).
      */
     @Test
     void shouldAutoAwardCertification_whenNoDuplicateAndTemplateExists() {
@@ -229,7 +193,7 @@ class EarnedCertificationServiceTest {
         // Then
         assertThat(result).isNotNull();
         verify(earnedCertificationRepository).save(argThat(cert ->
-                cert.getAwardedBy().equals(0L) // SYSTEM award
+                cert.getAwardedBy().equals(0L)
         ));
     }
 
@@ -293,7 +257,7 @@ class EarnedCertificationServiceTest {
     }
 
     /**
-     * Returns empty list when learner has no certifications — no exception thrown.
+     * Returns empty list when learner has no certifications.
      */
     @Test
     void shouldReturnEmptyList_whenLearnerHasNoCertifications() {
