@@ -1,13 +1,13 @@
 ﻿spring:
   application:
     name: certification-badge-service-test
-  
+
   datasource:
     url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     username: sa
-    password: 
+    password:
     driver-class-name: org.h2.Driver
-  
+
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -16,20 +16,58 @@
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
         format_sql: true
-  
+
+  # Disable Flyway — DDL handled by Hibernate in tests
   flyway:
     enabled: false
 
+  # Disable Spring Cloud Config
   cloud:
     config:
       enabled: false
 
+  # Disable mail — no SMTP server on CI
+  mail:
+    host: localhost
+    port: 25
+    username:
+    password:
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+# Disable Eureka — no service registry on CI
 eureka:
   client:
     enabled: false
+    register-with-eureka: false
+    fetch-registry: false
 
-# Logging
+# JWT config required by JwtService
+jwt:
+  secret: test-secret-key-for-ci-only-not-production-use
+  expiration: 86400000
+
+# Internal API key
+internal:
+  api-key: test-api-key
+
+# PDF signing — use dummy values, PDF tests are not run in unit/integration tests
+pdf:
+  signing:
+    keystore-path: classpath:smartek-keystore.p12
+    keystore-password: smartek-dev-2024
+    key-alias: smartek
+
+app:
+  base-url: http://localhost:4200
+
+# Logging — keep quiet on CI
 logging:
   level:
     com.smartek: INFO
-    org.springframework.security: INFO
+    org.springframework.security: WARN
+    org.springframework.cloud: WARN

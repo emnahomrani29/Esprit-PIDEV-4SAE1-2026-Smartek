@@ -28,7 +28,7 @@ jobs:
 
       - name: Run backend unit tests
         working-directory: Backend/certification-badge-service
-        run: mvn test --batch-mode --no-transfer-progress
+        run: mvn test --batch-mode --no-transfer-progress -Dspring.profiles.active=test
 
       - name: Upload Surefire test report
         if: always()
@@ -58,15 +58,9 @@ jobs:
 
       - name: Run frontend unit tests
         working-directory: Frontend/angular-app
-        run: |
-          npx ng test \
-            --watch=false \
-            --browsers=ChromeHeadless \
-            --no-progress \
-            --include="src/app/core/services" \
-            --include="src/app/features/certifications-badges"
+        run: npx ng test --watch=false --browsers=ChromeHeadless --no-progress --include=src/app/core/services --include=src/app/features/certifications-badges
 
-      - name: Upload coverage report
+      - name: Upload test artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
