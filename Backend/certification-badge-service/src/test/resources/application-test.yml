@@ -1,4 +1,4 @@
-spring:
+﻿spring:
   application:
     name: certification-badge-service-test
   
@@ -17,6 +17,9 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
         format_sql: true
   
+  flyway:
+    enabled: false
+
   cloud:
     config:
       enabled: false

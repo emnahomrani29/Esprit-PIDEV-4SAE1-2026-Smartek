@@ -30,7 +30,7 @@ jobs:
         working-directory: Backend/certification-badge-service
         run: mvn test --batch-mode --no-transfer-progress
 
-      - name: Upload test report
+      - name: Upload Surefire test report
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -58,7 +58,13 @@ jobs:
 
       - name: Run frontend unit tests
         working-directory: Frontend/angular-app
-        run: npm test -- --watch=false --browsers=ChromeHeadless --include="src/app/core/services" --include="src/app/features/certifications-badges"
+        run: |
+          npx ng test \
+            --watch=false \
+            --browsers=ChromeHeadless \
+            --no-progress \
+            --include="src/app/core/services" \
+            --include="src/app/features/certifications-badges"
 
       - name: Upload coverage report
         if: always()
