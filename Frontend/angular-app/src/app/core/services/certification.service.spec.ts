@@ -28,7 +28,7 @@ describe('CertificationService', () => {
     issueDate: '2026-01-15',
     expiryDate: '2028-01-15',
     awardedBy: 0,
-    verificationCode: 'cert-xyz-789'
+    verificationId: 'cert-xyz-789'
   };
 
   beforeEach(() => {
@@ -246,7 +246,7 @@ describe('CertificationService', () => {
   it('should fetch earned certification details by id from /details endpoint', () => {
     service.getEarnedCertificationById(10).subscribe(result => {
       expect(result.id).toBe(10);
-      expect(result.verificationCode).toBe('cert-xyz-789');
+    expect(result.verificationId).toBe('cert-xyz-789');
     });
 
     const req = httpMock.expectOne(`${EARNED}/10/details`);

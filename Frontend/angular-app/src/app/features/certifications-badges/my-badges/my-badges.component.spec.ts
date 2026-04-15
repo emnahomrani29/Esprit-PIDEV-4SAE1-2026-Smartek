@@ -1,14 +1,10 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { MyBadgesComponent } from './my-badges.component';
 import { BadgeService } from '../../../core/services/badge.service';
 import { AuthService, AuthResponse } from '../../../core/services/auth.service';
 import { EarnedBadge, BadgeTemplate } from '../../../core/models/badge.model';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-
-// Prevent QRCode from running in test environment
-jest: undefined; // no-op — qrcode is mocked below
-const QRCodeMock = { toDataURL: jasmine.createSpy('toDataURL').and.resolveTo('data:image/png;base64,mock') };
 
 describe('MyBadgesComponent', () => {
   let component: MyBadgesComponent;
@@ -39,20 +35,22 @@ describe('MyBadgesComponent', () => {
     learnerId: 42,
     awardDate: new Date('2026-01-15'),
     awardedBy: 0,
-    verificationCode: 'abc-verify-123'
+    verificationId: 'abc-verify-123'
   };
 
-  const mockBadgeNoVerification: EarnedBadge = {
+  const mockBadgeSilver: EarnedBadge = {
     id: 6,
     badgeTemplate: { ...mockTemplate, minimumScore: 75, name: 'Silver Badge' },
     learnerId: 42,
     awardDate: new Date('2026-02-01'),
     awardedBy: 1
-    // no verificationCode
   };
 
   beforeEach(async () => {
-    badgeServiceSpy = jasmine.createSpyObj('BadgeService', ['getBadgesByLearner']);
+    badgeServiceSpy = jasmine.createSpyObj('BadgeService', [
+      'getBadgesByLearner',
+      'shareOnLinkedIn'
+    ]);
     authServiceSpy = jasmine.createSpyObj('AuthService', ['getUserInfo']);
 
     await TestBed.configureTestingModule({
@@ -119,93 +117,9 @@ describe('MyBadgesComponent', () => {
     expect(component.loading).toBeFalse();
   });
 
-  it('should set loading to false even when API call fails', () => {
-    authServiceSpy.getUserInfo.and.returnValue(mockUser);
-    badgeServiceSpy.getBadgesByLearner.and.returnValue(throwError(() => new Error('error')));
-
-    fixture.detectChanges();
-
-    expect(component.loading).toBeFalse();
-  });
-
-  // ─── getVerificationUrl ────────────────────────────────────────────────────
-
-  it('should return correct verification URL when badge has verificationCode', () => {
-    authServiceSpy.getUserInfo.and.returnValue(mockUser);
-    badgeServiceSpy.getBadgesByLearner.and.returnValue(of([]));
-    fixture.detectChanges();
-
-    const url = component.getVerificationUrl(mockBadge);
-
-    expect(url).toBe('http://localhost:4200/verify/abc-verify-123');
-  });
-
-  it('should return empty string when badge has no verificationCode', () => {
-    authServiceSpy.getUserInfo.and.returnValue(mockUser);
-    badgeServiceSpy.getBadgesByLearner.and.returnValue(of([]));
-    fixture.detectChanges();
-
-    const url = component.getVerificationUrl(mockBadgeNoVerification);
-
-    expect(url).toBe('');
-  });
-
-  // ─── shareOnLinkedIn ───────────────────────────────────────────────────────
-
-  it('should open LinkedIn share URL when shareOnLinkedIn is called', () => {
-    authServiceSpy.getUserInfo.and.returnValue(mockUser);
-    badgeServiceSpy.getBadgesByLearner.and.returnValue(of([]));
-    fixture.detectChanges();
-
-    spyOn(window, 'open');
-    component.shareOnLinkedIn(mockBadge);
-
-    const expectedUrl = encodeURIComponent('http://localhost:4200/verify/abc-verify-123');
-    expect(window.open).toHaveBeenCalledWith(
-      `https://www.linkedin.com/sharing/share-offsite/?url=${expectedUrl}`,
-      '_blank'
-    );
-  });
-
-  it('should open LinkedIn with empty encoded URL when badge has no verificationCode', () => {
-    authServiceSpy.getUserInfo.and.returnValue(mockUser);
-    badgeServiceSpy.getBadgesByLearner.and.returnValue(of([]));
-    fixture.detectChanges();
-
-    spyOn(window, 'open');
-    component.shareOnLinkedIn(mockBadgeNoVerification);
-
-    expect(window.open).toHaveBeenCalledWith(
-      `https://www.linkedin.com/sharing/share-offsite/?url=`,
-      '_blank'
-    );
-  });
-
-  // ─── badge tier logic (via template data) ─────────────────────────────────
-
-  it('should classify badge as Gold when minimumScore >= 90', () => {
-    // Gold badge has minimumScore = 90
-    expect(mockBadge.badgeTemplate.minimumScore).toBeGreaterThanOrEqual(90);
-  });
-
-  it('should classify badge as Silver when minimumScore is between 75 and 89', () => {
-    expect(mockBadgeNoVerification.badgeTemplate.minimumScore).toBeGreaterThanOrEqual(75);
-    expect(mockBadgeNoVerification.badgeTemplate.minimumScore).toBeLessThan(90);
-  });
-
-  it('should classify badge as Bronze when minimumScore is below 75', () => {
-    const bronzeBadge: EarnedBadge = {
-      ...mockBadge,
-      badgeTemplate: { ...mockTemplate, minimumScore: 60, name: 'Bronze Badge' }
-    };
-    expect(bronzeBadge.badgeTemplate.minimumScore).toBeLessThan(75);
-  });
-
-  // ─── multiple badges ───────────────────────────────────────────────────────
-
   it('should load multiple badges and store all of them', () => {
     authServiceSpy.getUserInfo.and.returnValue(mockUser);
-    badgeServiceSpy.getBadgesByLearner.and.returnValue(of([mockBadge, mockBadgeNoVerification]));
+    badgeServiceSpy.getBadgesByLearner.and.returnValue(of([mockBadge, mockBadgeSilver]));
 
     fixture.detectChanges();
 
@@ -220,5 +134,62 @@ describe('MyBadgesComponent', () => {
     fixture.detectChanges();
 
     expect(badgeServiceSpy.getBadgesByLearner).toHaveBeenCalledWith(99);
+  });
+
+  // ─── shareOnLinkedIn ───────────────────────────────────────────────────────
+
+  it('should call badgeService.shareOnLinkedIn and open URL on success', () => {
+    authServiceSpy.getUserInfo.and.returnValue(mockUser);
+    badgeServiceSpy.getBadgesByLearner.and.returnValue(of([mockBadge]));
+    badgeServiceSpy.shareOnLinkedIn.and.returnValue(of({ linkedInUrl: 'https://linkedin.com/share?url=test' }));
+    spyOn(window, 'open');
+    fixture.detectChanges();
+
+    component.shareOnLinkedIn(mockBadge);
+
+    expect(badgeServiceSpy.shareOnLinkedIn).toHaveBeenCalledWith(5);
+    expect(window.open).toHaveBeenCalledWith('https://linkedin.com/share?url=test', '_blank');
+  });
+
+  it('should set error when shareOnLinkedIn service call fails', () => {
+    authServiceSpy.getUserInfo.and.returnValue(mockUser);
+    badgeServiceSpy.getBadgesByLearner.and.returnValue(of([mockBadge]));
+    badgeServiceSpy.shareOnLinkedIn.and.returnValue(throwError(() => new Error('fail')));
+    fixture.detectChanges();
+
+    component.shareOnLinkedIn(mockBadge);
+
+    expect(component.error).toBe('Failed to generate LinkedIn share link');
+    expect(component.sharingId).toBeNull();
+  });
+
+  it('should not call shareOnLinkedIn when badge has no id', () => {
+    authServiceSpy.getUserInfo.and.returnValue(mockUser);
+    badgeServiceSpy.getBadgesByLearner.and.returnValue(of([]));
+    fixture.detectChanges();
+
+    const badgeWithoutId: EarnedBadge = { ...mockBadge, id: undefined };
+    component.shareOnLinkedIn(badgeWithoutId);
+
+    expect(badgeServiceSpy.shareOnLinkedIn).not.toHaveBeenCalled();
+  });
+
+  // ─── badge tier logic ──────────────────────────────────────────────────────
+
+  it('should classify badge as Gold when minimumScore >= 90', () => {
+    expect(mockBadge.badgeTemplate.minimumScore).toBeGreaterThanOrEqual(90);
+  });
+
+  it('should classify badge as Silver when minimumScore is between 75 and 89', () => {
+    expect(mockBadgeSilver.badgeTemplate.minimumScore).toBeGreaterThanOrEqual(75);
+    expect(mockBadgeSilver.badgeTemplate.minimumScore).toBeLessThan(90);
+  });
+
+  it('should classify badge as Bronze when minimumScore is below 75', () => {
+    const bronzeBadge: EarnedBadge = {
+      ...mockBadge,
+      badgeTemplate: { ...mockTemplate, minimumScore: 60, name: 'Bronze Badge' }
+    };
+    expect(bronzeBadge.badgeTemplate.minimumScore).toBeLessThan(75);
   });
 });

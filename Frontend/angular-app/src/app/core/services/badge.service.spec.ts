@@ -24,7 +24,7 @@ describe('BadgeService', () => {
     learnerId: 42,
     awardDate: new Date('2026-01-15'),
     awardedBy: 0,
-    verificationCode: 'abc-123'
+    verificationId: 'abc-123'
   };
 
   beforeEach(() => {
