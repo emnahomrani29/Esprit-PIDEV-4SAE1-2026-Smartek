@@ -156,6 +156,7 @@ describe('AuthService', () => {
   });
 
   it('should return null and not throw when userInfo is malformed JSON', () => {
+    spyOn(console, 'error');
     localStorage.setItem('userInfo', 'not-valid-json{{{');
     expect(service.getUserInfo()).toBeNull();
   });

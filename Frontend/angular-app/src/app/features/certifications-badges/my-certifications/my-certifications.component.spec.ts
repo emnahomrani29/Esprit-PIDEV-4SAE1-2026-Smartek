@@ -175,7 +175,7 @@ describe('MyCertificationsComponent', () => {
 
     component.viewCertificate(10);
 
-    expect(routerSpy.navigate).toHaveBeenCalledWith(['/certificate-viewer', 10]);
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/dashboard/certificate-viewer', 10]);
   });
 
   // ─── awardSample ───────────────────────────────────────────────────────────
