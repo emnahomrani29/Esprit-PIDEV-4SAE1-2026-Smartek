@@ -26,6 +26,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Endpoints publics (lecture des offres actives)
                 .requestMatchers(HttpMethod.GET, "/api/offers/health").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/offers").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/offers/status/ACTIVE").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/offers/{id}").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/offers/search").permitAll()
