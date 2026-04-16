@@ -32,7 +32,12 @@ public class InterviewFeedbackService {
         Interview interview = interviewRepository.findById(request.getInterviewId())
                 .orElseThrow(() -> new ResourceNotFoundException("Entretien non trouvé"));
 
-        if (interview.getStatus() != Interview.InterviewStatus.COMPLETED) {
+        // Auto-complete SCHEDULED interviews when feedback is submitted
+        if (interview.getStatus() == Interview.InterviewStatus.SCHEDULED) {
+            interview.setStatus(Interview.InterviewStatus.COMPLETED);
+            interviewRepository.save(interview);
+            log.info("Interview {} auto-completed when feedback submitted", interview.getId());
+        } else if (interview.getStatus() != Interview.InterviewStatus.COMPLETED) {
             throw new BusinessException("Le feedback ne peut être soumis que pour un entretien terminé");
         }
 

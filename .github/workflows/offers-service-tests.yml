@@ -1,0 +1,72 @@
+name: Offers Service Tests
+
+on:
+  push:
+    branches: [ offers-service ]
+  pull_request:
+    branches: [ offers-service ]
+
+jobs:
+  test-offers-service:
+    name: offers-service tests
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ''
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: offers_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run offers-service tests
+        run: mvn test -Dspring.profiles.active=test -B
+        working-directory: Backend/offers-service
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: offers-service-test-reports
+          path: Backend/offers-service/target/surefire-reports/
+
+  test-frontend-offers:
+    name: frontend offers tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: Frontend/angular-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: Frontend/angular-app
+
+      - name: Run frontend tests
+        run: npx ng test --no-watch --browsers=ChromeHeadless
+        working-directory: Frontend/angular-app
+        env:
+          CHROME_BIN: /usr/bin/google-chrome

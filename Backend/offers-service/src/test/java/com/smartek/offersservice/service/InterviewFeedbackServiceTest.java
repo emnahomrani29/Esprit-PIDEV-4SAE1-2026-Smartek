@@ -115,16 +115,33 @@ class InterviewFeedbackServiceTest {
         }
 
         @Test
-        @DisplayName("SCHEDULED interview → BusinessException (must be COMPLETED)")
-        void scheduledInterview_throwsBusinessException() {
-            when(interviewRepository.findById(11L)).thenReturn(Optional.of(scheduledInterview));
+        @DisplayName("SCHEDULED interview → auto-completed and feedback submitted")
+        void scheduledInterview_autoCompletedAndFeedbackSubmitted() {
             validRequest.setInterviewId(11L);
+            validRequest.setApplicationId(2L);
+            Application app2 = new Application();
+            app2.setId(2L);
+            app2.setOfferId(100L);
+            app2.setLearnerId(3L);
+            app2.setStatus("PENDING");
 
-            assertThatThrownBy(() -> feedbackService.submitFeedback(validRequest))
-                    .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("terminé");
+            InterviewFeedback scheduledFeedback = InterviewFeedback.builder()
+                    .id(103L).interviewId(11L).applicationId(2L)
+                    .rating(4).decision(InterviewFeedback.FeedbackDecision.HIRED)
+                    .submittedBy(5L).build();
 
-            verify(feedbackRepository, never()).save(any());
+            when(interviewRepository.findById(11L)).thenReturn(Optional.of(scheduledInterview));
+            when(feedbackRepository.findByInterviewId(11L)).thenReturn(Optional.empty());
+            when(interviewRepository.save(any())).thenReturn(scheduledInterview);
+            when(feedbackRepository.save(any())).thenReturn(scheduledFeedback);
+            when(applicationRepository.findById(2L)).thenReturn(Optional.of(app2));
+            when(applicationRepository.save(any())).thenReturn(app2);
+
+            InterviewFeedbackResponse result = feedbackService.submitFeedback(validRequest);
+
+            assertThat(result).isNotNull();
+            verify(interviewRepository).save(any()); // auto-complete
+            verify(feedbackRepository).save(any());
         }
 
         @Test
