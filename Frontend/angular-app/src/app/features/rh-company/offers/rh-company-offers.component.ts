@@ -265,7 +265,6 @@ export class RhCompanyOffersComponent implements OnInit {
   }
 
   saveFeedback() {
-    // D'abord marquer l'entretien comme COMPLETED si nécessaire, puis soumettre le feedback
     const interviewId = this.feedbackForm.interviewId;
     const submitFeedback = () => {
       this.http.post<any>(`${environment.apiUrl}/interviews/feedback`, this.feedbackForm).subscribe({
@@ -274,7 +273,8 @@ export class RhCompanyOffersComponent implements OnInit {
           this.loadCompanyInterviews();
         },
         error: (err) => {
-          const msg = err?.error?.message || 'Erreur lors de la soumission du feedback';
+          this.showFeedbackModal = false;
+          const msg = err?.error?.message || err?.error?.error || 'Erreur lors de la soumission du feedback';
           this.error = msg;
         }
       });
@@ -283,7 +283,7 @@ export class RhCompanyOffersComponent implements OnInit {
     // Auto-complete l'entretien avant de soumettre le feedback
     this.http.put<any>(`${environment.apiUrl}/interviews/${interviewId}/status?status=COMPLETED`, {}).subscribe({
       next: () => submitFeedback(),
-      error: () => submitFeedback() // Continuer même si déjà COMPLETED
+      error: () => submitFeedback()
     });
   }
 
