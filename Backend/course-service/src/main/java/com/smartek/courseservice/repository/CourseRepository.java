@@ -15,14 +15,15 @@ import java.util.Optional;
 public interface CourseRepository extends JpaRepository<Course, Long> {
     Optional<Course> findByTitle(String title);
     
+    @EntityGraph(attributePaths = {"chapters", "liveSessions"})
     @Query("SELECT c FROM Course c WHERE c.trainerId = :trainerId")
     List<Course> findByTrainerId(Long trainerId);
     
-    @EntityGraph(attributePaths = {"chapters"})
+    @EntityGraph(attributePaths = {"chapters", "liveSessions"})
     @Query("SELECT c FROM Course c WHERE c.courseId = :id")
     Optional<Course> findByIdWithChapters(Long id);
     
-    @EntityGraph(attributePaths = {"chapters"})
+    @EntityGraph(attributePaths = {"chapters", "liveSessions"})
     @Query("SELECT c FROM Course c")
     List<Course> findAllWithChapters();
     

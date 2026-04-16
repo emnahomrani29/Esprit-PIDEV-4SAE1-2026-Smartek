@@ -22,6 +22,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
+      // Ignorer silencieusement les erreurs 503 pour les notifications
+      if (error.status === 503 && error.url?.includes('/api/notifications')) {
+        console.warn('Service de notifications temporairement indisponible');
+        return throwError(() => error);
+      }
+
       if (error.status === 401) {
         console.log('Token invalide ou expiré, déconnexion...');
         authService.logout();

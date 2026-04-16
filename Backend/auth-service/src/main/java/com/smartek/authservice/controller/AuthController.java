@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -79,5 +81,12 @@ public class AuthController {
                             .message("Utilisateur non trouvé")
                             .build());
         }
+    }
+
+    @GetMapping("/users/learners")
+    public ResponseEntity<List<AuthResponse>> getAllLearners() {
+        log.info("Récupération de tous les learners");
+        List<AuthResponse> learners = authService.getAllLearners();
+        return ResponseEntity.ok(learners);
     }
 }

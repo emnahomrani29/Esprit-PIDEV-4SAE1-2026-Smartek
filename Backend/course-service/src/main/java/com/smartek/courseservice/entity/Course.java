@@ -9,10 +9,16 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
-@Table(name = "courses")
+@Table(name = "courses", indexes = {
+    @Index(name = "idx_course_trainer_id", columnList = "trainer_id"),
+    @Index(name = "idx_course_delivery_mode", columnList = "delivery_mode"),
+    @Index(name = "idx_course_title", columnList = "title")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -36,10 +42,20 @@ public class Course {
     @Column(name = "trainer_id", nullable = false)
     private Long trainerId;
     
+    @Enumerated(EnumType.STRING)
+    @Column(name = "delivery_mode", nullable = false)
+    @Builder.Default
+    private DeliveryMode deliveryMode = DeliveryMode.PRESENTIEL;
+    
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderIndex ASC")
     @Builder.Default
     private List<Chapter> chapters = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("startTime ASC")
+    @Builder.Default
+    private Set<LiveSession> liveSessions = new HashSet<>();
     
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

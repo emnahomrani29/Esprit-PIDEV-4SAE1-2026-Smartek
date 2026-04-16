@@ -1,5 +1,6 @@
 package com.smartek.courseservice.dto;
 
+import com.smartek.courseservice.entity.DeliveryMode;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,7 +20,9 @@ public class CourseResponse {
     private String content;
     private LocalDate duration;
     private Long trainerId;
+    private DeliveryMode deliveryMode;
     private List<ChapterResponse> chapters;
+    private List<LiveSessionResponse> liveSessions;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String message;

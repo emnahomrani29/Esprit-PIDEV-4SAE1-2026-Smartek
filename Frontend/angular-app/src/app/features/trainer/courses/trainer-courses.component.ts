@@ -1,12 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
 import { ChapterService } from '../../../core/services/chapter.service';
+import { LiveSessionService } from '../../../core/services/live-session.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Course, CourseCreateRequest } from '../../../core/models/course.model';
+import { DeliveryMode, LiveSessionRequest, LiveSessionResponse, SessionStatus } from '../../../core/models/live-session.model';
 import { Chapter, ChapterCreateRequest } from '../../../core/models/chapter.model';
 import { forkJoin } from 'rxjs';
+import { retry, delay } from 'rxjs/operators';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
 
 interface ChapterFormData {
@@ -49,17 +53,24 @@ export class TrainerCoursesComponent implements OnInit {
   courseChapters: Chapter[] = [];
   loadingChapters = false;
 
+  // Delivery mode
+  DeliveryMode = DeliveryMode;
+
   constructor(
     private fb: FormBuilder,
     private courseService: CourseService,
     private chapterService: ChapterService,
-    private authService: AuthService
+    private liveSessionService: LiveSessionService,
+    private authService: AuthService,
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
     this.courseForm = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(200)]],
       content: ['', Validators.required],
       duration: ['', Validators.required],
-      trainerId: [null]
+      trainerId: [null],
+      deliveryMode: [DeliveryMode.PRESENTIEL, Validators.required]
     });
 
     this.chapterForm = this.fb.group({
@@ -167,7 +178,8 @@ export class TrainerCoursesComponent implements OnInit {
       title: course.title,
       content: course.content,
       duration: course.duration,
-      trainerId: course.trainerId
+      trainerId: course.trainerId,
+      deliveryMode: course.deliveryMode || DeliveryMode.PRESENTIEL
     });
     this.chapters = [];
     this.showModal = true;
@@ -507,5 +519,321 @@ export class TrainerCoursesComponent implements OnInit {
         }
       });
     }
+  }
+
+  // Navigate to live sessions management
+  manageLiveSessions(courseId: number): void {
+    this.currentCourseForSessions = this.courses.find(c => c.courseId === courseId) || null;
+    if (this.currentCourseForSessions) {
+      this.showLiveSessionsModal = true;
+      // Utiliser directement les sessions du cours déjà chargé
+      this.liveSessions = this.currentCourseForSessions.liveSessions || [];
+      this.loadingLiveSessions = false;
+      this.cdr.detectChanges();
+      // Recharger en arrière-plan pour synchroniser
+      this.loadLiveSessionsForCourse(courseId);
+    }
+  }
+
+  // Live Sessions Modal Management
+  showLiveSessionsModal = false;
+  currentCourseForSessions: Course | null = null;
+  liveSessions: LiveSessionResponse[] = [];
+  loadingLiveSessions = false;
+  showSessionForm = false;
+  isEditingSession = false;
+  selectedSession: LiveSessionResponse | null = null;
+  sessionForm: any = {
+    title: '',
+    description: '',
+    startTime: '',
+    endTime: '',
+    maxParticipants: null
+  };
+
+  closeLiveSessionsModal(): void {
+    this.showLiveSessionsModal = false;
+    this.currentCourseForSessions = null;
+    this.liveSessions = [];
+    this.closeSessionForm();
+  }
+
+  loadLiveSessionsForCourse(courseId: number): void {
+    this.loadingLiveSessions = true;
+    // Essayer d'abord via l'endpoint dédié
+    this.liveSessionService.getSessionsByCourseId(courseId).pipe(
+      retry({ count: 2, delay: 2000 })
+    ).subscribe({
+      next: (sessions) => {
+        if (sessions.length > 0 || this.liveSessions.length === 0) {
+          this.liveSessions = sessions;
+        }
+        this.loadingLiveSessions = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.warn('Endpoint sessions indisponible, utilisation des données du cours:', error);
+        // Fallback: recharger le cours complet pour avoir les sessions à jour
+        this.courseService.getCoursesByTrainer(this.currentUserId!).subscribe({
+          next: (courses) => {
+            this.courses = courses;
+            const updatedCourse = courses.find(c => c.courseId === courseId);
+            if (updatedCourse?.liveSessions) {
+              this.liveSessions = updatedCourse.liveSessions;
+              this.currentCourseForSessions = updatedCourse;
+            }
+            this.loadingLiveSessions = false;
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.loadingLiveSessions = false;
+            this.cdr.detectChanges();
+          }
+        });
+      }
+    });
+  }
+
+  openSessionForm(): void {
+    this.isEditingSession = false;
+    this.selectedSession = null;
+    this.sessionForm = {
+      title: '',
+      description: '',
+      startTime: '',
+      endTime: '',
+      maxParticipants: null
+    };
+    this.showSessionForm = true;
+    this.cdr.detectChanges();
+    
+    // Scroll to top of modal to ensure form is visible
+    setTimeout(() => {
+      const modalContent = document.querySelector('.max-h-\\[90vh\\]');
+      if (modalContent) {
+        modalContent.scrollTop = 0;
+      }
+    }, 50);
+  }
+
+  openEditSessionForm(session: LiveSessionResponse): void {
+    this.isEditingSession = true;
+    this.selectedSession = session;
+    this.sessionForm = {
+      title: session.title,
+      description: session.description || '',
+      startTime: this.formatDateTimeForInput(session.startTime),
+      endTime: this.formatDateTimeForInput(session.endTime),
+      maxParticipants: session.maxParticipants || null
+    };
+    this.showSessionForm = true;
+    this.cdr.detectChanges();
+    
+    // Scroll to top of modal to ensure form is visible
+    setTimeout(() => {
+      const modalContent = document.querySelector('.max-h-\\[90vh\\]');
+      if (modalContent) {
+        modalContent.scrollTop = 0;
+      }
+    }, 50);
+  }
+
+  closeSessionForm(): void {
+    this.showSessionForm = false;
+    this.isEditingSession = false;
+    this.selectedSession = null;
+  }
+
+  formatDateTimeForInput(dateTime: string): string {
+    if (!dateTime) return '';
+    return dateTime.substring(0, 16);
+  }
+
+  saveSession(): void {
+    if (!this.sessionForm.title || !this.sessionForm.startTime || !this.sessionForm.endTime) {
+      alert('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+
+    if (this.sessionForm.endTime <= this.sessionForm.startTime) {
+      alert('La date de fin doit être après la date de début');
+      return;
+    }
+
+    if (!this.currentCourseForSessions?.courseId || !this.currentUserId) {
+      alert('Erreur: informations manquantes');
+      return;
+    }
+
+    // Convertir les dates au format ISO
+    const startTime = new Date(this.sessionForm.startTime).toISOString();
+    const endTime = new Date(this.sessionForm.endTime).toISOString();
+
+    const request: LiveSessionRequest = {
+      courseId: this.currentCourseForSessions.courseId,
+      title: this.sessionForm.title,
+      description: this.sessionForm.description || undefined,
+      trainerId: this.currentUserId,
+      startTime: startTime,
+      endTime: endTime,
+      maxParticipants: this.sessionForm.maxParticipants || undefined
+    };
+
+    if (this.isEditingSession && this.selectedSession?.sessionId) {
+      // Update existing session
+      this.liveSessionService.updateSession(this.selectedSession.sessionId, request).subscribe({
+        next: (response) => {
+          console.log('Session updated:', response);
+          // Mettre à jour localement
+          const idx = this.liveSessions.findIndex(s => s.sessionId === response.sessionId);
+          if (idx !== -1) {
+            this.liveSessions = [
+              ...this.liveSessions.slice(0, idx),
+              response,
+              ...this.liveSessions.slice(idx + 1)
+            ];
+          }
+          this.cdr.detectChanges();
+          this.closeSessionForm();
+          // Ne pas recharger — la liste locale est déjà à jour
+        },
+        error: (error) => {
+          console.error('Error updating session:', error);
+          alert('Erreur lors de la mise à jour de la session');
+        }
+      });
+    } else {
+      // Create new session
+      this.liveSessionService.createSession(request).subscribe({
+        next: (response) => {
+          console.log('Session created:', response);
+          // Ajouter immédiatement à la liste locale
+          this.liveSessions = [...this.liveSessions, response];
+          // Mettre à jour aussi dans le cours local
+          if (this.currentCourseForSessions) {
+            this.currentCourseForSessions.liveSessions = [...this.liveSessions];
+            const idx = this.courses.findIndex(c => c.courseId === this.currentCourseForSessions!.courseId);
+            if (idx !== -1) {
+              this.courses[idx] = { ...this.currentCourseForSessions };
+            }
+          }
+          this.cdr.detectChanges();
+          this.closeSessionForm();
+        },
+        error: (error) => {
+          console.error('Error creating session:', error);
+          alert('Erreur lors de la création de la session');
+        }
+      });
+    }
+  }
+
+  deleteSession(sessionId: number): void {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette session ?')) {
+      this.liveSessions = this.liveSessions.filter(s => s.sessionId !== sessionId);
+      // Mettre à jour le cours local
+      if (this.currentCourseForSessions) {
+        this.currentCourseForSessions.liveSessions = [...this.liveSessions];
+        const idx = this.courses.findIndex(c => c.courseId === this.currentCourseForSessions!.courseId);
+        if (idx !== -1) this.courses[idx] = { ...this.currentCourseForSessions };
+      }
+      this.cdr.detectChanges();
+      this.liveSessionService.deleteSession(sessionId).subscribe({
+        next: () => console.log('Session deleted:', sessionId),
+        error: (error) => {
+          console.error('Error deleting session:', error);
+          this.loadLiveSessionsForCourse(this.currentCourseForSessions!.courseId!);
+          alert('Erreur lors de la suppression de la session');
+        }
+      });
+    }
+  }
+
+  joinSession(roomId: string): void {
+    // Ouvrir la salle de visioconférence
+    this.router.navigate(['/video-conference', roomId]);
+  }
+
+  startSession(session: LiveSessionResponse): void {
+    this.liveSessionService.updateSessionStatus(session.sessionId, SessionStatus.ONGOING).subscribe({
+      next: (updated) => {
+        // Mettre à jour localement
+        const idx = this.liveSessions.findIndex(s => s.sessionId === session.sessionId);
+        if (idx !== -1) {
+          this.liveSessions = [
+            ...this.liveSessions.slice(0, idx),
+            { ...this.liveSessions[idx], status: SessionStatus.ONGOING },
+            ...this.liveSessions.slice(idx + 1)
+          ];
+          this.cdr.detectChanges();
+        }
+        // Rejoindre automatiquement après démarrage
+        this.router.navigate(['/video-conference', session.roomId]);
+      },
+      error: (err) => {
+        console.error('Error starting session:', err);
+        alert('Erreur lors du démarrage de la session');
+      }
+    });
+  }
+
+  endSession(session: LiveSessionResponse): void {
+    if (!confirm(`Terminer la session "${session.title}" ?`)) return;
+
+    this.liveSessionService.updateSessionStatus(session.sessionId, SessionStatus.COMPLETED).subscribe({
+      next: () => {
+        // Mettre à jour localement
+        const idx = this.liveSessions.findIndex(s => s.sessionId === session.sessionId);
+        if (idx !== -1) {
+          this.liveSessions = [
+            ...this.liveSessions.slice(0, idx),
+            { ...this.liveSessions[idx], status: SessionStatus.COMPLETED },
+            ...this.liveSessions.slice(idx + 1)
+          ];
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err) => {
+        console.error('Error ending session:', err);
+        alert('Erreur lors de la clôture de la session');
+      }
+    });
+  }
+
+  getStatusLabel(status: string): string {
+    const labels: Record<string, string> = {
+      'SCHEDULED': 'À venir',
+      'ONGOING': 'En direct',
+      'COMPLETED': 'Terminée',
+      'CANCELLED': 'Annulée'
+    };
+    return labels[status] || status;
+  }
+
+  formatDateTime(dateTime: string): string {
+    if (!dateTime) return '';
+    const date = new Date(dateTime);
+    return date.toLocaleString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  getSessionDuration(startTime: string, endTime: string): string {
+    return this.liveSessionService.getSessionDuration(startTime, endTime);
+  }
+
+  getCurrentDateTime(): string {
+    const now = new Date();
+    // Format: YYYY-MM-DDTHH:mm
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   }
 }

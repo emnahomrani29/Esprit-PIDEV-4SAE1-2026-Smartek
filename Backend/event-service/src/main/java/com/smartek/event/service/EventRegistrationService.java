@@ -197,9 +197,9 @@ public class EventRegistrationService {
 
     private void updateEventCapacity(Event event, EventMode mode, int delta) {
         if (mode == EventMode.PHYSICAL) {
-            event.setPhysicalRegistered(event.getPhysicalRegistered() + delta);
+            event.setPhysicalRegistered(Math.max(0, event.getPhysicalRegistered() + delta));
         } else if (mode == EventMode.ONLINE) {
-            event.setOnlineRegistered(event.getOnlineRegistered() + delta);
+            event.setOnlineRegistered(Math.max(0, event.getOnlineRegistered() + delta));
         }
         
         // Mettre à jour aussi les anciens champs pour compatibilité

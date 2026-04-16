@@ -1,74 +1,145 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Event, EventRequest } from '../models/event.model';
+import { environment } from '../../../environments/environment';
+
+export interface EventRequest {
+  title: string;
+  description?: string;
+  startDate: string;
+  endDate: string;
+  location: string;
+  maxParticipations: number;
+  physicalCapacity?: number;
+  onlineCapacity?: number;
+  mode?: string;
+  price?: number;
+  isPaid?: boolean;
+  createdBy?: number;
+}
+
+export interface EventResponse {
+  eventId: number;
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  location: string;
+  physicalCapacity: number;
+  onlineCapacity: number;
+  physicalRegistered: number;
+  onlineRegistered: number;
+  maxParticipations: number;
+  currentParticipations: number;
+  status: string;
+  mode: string;
+  price: number;
+  isPaid: boolean;
+  createdBy: number;
+  isAvailable: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EventRegistration {
+  registrationId: number;
+  eventId: number;
+  userId: number;
+  status: string;
+  paymentStatus: string;
+  participationMode: string;
+  registeredAt: string;
+}
+
+export interface EventRevenueResponse {
+  eventId: number;
+  totalRevenue: number;
+  potentialRevenue: number;
+  paidRegistrations: number;
+  pendingPayments: number;
+  averageRevenuePerParticipant: number;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class EventService {
-  private apiUrl = 'http://localhost:8090/events';
+  private apiUrl = `${environment.apiUrl}/events`;
 
   constructor(private http: HttpClient) {}
 
-  getAllEvents(): Observable<Event[]> {
-    return this.http.get<Event[]>(this.apiUrl);
+  getAllEvents(): Observable<EventResponse[]> {
+    return this.http.get<EventResponse[]>(this.apiUrl);
   }
 
-  getEventById(id: number): Observable<Event> {
-    return this.http.get<Event>(`${this.apiUrl}/${id}`);
+  getUpcomingEvents(): Observable<EventResponse[]> {
+    return this.http.get<EventResponse[]>(`${this.apiUrl}/upcoming`);
   }
 
-  getUpcomingEvents(): Observable<Event[]> {
-    return this.http.get<Event[]>(`${this.apiUrl}/upcoming`);
+  getEventById(id: number): Observable<EventResponse> {
+    return this.http.get<EventResponse>(`${this.apiUrl}/${id}`);
   }
 
-  createEvent(event: EventRequest): Observable<Event> {
-    return this.http.post<Event>(this.apiUrl, event);
+  createEvent(request: EventRequest): Observable<EventResponse> {
+    return this.http.post<EventResponse>(this.apiUrl, request);
   }
 
-  updateEvent(id: number, event: EventRequest): Observable<Event> {
-    return this.http.put<Event>(`${this.apiUrl}/${id}`, event);
+  updateEvent(id: number, request: EventRequest): Observable<EventResponse> {
+    return this.http.put<EventResponse>(`${this.apiUrl}/${id}`, request);
   }
 
   deleteEvent(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-  registerParticipation(id: number): Observable<Event> {
-    return this.http.post<Event>(`${this.apiUrl}/${id}/register`, {});
+  changeStatus(eventId: number, newStatus: string, changedBy: number, reason?: string): Observable<any> {
+    return this.http.post<any>(`${environment.apiUrl}/events/business/${eventId}/status`, {
+      newStatus,
+      changedBy,
+      reason
+    });
   }
 
-  cancelParticipation(id: number): Observable<Event> {
-    return this.http.post<Event>(`${this.apiUrl}/${id}/cancel`, {});
-  }
-
-  // Inscription avancée avec logique métier
-  registerForEventAdvanced(eventId: number, userId: number, participationMode: string): Observable<any> {
-    const requestBody = {
-      eventId: eventId,
-      userId: userId,
-      participationMode: participationMode
-    };
-    console.log('Registration request:', requestBody);
-    return this.http.post(`${this.apiUrl}/business/register`, requestBody);
-  }
-
-  // Annuler une inscription avancée
-  cancelRegistrationAdvanced(registrationId: number, userId: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/business/registrations/${registrationId}?userId=${userId}`);
+  // Inscription à un événement
+  registerForEvent(eventId: number, userId: number, mode: string = 'PHYSICAL'): Observable<any> {
+    return this.http.post<any>(`${environment.apiUrl}/events/business/register`, {
+      eventId,
+      userId,
+      participationMode: mode
+    });
   }
 
   // Récupérer les inscriptions d'un utilisateur
-  getUserRegistrations(userId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/business/user/${userId}/registrations`);
+  getUserRegistrations(userId: number): Observable<EventRegistration[]> {
+    return this.http.get<EventRegistration[]>(`${environment.apiUrl}/events/business/user/${userId}/registrations`);
   }
 
-  changeEventStatus(id: number, newStatus: string, reason?: string, changedBy?: number): Observable<Event> {
-    return this.http.post<Event>(`${this.apiUrl}/business/${id}/status`, {
-      newStatus,
-      reason: reason || `Status changed to ${newStatus}`,
-      changedBy: changedBy || 1
-    });
+  // Annuler une inscription
+  cancelRegistration(registrationId: number, userId: number): Observable<any> {
+    return this.http.delete<any>(`${environment.apiUrl}/events/business/registrations/${registrationId}?userId=${userId}`);
+  }
+
+  // Créer une session de paiement Stripe
+  createCheckoutSession(
+    registrationId: number,
+    eventId: number,
+    userId: number,
+    amount: number,
+    eventTitle: string
+  ): Observable<{ sessionId: string; checkoutUrl: string }> {
+    return this.http.post<{ sessionId: string; checkoutUrl: string }>(
+      `${environment.apiUrl}/events/payment/create-checkout-session`,
+      { registrationId, eventId, userId, amount, currency: 'usd', eventTitle }
+    );
+  }
+
+  // Vérifier le statut d'un paiement
+  verifyPayment(registrationId: number): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}/events/payment/verify?registrationId=${registrationId}`);
+  }
+
+  // Récupérer les revenus d'un événement
+  getEventRevenue(eventId: number): Observable<EventRevenueResponse> {
+    return this.http.get<EventRevenueResponse>(`${environment.apiUrl}/events/business/${eventId}/revenue`);
   }
 }

@@ -12,9 +12,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/plannings/weekly")
+@RequestMapping("/api/plannings/weekly")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:4200")
 public class WeeklyPlanningController {
 
     private final WeeklyPlanningService weeklyPlanningService;

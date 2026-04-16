@@ -14,7 +14,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/plannings")
+@RequestMapping("/api/plannings")
 @RequiredArgsConstructor
 public class PlanningController {
 
@@ -84,5 +84,35 @@ public class PlanningController {
     @GetMapping("/health")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("Planning Service is running");
+    }
+
+    /**
+     * Publie une session individuelle
+     * POST /api/plannings/{id}/publish
+     */
+    @PostMapping("/{id}/publish")
+    public ResponseEntity<PlanningResponse> publishPlanning(@PathVariable Long id) {
+        PlanningResponse response = planningService.publishPlanning(id);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Dépublie une session individuelle
+     * POST /api/plannings/{id}/unpublish
+     */
+    @PostMapping("/{id}/unpublish")
+    public ResponseEntity<PlanningResponse> unpublishPlanning(@PathVariable Long id) {
+        PlanningResponse response = planningService.unpublishPlanning(id);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Récupère les plannings publiés (pour les learners)
+     * GET /api/plannings/published
+     */
+    @GetMapping("/published")
+    public ResponseEntity<List<PlanningResponse>> getPublishedPlannings() {
+        List<PlanningResponse> plannings = planningService.getPublishedPlannings();
+        return ResponseEntity.ok(plannings);
     }
 }

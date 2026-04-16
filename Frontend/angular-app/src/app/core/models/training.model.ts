@@ -17,7 +17,9 @@ export interface CourseInfo {
   content: string;
   duration: string;
   instructor?: string;
+  deliveryMode?: string;
   chapters?: ChapterInfo[];
+  liveSessions?: any[];
 }
 
 export interface ChapterInfo {

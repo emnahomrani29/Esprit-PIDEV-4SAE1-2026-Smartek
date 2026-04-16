@@ -8,7 +8,8 @@ import { environment } from '../../../environments/environment';
 describe('CertificationService', () => {
   let service: CertificationService;
   let httpMock: HttpTestingController;
-  const baseUrl = `${environment.apiUrl}/certifications-badges`;
+  // Le service utilise des URLs hardcodées sur le port 8089
+  const baseUrl = 'http://localhost:8089/api/certifications-badges';
 
   const mockTemplate: CertificationTemplate = { id: 1, title: 'Java Expert', description: 'desc' };
   const mockCert: EarnedCertification = {

@@ -49,7 +49,7 @@ export class SignUpComponent {
 
     // Step 3: Informations supplémentaires
     this.step3Form = this.fb.group({
-      phone: ['', [Validators.pattern(/^[0-9]{10}$/)]],
+      phone: ['', [Validators.pattern(/^[0-9]{8}$/)]],
       image: [null],
       experience: [0, [Validators.min(0)]],
       role: ['LEARNER', Validators.required]
@@ -85,7 +85,7 @@ export class SignUpComponent {
         firstName: this.step1Form.value.firstName,
         email: this.step1Form.value.email,
         password: this.step2Form.value.password,
-        phone: this.step3Form.value.phone || undefined,
+        phone: this.step3Form.value.phone ? '+216' + this.step3Form.value.phone : undefined,
         imageBase64: this.step3Form.value.image || undefined,
         experience: this.step3Form.value.experience || 0,
         role: this.step3Form.value.role

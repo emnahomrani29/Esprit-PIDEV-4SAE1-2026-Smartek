@@ -13,8 +13,8 @@ describe('ApplicationService', () => {
   const mockApp: Application = {
     id: 1, offerId: 100, learnerId: 2,
     learnerName: 'Alice', learnerEmail: 'alice@test.com',
-    status: 'PENDING', appliedAt: new Date()
-  } as Application;
+    status: 'PENDING', appliedAt: new Date().toISOString()
+  };
 
   beforeEach(() => {
     TestBed.configureTestingModule({ imports: [HttpClientTestingModule], providers: [ApplicationService] });

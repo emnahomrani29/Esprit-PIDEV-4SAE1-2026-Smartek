@@ -99,7 +99,8 @@ public class Event {
         updatedAt = LocalDateTime.now();
         
         // Initialiser les capacités hybrides si nécessaire
-        if (physicalCapacity == null && onlineCapacity == null) {
+        if ((physicalCapacity == null || physicalCapacity == 0) && 
+            (onlineCapacity == null || onlineCapacity == 0)) {
             if (mode == EventMode.PHYSICAL) {
                 physicalCapacity = maxParticipations;
                 onlineCapacity = 0;
@@ -132,11 +133,16 @@ public class Event {
     }
 
     public Boolean hasAvailableCapacity(EventMode registrationMode) {
+        // Fallback: si les capacités spécifiques sont 0, utiliser maxParticipations
+        int totalRegistered = getTotalRegistered();
+        if (getTotalCapacity() == 0) {
+            return totalRegistered < maxParticipations;
+        }
         if (registrationMode == EventMode.PHYSICAL) {
             return physicalRegistered < physicalCapacity;
         } else if (registrationMode == EventMode.ONLINE) {
             return onlineRegistered < onlineCapacity;
         }
-        return false;
+        return totalRegistered < maxParticipations;
     }
 }

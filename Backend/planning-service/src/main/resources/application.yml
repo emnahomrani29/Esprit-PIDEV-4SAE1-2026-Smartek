@@ -27,10 +27,27 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
   instance:
-    prefer-ip-address: true
+    prefer-ip-address: false
+    hostname: localhost
+    instance-id: ${spring.application.name}:${server.port}
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info
+
+# Twilio SMS Configuration
+twilio:
+  account-sid: AC8d62d2f57ca2a96cea7fa7448de22721
+  auth-token: 0a3096886e325514230cf7401bdc6fbc
+  phone-number: "+18145235365"
+  enabled: true
+
+# Auth service URL for fetching learner phone numbers
+auth-service:
+  url: http://localhost:8081
+
+# JWT Configuration (même secret que l'auth-service)
+jwt:
+  secret: smartek-secret-key-for-jwt-token-generation-2024-very-secure

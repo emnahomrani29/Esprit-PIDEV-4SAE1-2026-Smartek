@@ -17,5 +17,7 @@ public interface ExamResultRepository extends JpaRepository<ExamResult, Long> {
     
     @Query("SELECT er FROM ExamResult er JOIN er.exam e WHERE e.createdBy = :trainerId ORDER BY er.submittedAt DESC")
     List<ExamResult> findAllByTrainerId(@Param("trainerId") Long trainerId);
+    
+    void deleteByExamId(Long examId);
 }
 

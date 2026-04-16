@@ -20,4 +20,5 @@ public class PlanningResponse {
     private String eventType;
     private String location;
     private String color;
+    private String status; // SCHEDULED, PUBLISHED, DRAFT, COMPLETED, CANCELLED
 }

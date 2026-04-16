@@ -42,6 +42,10 @@ public interface PlanningRepository extends JpaRepository<Planning, Long> {
     @Query("SELECT p FROM Planning p WHERE p.status = 'PUBLISHED' ORDER BY p.date ASC, p.startTime ASC")
     List<Planning> findPublishedPlannings();
     
+    @Modifying
+    @Query("UPDATE Planning p SET p.status = 'DRAFT' WHERE p.status IS NULL")
+    int fixNullStatuses();
+    
     // Méthode pour les learners - récupérer les plannings publiés pour une période donnée
     @Query("SELECT p FROM Planning p WHERE p.status = :status AND p.date BETWEEN :startDate AND :endDate ORDER BY p.date ASC, p.startTime ASC")
     List<Planning> findByStatusAndDateBetween(String status, LocalDate startDate, LocalDate endDate);

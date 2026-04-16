@@ -1,10 +1,14 @@
+import { DeliveryMode } from './live-session.model';
+
 export interface Course {
   courseId?: number;
   title: string;
   content: string;
   duration: string; // Format: YYYY-MM-DD
   trainerId: number;
+  deliveryMode?: DeliveryMode;
   chapters?: any[]; // Pour la compatibilité avec my-courses
+  liveSessions?: any[];
 }
 
 export interface CourseDetail {
@@ -30,6 +34,7 @@ export interface CourseCreateRequest {
   content: string;
   duration: string;
   trainerId: number;
+  deliveryMode: DeliveryMode;
 }
 
 export interface CourseUpdateRequest {

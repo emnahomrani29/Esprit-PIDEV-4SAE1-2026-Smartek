@@ -63,7 +63,9 @@ eureka:
     initial-instance-info-replication-interval-seconds: 10
     instance-info-replication-interval-seconds: 10
   instance:
-    prefer-ip-address: true
+    prefer-ip-address: false
+    hostname: localhost
+    instance-id: ${spring.application.name}:${server.port}
     # Heartbeat interval (30 seconds)
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90

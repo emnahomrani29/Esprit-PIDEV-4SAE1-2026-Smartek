@@ -75,6 +75,11 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'events/payment/success',
+    loadComponent: () => import('./features/learner/events/payment-success/event-payment-success.component').then(m => m.EventPaymentSuccessComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'learner/certifications',
     loadComponent: () => import('./features/certifications-badges/my-certifications/my-certifications.component').then(m => m.MyCertificationsComponent),
     canActivate: [authGuard]
@@ -146,6 +151,17 @@ export const routes: Routes = [
     loadComponent: () => import('./features/trainer/courses/trainer-courses.component').then(m => m.TrainerCoursesComponent),
     canActivate: [permissionGuard],
     data: { roles: [Role.TRAINER] }
+  },
+  { 
+    path: 'trainer/courses/:courseId/live-sessions',
+    loadComponent: () => import('./features/trainer/live-sessions/live-sessions-management.component').then(m => m.LiveSessionsManagementComponent),
+    canActivate: [permissionGuard],
+    data: { roles: [Role.TRAINER] }
+  },
+  { 
+    path: 'video-conference/:roomId',
+    loadComponent: () => import('./features/video-conference/video-conference-room.component').then(m => m.VideoConferenceRoomComponent),
+    canActivate: [authGuard]
   },
   { 
     path: 'trainer/training-management',

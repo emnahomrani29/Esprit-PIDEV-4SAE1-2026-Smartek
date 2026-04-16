@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -62,6 +63,7 @@ public class TrainingService {
     }
     
     @Cacheable(value = "trainings", unless = "#result.isEmpty()")
+    @Transactional(readOnly = true)
     public List<TrainingResponse> getAllTrainings() {
         log.info("Récupération de toutes les formations");
         return trainingRepository.findAll().stream()
@@ -76,6 +78,7 @@ public class TrainingService {
     }
     
     @Cacheable(value = "training", key = "#id")
+    @Transactional(readOnly = true)
     public TrainingResponse getTrainingById(Long id) {
         log.info("Récupération de la formation avec ID: {}", id);
         Training training = trainingRepository.findById(id)
@@ -205,41 +208,58 @@ public class TrainingService {
     }
     
     private TrainingResponse mapToResponse(Training training, String message) {
-        // Récupérer les informations détaillées des cours
         List<TrainingResponse.CourseInfo> courses = new ArrayList<>();
-        if (!training.getCourseIds().isEmpty()) {
-            for (Long courseId : training.getCourseIds()) {
-                try {
-                    CourseResponse courseResponse = courseClient.getCourseById(courseId);
-                    List<ChapterResponse> chapterResponses = courseClient.getChaptersByCourseId(courseId);
-                    
-                    // Convertir les ChapterResponse en ChapterInfo
-                    List<TrainingResponse.ChapterInfo> chapters = chapterResponses.stream()
-                            .map(ch -> TrainingResponse.ChapterInfo.builder()
-                                    .chapterId(ch.getChapterId())
-                                    .title(ch.getTitle())
-                                    .description(ch.getDescription())
-                                    .orderIndex(ch.getOrderIndex())
-                                    .pdfFileName(ch.getPdfFileName())
-                                    .pdfFilePath(ch.getPdfFilePath())
-                                    .build())
-                            .collect(Collectors.toList());
-                    
-                    TrainingResponse.CourseInfo courseInfo = TrainingResponse.CourseInfo.builder()
-                            .courseId(courseResponse.getCourseId())
-                            .title(courseResponse.getTitle())
-                            .content(courseResponse.getContent())
-                            .duration(courseResponse.getDuration() != null ? 
-                                LocalDate.parse(courseResponse.getDuration()) : null)
-                            .chapters(chapters)
-                            .build();
-                    courses.add(courseInfo);
-                } catch (Exception e) {
-                    log.error("Erreur lors de la récupération du cours {}: {}", courseId, e.getMessage());
-                }
-            }
+
+        if (training.getCourseIds() != null && !training.getCourseIds().isEmpty()) {
+            // Fetch all courses in parallel using CompletableFuture to reduce latency
+            List<CompletableFuture<TrainingResponse.CourseInfo>> futures = training.getCourseIds().stream()
+                    .map(courseId -> CompletableFuture.supplyAsync(() -> {
+                        try {
+                            CourseResponse courseResponse = courseClient.getCourseById(courseId);
+                            List<ChapterResponse> chapterResponses = courseClient.getChaptersByCourseId(courseId);
+
+                            List<TrainingResponse.ChapterInfo> chapters = chapterResponses.stream()
+                                    .map(ch -> TrainingResponse.ChapterInfo.builder()
+                                            .chapterId(ch.getChapterId())
+                                            .title(ch.getTitle())
+                                            .description(ch.getDescription())
+                                            .orderIndex(ch.getOrderIndex())
+                                            .pdfFileName(ch.getPdfFileName())
+                                            .pdfFilePath(ch.getPdfFilePath())
+                                            .build())
+                                    .collect(Collectors.toList());
+
+                            LocalDate duration = null;
+                            try {
+                                if (courseResponse.getDuration() != null) {
+                                    duration = LocalDate.parse(courseResponse.getDuration());
+                                }
+                            } catch (Exception e) {
+                                log.warn("Failed to parse duration: {}", courseResponse.getDuration());
+                            }
+
+                            return TrainingResponse.CourseInfo.builder()
+                                    .courseId(courseResponse.getCourseId())
+                                    .title(courseResponse.getTitle())
+                                    .content(courseResponse.getContent())
+                                    .duration(duration)
+                                    .deliveryMode(courseResponse.getDeliveryMode())
+                                    .chapters(chapters)
+                                    .build();
+                        } catch (Exception e) {
+                            log.error("Erreur lors de la récupération du cours {}: {}", courseId, e.getMessage());
+                            return null;
+                        }
+                    }))
+                    .collect(Collectors.toList());
+
+            // Wait for all futures and collect non-null results
+            courses = futures.stream()
+                    .map(CompletableFuture::join)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
         }
-        
+
         return TrainingResponse.builder()
                 .trainingId(training.getTrainingId())
                 .title(training.getTitle())
