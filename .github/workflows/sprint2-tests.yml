@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - event/planning-service
+      - training-cours-exams-service
   pull_request:
     branches:
       - main
       - event/planning-service
+      - training-cours-exams-service
 
 jobs:
 
