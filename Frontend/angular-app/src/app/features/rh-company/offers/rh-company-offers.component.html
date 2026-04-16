@@ -145,7 +145,7 @@
             <option value="CANCELLED">CANCELLED</option>
             <option value="RESCHEDULED">RESCHEDULED</option>
           </select>
-          <button (click)="openFeedback(iv)" [disabled]="iv.status!=='COMPLETED'" class="text-xs bg-yellow-50 text-yellow-600 px-3 py-1 rounded-lg hover:bg-yellow-100 disabled:opacity-40 disabled:cursor-not-allowed">&#128203; Feedback</button>
+          <button (click)="openFeedback(iv)" [disabled]="iv.status==='CANCELLED'" class="text-xs bg-yellow-50 text-yellow-600 px-3 py-1 rounded-lg hover:bg-yellow-100 disabled:opacity-40 disabled:cursor-not-allowed">&#128203; Feedback</button>
           <button (click)="deleteInterview(iv.id)" class="text-xs bg-red-50 text-red-500 px-3 py-1 rounded-lg hover:bg-red-100">&#128465;️</button>
         </div>
       </div>
