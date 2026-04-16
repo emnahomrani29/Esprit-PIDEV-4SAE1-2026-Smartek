@@ -58,4 +58,11 @@ public class ApplicationController {
             @RequestParam Long learnerId) {
         return ResponseEntity.ok(applicationService.withdrawApplication(applicationId, learnerId));
     }
+
+    @GetMapping("/{applicationId}/match-analysis")
+    public ResponseEntity<java.util.Map<String, Object>> getMatchAnalysis(
+            @PathVariable Long applicationId,
+            @RequestParam(required = false) Integer yearsOfExperience) {
+        return ResponseEntity.ok(applicationService.getMatchAnalysis(applicationId, yearsOfExperience));
+    }
 }

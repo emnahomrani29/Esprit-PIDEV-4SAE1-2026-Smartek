@@ -88,4 +88,17 @@ public class ApplicationService {
         application.setStatus("WITHDRAWN");
         return applicationMapper.toResponse(applicationRepository.save(application));
     }
+
+    public java.util.Map<String, Object> getMatchAnalysis(Long applicationId, Integer yearsOfExperience) {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Candidature non trouvée: " + applicationId));
+        Offer offer = application.getOffer();
+        if (offer == null && application.getOfferId() != null) {
+            offer = offerRepository.findById(application.getOfferId()).orElse(null);
+        }
+        if (offer == null) {
+            return java.util.Map.of("error", "Offre non trouvée");
+        }
+        return scoringService.analyzeMatch(application, offer, yearsOfExperience);
+    }
 }

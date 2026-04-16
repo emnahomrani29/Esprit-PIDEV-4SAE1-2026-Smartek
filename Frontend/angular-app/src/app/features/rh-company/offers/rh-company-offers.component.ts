@@ -170,11 +170,40 @@ export class RhCompanyOffersComponent implements OnInit {
 
   // ─── APPLICATIONS ─────────────────────────────────────────────────────────
 
+  matchAnalysis: { [appId: number]: any } = {};
+
   viewApplications(offer: any) {
     this.selectedOfferForApps = offer;
-    this.http.get<any[]>(`${environment.apiUrl}/applications/offer/${offer.id}`).subscribe({
-      next: data => { this.applications = data; this.showApplicationsModal = true; }
+    this.http.get<any[]>(`${environment.apiUrl}/applications/offer/${offer.id}/ranked`).subscribe({
+      next: data => { this.applications = data; this.showApplicationsModal = true; },
+      error: () => {
+        this.http.get<any[]>(`${environment.apiUrl}/applications/offer/${offer.id}`).subscribe({
+          next: data => { this.applications = data; this.showApplicationsModal = true; }
+        });
+      }
     });
+  }
+
+  loadMatchAnalysis(appId: number) {
+    if (this.matchAnalysis[appId]) return; // already loaded
+    this.http.get<any>(`${environment.apiUrl}/applications/${appId}/match-analysis`).subscribe({
+      next: data => { this.matchAnalysis[appId] = data; },
+      error: () => {}
+    });
+  }
+
+  scoreColor(score: number): string {
+    if (score >= 75) return 'text-green-600 bg-green-50';
+    if (score >= 50) return 'text-yellow-600 bg-yellow-50';
+    if (score >= 25) return 'text-orange-500 bg-orange-50';
+    return 'text-red-500 bg-red-50';
+  }
+
+  scoreLabel(score: number): string {
+    if (score >= 75) return 'Excellent';
+    if (score >= 50) return 'Bon';
+    if (score >= 25) return 'Moyen';
+    return 'Faible';
   }
 
   updateAppStatus(appId: number, status: string) {
