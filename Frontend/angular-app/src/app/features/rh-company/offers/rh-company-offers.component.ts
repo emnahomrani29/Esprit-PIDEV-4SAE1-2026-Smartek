@@ -115,6 +115,14 @@ export class RhCompanyOffersComponent implements OnInit {
   }
 
   saveOffer() {
+    // Validation des champs obligatoires
+    if (!this.offerForm.title?.trim()) { this.error = 'Le titre est obligatoire'; return; }
+    if (!this.offerForm.description?.trim()) { this.error = 'La description est obligatoire'; return; }
+    if (!this.offerForm.companyName?.trim()) { this.error = 'Le nom de l\'entreprise est obligatoire'; return; }
+    if (!this.offerForm.location?.trim()) { this.error = 'La localisation est obligatoire'; return; }
+    if (!this.offerForm.contractType?.trim()) { this.error = 'Le type de contrat est obligatoire'; return; }
+
+    this.error = '';
     const payload = {
       ...this.offerForm,
       companyId: this.companyId,
@@ -125,7 +133,10 @@ export class RhCompanyOffersComponent implements OnInit {
       : this.http.post<any>(`${environment.apiUrl}/offers`, payload);
     req.subscribe({
       next: () => { this.showOfferModal = false; this.loadOffers(); },
-      error: () => { this.error = 'Erreur lors de la sauvegarde'; }
+      error: (err) => {
+        const msg = err?.error?.errors ? Object.values(err.error.errors).join(', ') : 'Erreur lors de la sauvegarde';
+        this.error = msg;
+      }
     });
   }
 
