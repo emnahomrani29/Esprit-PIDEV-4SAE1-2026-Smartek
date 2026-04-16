@@ -247,7 +247,7 @@ export const routes: Routes = [
       },
       {
         path: 'offers',
-        loadComponent: () => import('./features/rh-company/offers/rh-company-offers.component').then(m => m.RhCompanyOffersComponent)
+        component: JobOffersComponent
       },
       {
         path: 'participation',
