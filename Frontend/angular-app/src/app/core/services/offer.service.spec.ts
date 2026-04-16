@@ -30,7 +30,7 @@ describe('OfferService', () => {
       expect(offers.length).toBe(1);
       expect(offers[0].title).toBe('Dev Java');
     });
-    httpMock.expectOne(apiUrl).flush([mockOffer]);
+    httpMock.expectOne(`${apiUrl}?page=0&size=100&sortBy=createdAt&sortDir=desc`).flush([mockOffer]);
   });
 
   it('should GET offer by id', () => {

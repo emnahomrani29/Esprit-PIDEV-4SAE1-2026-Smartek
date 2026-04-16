@@ -26,8 +26,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusiness(BusinessException ex) {
         log.warn("Business rule violation: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(new ErrorResponse(HttpStatus.UNPROCESSABLE_ENTITY.value(), ex.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -38,7 +38,7 @@ public class GlobalExceptionHandler {
             errors.put(field, error.getDefaultMessage());
         });
         return ResponseEntity.badRequest()
-                .body(ErrorResponse.withDetails(HttpStatus.BAD_REQUEST.value(), "Validation failed", errors));
+                .body(ErrorResponse.withErrors(HttpStatus.BAD_REQUEST.value(), "Validation failed", errors));
     }
 
     @ExceptionHandler(Exception.class)
@@ -48,13 +48,13 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Une erreur interne est survenue"));
     }
 
-    public record ErrorResponse(int status, String message, LocalDateTime timestamp, Map<String, String> details) {
+    public record ErrorResponse(int status, String message, LocalDateTime timestamp, Map<String, String> errors) {
         public ErrorResponse(int status, String message) {
             this(status, message, LocalDateTime.now(), null);
         }
 
-        public static ErrorResponse withDetails(int status, String message, Map<String, String> details) {
-            return new ErrorResponse(status, message, LocalDateTime.now(), details);
+        public static ErrorResponse withErrors(int status, String message, Map<String, String> errors) {
+            return new ErrorResponse(status, message, LocalDateTime.now(), errors);
         }
     }
 }
