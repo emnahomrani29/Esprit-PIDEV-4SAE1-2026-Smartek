@@ -2,6 +2,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CertificationTemplate, EarnedCertification, AwardCertificationRequest, BulkAwardCertificationRequest } from '../models/certification.model';
+import { environment } from '../../../environments/environment';
 
 export interface PageResponse<T> {
   content: T[];
@@ -15,8 +16,8 @@ export interface PageResponse<T> {
   providedIn: 'root'
 })
 export class CertificationService {
-  private apiUrl = 'http://localhost:8089/api/certifications-badges/certification-templates';
-  private earnedApiUrl = 'http://localhost:8089/api/certifications-badges/earned-certifications';
+  private apiUrl = `${environment.apiUrl}/certifications-badges/certification-templates`;
+  private earnedApiUrl = `${environment.apiUrl}/certifications-badges/earned-certifications`;
 
   constructor(private http: HttpClient) {}
 
