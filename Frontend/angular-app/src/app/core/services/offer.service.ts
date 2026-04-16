@@ -14,7 +14,10 @@ export class OfferService {
   constructor(private http: HttpClient) {}
 
   getAllOffers(): Observable<Offer[]> {
-    return this.http.get<any>(this.apiUrl).pipe(
+    // POST /search is public and returns paginated results
+    return this.http.post<any>(`${this.apiUrl}/search`, {
+      page: 0, size: 100, sortBy: 'createdAt', sortDir: 'desc'
+    }).pipe(
       map(res => Array.isArray(res) ? res : (res?.content ?? []))
     );
   }
