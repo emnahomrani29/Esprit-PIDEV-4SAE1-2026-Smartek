@@ -37,6 +37,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/offers/**").permitAll()
                 .requestMatchers(HttpMethod.DELETE, "/api/offers/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/offers/my").permitAll()
+                .requestMatchers("/api/interviews/**").permitAll()
+                .requestMatchers("/api/interview-feedbacks/**").permitAll()
+                .requestMatchers("/api/applications/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 // Tout le reste nécessite une authentification
                 .anyRequest().authenticated()
