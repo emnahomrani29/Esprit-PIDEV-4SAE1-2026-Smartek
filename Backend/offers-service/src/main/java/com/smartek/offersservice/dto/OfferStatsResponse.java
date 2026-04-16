@@ -24,4 +24,5 @@ public class OfferStatsResponse {
     private long scheduledInterviews;
     private long completedInterviews;
     private double acceptanceRate;
+    private double averageApplicationScore;
 }

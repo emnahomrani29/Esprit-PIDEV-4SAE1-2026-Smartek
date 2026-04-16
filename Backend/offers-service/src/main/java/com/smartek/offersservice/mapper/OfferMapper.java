@@ -26,7 +26,7 @@ public class OfferMapper {
                 .positions(request.getPositions() != null ? request.getPositions() : 1)
                 .requiredSkills(request.getRequiredSkills() != null ? request.getRequiredSkills() : new HashSet<>())
                 .companyId(request.getCompanyId())
-                .status(request.getStatus() != null ? request.getStatus() : Offer.OfferStatus.ACTIVE)
+                .status(request.getStatus() != null ? request.getStatus() : "ACTIVE")
                 .expiresAt(request.getExpiresAt())
                 .build();
     }

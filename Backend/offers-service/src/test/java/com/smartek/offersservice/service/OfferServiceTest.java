@@ -173,7 +173,8 @@ class OfferServiceTest {
     @Test
     @DisplayName("deleteOffer — doit supprimer l'offre existante")
     void deleteOffer_shouldDeleteExistingOffer() {
-        when(offerRepository.existsById(1L)).thenReturn(true);
+        when(offerRepository.findById(1L)).thenReturn(Optional.of(sampleOffer));
+        when(applicationRepository.countByOfferIdAndStatus(1L, "ACCEPTED")).thenReturn(0L);
         doNothing().when(offerRepository).deleteById(1L);
 
         assertThatCode(() -> offerService.deleteOffer(1L)).doesNotThrowAnyException();
@@ -183,7 +184,7 @@ class OfferServiceTest {
     @Test
     @DisplayName("deleteOffer — doit lever ResourceNotFoundException si introuvable")
     void deleteOffer_shouldThrowWhenNotFound() {
-        when(offerRepository.existsById(99L)).thenReturn(false);
+        when(offerRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> offerService.deleteOffer(99L))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -206,6 +207,7 @@ class OfferServiceTest {
         when(interviewRepository.countByOffer_CompanyId(companyId)).thenReturn(3L);
         when(interviewRepository.countByOffer_CompanyIdAndStatus(eq(companyId), any())).thenReturn(2L);
         when(feedbackRepository.countByDecision(any())).thenReturn(1L);
+        when(applicationRepository.averageScoreByCompanyId(companyId)).thenReturn(65.0);
 
         OfferStatsResponse stats = offerService.getStatsByCompany(companyId);
 
@@ -225,6 +227,7 @@ class OfferServiceTest {
         when(interviewRepository.countByOffer_CompanyId(companyId)).thenReturn(0L);
         when(interviewRepository.countByOffer_CompanyIdAndStatus(any(), any())).thenReturn(0L);
         when(feedbackRepository.countByDecision(any())).thenReturn(0L);
+        when(applicationRepository.averageScoreByCompanyId(companyId)).thenReturn(0.0);
 
         OfferStatsResponse stats = offerService.getStatsByCompany(companyId);
 

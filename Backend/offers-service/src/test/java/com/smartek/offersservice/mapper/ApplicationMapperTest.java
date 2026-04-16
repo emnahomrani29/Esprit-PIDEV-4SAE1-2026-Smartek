@@ -42,24 +42,26 @@ class ApplicationMapperTest {
         assertThat(entity.getLearnerName()).isEqualTo("Alice Dupont");
         assertThat(entity.getLearnerEmail()).isEqualTo("alice@test.com");
         assertThat(entity.getCoverLetter()).isEqualTo("Ma lettre de motivation");
-        assertThat(entity.getStatus()).isEqualTo(Application.ApplicationStatus.PENDING);
+        assertThat(entity.getStatus()).isEqualTo("PENDING");
         assertThat(entity.getScore()).isEqualTo(0);
     }
 
     @Test
     @DisplayName("toResponse() inclut le titre et l'ID de l'offre si présente")
     void toResponse_shouldIncludeOfferInfo_whenOfferPresent() {
-        Offer offer = Offer.builder().id(5L).title("Dev Java").build();
-        Application application = Application.builder()
-                .id(1L)
-                .learnerId(10L)
-                .learnerName("Bob Martin")
-                .learnerEmail("bob@test.com")
-                .score(80)
-                .status(Application.ApplicationStatus.REVIEWED)
-                .recruiterNote("Bon profil")
-                .appliedAt(LocalDateTime.now())
-                .build();
+        Offer offer = new Offer();
+        offer.setId(5L);
+        offer.setTitle("Dev Java");
+
+        Application application = new Application();
+        application.setId(1L);
+        application.setLearnerId(10L);
+        application.setLearnerName("Bob Martin");
+        application.setLearnerEmail("bob@test.com");
+        application.setScore(80);
+        application.setStatus("REVIEWED");
+        application.setRecruiterNote("Bon profil");
+        application.setAppliedAt(LocalDateTime.now());
         application.setOffer(offer);
 
         ApplicationResponse response = mapper.toResponse(application);
@@ -75,12 +77,13 @@ class ApplicationMapperTest {
     @Test
     @DisplayName("toResponse() gère le cas où l'offre est null")
     void toResponse_shouldHandleNullOffer() {
-        Application application = Application.builder()
-                .id(1L).learnerId(10L)
-                .learnerName("Test").learnerEmail("test@test.com")
-                .score(0).status(Application.ApplicationStatus.PENDING)
-                .build();
-        // offer non définie (null)
+        Application application = new Application();
+        application.setId(1L);
+        application.setLearnerId(10L);
+        application.setLearnerName("Test");
+        application.setLearnerEmail("test@test.com");
+        application.setScore(0);
+        application.setStatus("PENDING");
 
         ApplicationResponse response = mapper.toResponse(application);
 

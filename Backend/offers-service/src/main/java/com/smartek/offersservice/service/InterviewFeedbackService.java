@@ -58,7 +58,7 @@ public class InterviewFeedbackService {
 
         InterviewFeedback saved = feedbackRepository.save(feedback);
 
-        // Si décision HIRED ou REJECTED, mettre à jour le statut de la candidature
+        // Sync application status based on decision
         if (feedback.getDecision() == InterviewFeedback.FeedbackDecision.HIRED) {
             updateApplicationStatus(request.getApplicationId(), "ACCEPTED");
         } else if (feedback.getDecision() == InterviewFeedback.FeedbackDecision.REJECTED) {
@@ -83,7 +83,7 @@ public class InterviewFeedbackService {
 
     private void updateApplicationStatus(Long applicationId, String status) {
         applicationRepository.findById(applicationId).ifPresent(app -> {
-            app.setStatus(Application.ApplicationStatus.valueOf(status));
+            app.setStatus(status);
             applicationRepository.save(app);
             log.info("Application {} status updated to {}", applicationId, status);
         });

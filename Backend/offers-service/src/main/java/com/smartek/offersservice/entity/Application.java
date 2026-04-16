@@ -43,10 +43,9 @@ public class Application {
 
     private String cvFileName;
 
-    @Enumerated(EnumType.STRING)
     @Builder.Default
     @Column(nullable = false)
-    private ApplicationStatus status = ApplicationStatus.PENDING;
+    private String status = "PENDING"; // PENDING, REVIEWED, ACCEPTED, REJECTED, WITHDRAWN
 
     @Builder.Default
     private int score = 0;
@@ -63,7 +62,7 @@ public class Application {
     protected void onCreate() {
         appliedAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (status == null) status = ApplicationStatus.PENDING;
+        if (status == null) status = "PENDING";
     }
 
     @PreUpdate

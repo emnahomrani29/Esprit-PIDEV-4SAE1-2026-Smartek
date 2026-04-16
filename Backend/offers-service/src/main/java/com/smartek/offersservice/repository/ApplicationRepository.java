@@ -24,11 +24,14 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 
     long countByOfferId(Long offerId);
 
-    long countByOfferIdAndStatus(Long offerId, Application.ApplicationStatus status);
+    long countByOfferIdAndStatus(Long offerId, String status);
 
     @Query("SELECT COUNT(a) FROM Application a WHERE a.offerId IN (SELECT o.id FROM Offer o WHERE o.companyId = :companyId)")
     long countByCompanyId(@Param("companyId") Long companyId);
 
     @Query("SELECT COUNT(a) FROM Application a WHERE a.status = :status AND a.offerId IN (SELECT o.id FROM Offer o WHERE o.companyId = :companyId)")
-    long countByCompanyIdAndStatus(@Param("companyId") Long companyId, @Param("status") Application.ApplicationStatus status);
+    long countByCompanyIdAndStatus(@Param("companyId") Long companyId, @Param("status") String status);
+
+    @Query("SELECT COALESCE(AVG(a.score), 0.0) FROM Application a WHERE a.offerId IN (SELECT o.id FROM Offer o WHERE o.companyId = :companyId)")
+    double averageScoreByCompanyId(@Param("companyId") Long companyId);
 }

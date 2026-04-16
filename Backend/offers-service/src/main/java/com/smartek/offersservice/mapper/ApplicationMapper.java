@@ -16,7 +16,7 @@ public class ApplicationMapper {
                 .coverLetter(request.getCoverLetter())
                 .cvBase64(request.getCvBase64())
                 .cvFileName(request.getCvFileName())
-                .status(Application.ApplicationStatus.PENDING)
+                .status("PENDING")
                 .score(0)
                 .build();
     }
@@ -24,6 +24,13 @@ public class ApplicationMapper {
     public ApplicationResponse toResponse(Application application) {
         String offerTitle = application.getOffer() != null ? application.getOffer().getTitle() : null;
         Long offerId = application.getOffer() != null ? application.getOffer().getId() : application.getOfferId();
+
+        Application.ApplicationStatus statusEnum = null;
+        if (application.getStatus() != null) {
+            try {
+                statusEnum = Application.ApplicationStatus.valueOf(application.getStatus());
+            } catch (IllegalArgumentException ignored) {}
+        }
 
         return ApplicationResponse.builder()
                 .id(application.getId())
@@ -36,7 +43,7 @@ public class ApplicationMapper {
                 .cvBase64(application.getCvBase64())
                 .cvFileName(application.getCvFileName())
                 .score(application.getScore())
-                .status(application.getStatus())
+                .status(statusEnum)
                 .recruiterNote(application.getRecruiterNote())
                 .appliedAt(application.getAppliedAt())
                 .updatedAt(application.getUpdatedAt())

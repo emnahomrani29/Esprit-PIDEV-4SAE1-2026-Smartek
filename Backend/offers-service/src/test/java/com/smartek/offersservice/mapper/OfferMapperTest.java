@@ -14,7 +14,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests unitaires pour OfferMapper.
- * Vérifie la conversion correcte entre entités et DTOs.
  */
 @DisplayName("OfferMapper — Tests unitaires")
 class OfferMapperTest {
@@ -39,12 +38,12 @@ class OfferMapperTest {
                 .salaryMin(45000)
                 .salaryMax(55000)
                 .domain("IT")
-                .experienceLevel(Offer.ExperienceLevel.MID)
+                .experienceLevel("MID")
                 .remote(true)
                 .positions(3)
                 .requiredSkills(Set.of("Java", "Spring"))
                 .companyId(1L)
-                .status(Offer.OfferStatus.ACTIVE)
+                .status("ACTIVE")
                 .build();
 
         Offer entity = mapper.toEntity(request);
@@ -57,12 +56,12 @@ class OfferMapperTest {
         assertThat(entity.getSalaryMin()).isEqualTo(45000);
         assertThat(entity.getSalaryMax()).isEqualTo(55000);
         assertThat(entity.getDomain()).isEqualTo("IT");
-        assertThat(entity.getExperienceLevel()).isEqualTo(Offer.ExperienceLevel.MID);
+        assertThat(entity.getExperienceLevel()).isEqualTo("MID");
         assertThat(entity.getRemote()).isTrue();
         assertThat(entity.getPositions()).isEqualTo(3);
         assertThat(entity.getRequiredSkills()).containsExactlyInAnyOrder("Java", "Spring");
         assertThat(entity.getCompanyId()).isEqualTo(1L);
-        assertThat(entity.getStatus()).isEqualTo(Offer.OfferStatus.ACTIVE);
+        assertThat(entity.getStatus()).isEqualTo("ACTIVE");
     }
 
     @Test
@@ -75,46 +74,45 @@ class OfferMapperTest {
                 .location("Lyon")
                 .contractType("CDD")
                 .companyId(2L)
-                .build(); // remote, positions, status, skills = null
+                .build();
 
         Offer entity = mapper.toEntity(request);
 
         assertThat(entity.getRemote()).isFalse();
         assertThat(entity.getPositions()).isEqualTo(1);
-        assertThat(entity.getStatus()).isEqualTo(Offer.OfferStatus.ACTIVE);
+        assertThat(entity.getStatus()).isEqualTo("ACTIVE");
         assertThat(entity.getRequiredSkills()).isEmpty();
     }
 
     @Test
     @DisplayName("toResponse() mappe tous les champs correctement")
     void toResponse_shouldMapAllFields() {
-        Offer offer = Offer.builder()
-                .id(1L)
-                .title("Dev Java")
-                .description("Desc")
-                .companyName("TechCorp")
-                .location("Paris")
-                .contractType("CDI")
-                .salary("50k")
-                .salaryMin(50000)
-                .salaryMax(60000)
-                .domain("IT")
-                .experienceLevel(Offer.ExperienceLevel.SENIOR)
-                .remote(false)
-                .positions(2)
-                .requiredSkills(Set.of("Java"))
-                .viewCount(42L)
-                .companyId(1L)
-                .status(Offer.OfferStatus.ACTIVE)
-                .build();
+        Offer offer = new Offer();
+        offer.setId(1L);
+        offer.setTitle("Dev Java");
+        offer.setDescription("Desc");
+        offer.setCompanyName("TechCorp");
+        offer.setLocation("Paris");
+        offer.setContractType("CDI");
+        offer.setSalary("50k");
+        offer.setSalaryMin(50000);
+        offer.setSalaryMax(60000);
+        offer.setDomain("IT");
+        offer.setExperienceLevel("SENIOR");
+        offer.setRemote(false);
+        offer.setPositions(2);
+        offer.setRequiredSkills(Set.of("Java"));
+        offer.setViewCount(42L);
+        offer.setCompanyId(1L);
+        offer.setStatus("ACTIVE");
 
         OfferResponse response = mapper.toResponse(offer);
 
         assertThat(response.getId()).isEqualTo(1L);
         assertThat(response.getTitle()).isEqualTo("Dev Java");
         assertThat(response.getViewCount()).isEqualTo(42L);
-        assertThat(response.getStatus()).isEqualTo(Offer.OfferStatus.ACTIVE);
-        assertThat(response.getExperienceLevel()).isEqualTo(Offer.ExperienceLevel.SENIOR);
+        assertThat(response.getStatus()).isEqualTo("ACTIVE");
+        assertThat(response.getExperienceLevel()).isEqualTo("SENIOR");
         assertThat(response.getRequiredSkills()).contains("Java");
         assertThat(response.getOpen()).isTrue(); // ACTIVE sans expiresAt = ouvert
     }
@@ -122,12 +120,14 @@ class OfferMapperTest {
     @Test
     @DisplayName("toResponse() indique open=false pour une offre CLOSED")
     void toResponse_shouldReturnOpenFalse_whenOfferClosed() {
-        Offer offer = Offer.builder()
-                .id(1L).title("Dev").description("Desc").companyName("Corp")
-                .location("Paris").contractType("CDI").companyId(1L)
-                .status(Offer.OfferStatus.CLOSED)
-                .viewCount(0L).positions(1).remote(false)
-                .build();
+        Offer offer = new Offer();
+        offer.setId(1L);
+        offer.setTitle("Dev");
+        offer.setStatus("CLOSED");
+        offer.setViewCount(0L);
+        offer.setPositions(1);
+        offer.setRemote(false);
+        offer.setCompanyId(1L);
 
         OfferResponse response = mapper.toResponse(offer);
 
@@ -137,13 +137,15 @@ class OfferMapperTest {
     @Test
     @DisplayName("toResponse() indique open=false pour une offre expirée")
     void toResponse_shouldReturnOpenFalse_whenOfferExpired() {
-        Offer offer = Offer.builder()
-                .id(1L).title("Dev").description("Desc").companyName("Corp")
-                .location("Paris").contractType("CDI").companyId(1L)
-                .status(Offer.OfferStatus.ACTIVE)
-                .expiresAt(LocalDateTime.now().minusDays(1)) // expirée hier
-                .viewCount(0L).positions(1).remote(false)
-                .build();
+        Offer offer = new Offer();
+        offer.setId(1L);
+        offer.setTitle("Dev");
+        offer.setStatus("ACTIVE");
+        offer.setExpiresAt(LocalDateTime.now().minusDays(1));
+        offer.setViewCount(0L);
+        offer.setPositions(1);
+        offer.setRemote(false);
+        offer.setCompanyId(1L);
 
         OfferResponse response = mapper.toResponse(offer);
 
@@ -153,12 +155,18 @@ class OfferMapperTest {
     @Test
     @DisplayName("updateEntityFromRequest() met à jour uniquement les champs non-null")
     void updateEntityFromRequest_shouldUpdateOnlyNonNullFields() {
-        Offer offer = Offer.builder()
-                .id(1L).title("Ancien titre").description("Ancienne desc")
-                .companyName("Corp").location("Paris").contractType("CDI")
-                .companyId(1L).remote(false).positions(1)
-                .status(Offer.OfferStatus.ACTIVE).viewCount(10L)
-                .build();
+        Offer offer = new Offer();
+        offer.setId(1L);
+        offer.setTitle("Ancien titre");
+        offer.setDescription("Ancienne desc");
+        offer.setCompanyName("Corp");
+        offer.setLocation("Paris");
+        offer.setContractType("CDI");
+        offer.setCompanyId(1L);
+        offer.setRemote(false);
+        offer.setPositions(1);
+        offer.setStatus("ACTIVE");
+        offer.setViewCount(10L);
 
         OfferRequest update = OfferRequest.builder()
                 .title("Nouveau titre")
@@ -167,15 +175,14 @@ class OfferMapperTest {
                 .location("Lyon")
                 .contractType("CDI")
                 .companyId(1L)
-                // remote, positions, status = null → ne doivent pas changer
                 .build();
 
         mapper.updateEntityFromRequest(offer, update);
 
         assertThat(offer.getTitle()).isEqualTo("Nouveau titre");
         assertThat(offer.getLocation()).isEqualTo("Lyon");
-        assertThat(offer.getRemote()).isFalse();   // inchangé
-        assertThat(offer.getPositions()).isEqualTo(1); // inchangé
-        assertThat(offer.getStatus()).isEqualTo(Offer.OfferStatus.ACTIVE); // inchangé
+        assertThat(offer.getRemote()).isFalse();
+        assertThat(offer.getPositions()).isEqualTo(1);
+        assertThat(offer.getStatus()).isEqualTo("ACTIVE");
     }
 }

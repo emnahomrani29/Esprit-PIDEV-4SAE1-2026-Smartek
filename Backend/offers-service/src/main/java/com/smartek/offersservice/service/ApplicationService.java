@@ -36,7 +36,7 @@ public class ApplicationService {
         Offer offer = offerRepository.findById(request.getOfferId())
                 .orElseThrow(() -> new ResourceNotFoundException("Offre non trouvée: " + request.getOfferId()));
 
-        if (offer.getStatus() != Offer.OfferStatus.ACTIVE) {
+        if (!"ACTIVE".equals(offer.getStatus())) {
             throw new BusinessException("Cette offre n'est plus disponible");
         }
 
@@ -77,7 +77,7 @@ public class ApplicationService {
     public ApplicationResponse updateApplicationStatus(Long applicationId, String status, String recruiterNote) {
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Candidature non trouvée: " + applicationId));
-        application.setStatus(Application.ApplicationStatus.valueOf(status));
+        application.setStatus(status);
         if (recruiterNote != null) application.setRecruiterNote(recruiterNote);
         return applicationMapper.toResponse(applicationRepository.save(application));
     }
@@ -89,7 +89,7 @@ public class ApplicationService {
         if (!application.getLearnerId().equals(learnerId)) {
             throw new BusinessException("Vous ne pouvez pas retirer cette candidature");
         }
-        application.setStatus(Application.ApplicationStatus.WITHDRAWN);
+        application.setStatus("WITHDRAWN");
         return applicationMapper.toResponse(applicationRepository.save(application));
     }
 }

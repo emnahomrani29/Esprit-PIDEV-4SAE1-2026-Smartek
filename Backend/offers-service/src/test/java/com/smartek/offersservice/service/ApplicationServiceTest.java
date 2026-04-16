@@ -123,7 +123,7 @@ class ApplicationServiceTest {
             when(applicationRepository.findById(1L)).thenReturn(Optional.of(pendingApp));
             when(applicationRepository.save(any())).thenReturn(pendingApp);
 
-            applicationService.updateApplicationStatus(1L, newStatus);
+            applicationService.updateApplicationStatus(1L, newStatus, null);
 
             ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
             verify(applicationRepository).save(captor.capture());
@@ -135,7 +135,7 @@ class ApplicationServiceTest {
         void updateNonExisting_throwsException() {
             when(applicationRepository.findById(99L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> applicationService.updateApplicationStatus(99L, "ACCEPTED"))
+            assertThatThrownBy(() -> applicationService.updateApplicationStatus(99L, "ACCEPTED", null))
                     .isInstanceOf(RuntimeException.class);
         }
     }

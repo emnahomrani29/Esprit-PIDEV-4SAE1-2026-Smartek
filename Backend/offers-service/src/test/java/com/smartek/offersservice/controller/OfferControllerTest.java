@@ -67,7 +67,7 @@ class OfferControllerTest {
                 .id(id).title(title)
                 .companyName("TechCorp").location("Paris")
                 .contractType("CDI").companyId(1L)
-                .status(Offer.OfferStatus.ACTIVE)
+                .status("ACTIVE")
                 .viewCount(0L).positions(1).remote(false)
                 .open(true)
                 .build();

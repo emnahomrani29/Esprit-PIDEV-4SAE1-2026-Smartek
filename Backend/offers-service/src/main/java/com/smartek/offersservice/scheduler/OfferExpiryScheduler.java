@@ -11,14 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Scheduled job that automatically closes expired offers.
- *
- * Business rule: An ACTIVE offer with expiresAt < now is automatically
- * transitioned to EXPIRED status.
- *
- * Runs every hour. Uses @Scheduled with fixedDelay to avoid overlap.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -26,10 +18,7 @@ public class OfferExpiryScheduler {
 
     private final OfferRepository offerRepository;
 
-    /**
-     * Runs every hour and marks expired offers as EXPIRED.
-     */
-    @Scheduled(fixedDelay = 3_600_000) // every 1 hour
+    @Scheduled(fixedDelay = 3_600_000)
     @Transactional
     public void closeExpiredOffers() {
         List<Offer> expired = offerRepository.findExpiredOffers(LocalDateTime.now());
@@ -40,7 +29,7 @@ public class OfferExpiryScheduler {
         }
 
         expired.forEach(offer -> {
-            offer.setStatus(Offer.OfferStatus.EXPIRED);
+            offer.setStatus("EXPIRED");
             log.info("Offer id={} '{}' marked as EXPIRED (was due {})",
                     offer.getId(), offer.getTitle(), offer.getExpiresAt());
         });

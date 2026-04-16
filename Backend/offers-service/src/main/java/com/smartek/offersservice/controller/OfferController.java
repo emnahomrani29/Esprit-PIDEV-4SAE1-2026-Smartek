@@ -23,7 +23,6 @@ public class OfferController {
         return ResponseEntity.status(HttpStatus.CREATED).body(offerService.createOffer(request));
     }
 
-    // Pagination : GET /api/offers?page=0&size=10&sortBy=createdAt&sortDir=desc
     @GetMapping
     public ResponseEntity<Page<OfferResponse>> getAllOffers(
             @RequestParam(defaultValue = "0") int page,
@@ -48,7 +47,6 @@ public class OfferController {
         return ResponseEntity.ok(offerService.getOffersByCompanyId(companyId));
     }
 
-    // Endpoint qui utilise le X-User-Id du token JWT (injecté par l'API Gateway)
     @GetMapping("/my")
     public ResponseEntity<List<OfferResponse>> getMyOffers(
             @RequestHeader(value = "X-User-Id", required = false) Long userId,
@@ -58,24 +56,24 @@ public class OfferController {
     }
 
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<OfferResponse>> getOffersByStatus(@PathVariable String status) {
-        return ResponseEntity.ok(offerService.getOffersByStatus(status));
+    public ResponseEntity<Page<OfferResponse>> getOffersByStatus(
+            @PathVariable String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(offerService.getOffersByStatus(status, page, size));
     }
 
-    // Recherche avancée : POST /api/offers/search
     @PostMapping("/search")
     public ResponseEntity<Page<OfferResponse>> searchOffers(@RequestBody OfferSearchRequest request) {
         return ResponseEntity.ok(offerService.searchOffers(request));
     }
 
-    // Top offres les plus vues : GET /api/offers/top-viewed?limit=5
     @GetMapping("/top-viewed")
     public ResponseEntity<List<OfferResponse>> getTopViewedOffers(
             @RequestParam(defaultValue = "5") int limit) {
         return ResponseEntity.ok(offerService.getTopViewedOffers(limit));
     }
 
-    // Statistiques entreprise : GET /api/offers/stats/company/{companyId}
     @GetMapping("/stats/company/{companyId}")
     public ResponseEntity<OfferStatsResponse> getStatsByCompany(@PathVariable Long companyId) {
         return ResponseEntity.ok(offerService.getStatsByCompany(companyId));

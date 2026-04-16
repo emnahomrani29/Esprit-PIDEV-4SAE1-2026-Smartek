@@ -279,7 +279,7 @@ class OfferIntegrationTest {
         @DisplayName("POST /api/applications → 422 si offre CLOSED")
         void applyToOffer_shouldReturn422_whenOfferClosed() throws Exception {
             Offer offer = buildOffer("Dev Java");
-            offer.setStatus(Offer.OfferStatus.CLOSED);
+            offer.setStatus("CLOSED");
             offer = offerRepository.save(offer);
 
             String body = """
@@ -306,7 +306,7 @@ class OfferIntegrationTest {
             // Créer une candidature ACCEPTED directement en BDD
             Application app = Application.builder()
                     .learnerId(10L).learnerName("Alice").learnerEmail("alice@test.com")
-                    .status(Application.ApplicationStatus.ACCEPTED).score(80)
+                    .status("ACCEPTED").score(80)
                     .build();
             app.setOffer(offer);
             applicationRepository.save(app);
@@ -438,7 +438,7 @@ class OfferIntegrationTest {
 
             // ── Vérification finale : la candidature est ACCEPTED ─────────────
             Application finalApp = applicationRepository.findById(applicationId).orElseThrow();
-            assertThat(finalApp.getStatus()).isEqualTo(Application.ApplicationStatus.ACCEPTED);
+            assertThat(finalApp.getStatus()).isEqualTo("ACCEPTED");
         }
 
         @Test
@@ -448,7 +448,7 @@ class OfferIntegrationTest {
             Offer offer = offerRepository.save(buildOffer("Dev Java"));
             Application app = Application.builder()
                     .learnerId(10L).learnerName("Alice").learnerEmail("alice@test.com")
-                    .status(Application.ApplicationStatus.PENDING).score(50)
+                    .status("PENDING").score(50)
                     .build();
             app.setOffer(offer);
             Application savedApp = applicationRepository.save(app);
@@ -475,7 +475,7 @@ class OfferIntegrationTest {
             Offer offer = offerRepository.save(buildOffer("Dev Java"));
             Application app = Application.builder()
                     .learnerId(10L).learnerName("Alice").learnerEmail("alice@test.com")
-                    .status(Application.ApplicationStatus.ACCEPTED).score(50)
+                    .status("ACCEPTED").score(50)
                     .build();
             app.setOffer(offer);
             Application savedApp = applicationRepository.save(app);
@@ -606,7 +606,7 @@ class OfferIntegrationTest {
                         .learnerId((long) score)
                         .learnerName("Candidat " + score)
                         .learnerEmail("candidat" + score + "@test.com")
-                        .status(Application.ApplicationStatus.PENDING)
+                        .status("PENDING")
                         .score(score)
                         .build();
                 app.setOffer(offer);
@@ -649,7 +649,7 @@ class OfferIntegrationTest {
                 .contractType("CDI")
                 .companyId(1L)
                 .positions(3)
-                .status(Offer.OfferStatus.ACTIVE)
+                .status("ACTIVE")
                 .viewCount(0L)
                 .remote(false)
                 .build();

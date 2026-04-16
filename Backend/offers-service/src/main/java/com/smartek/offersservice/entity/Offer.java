@@ -47,8 +47,8 @@ public class Offer {
     private Integer salaryMax;
     private String domain;
 
-    @Enumerated(EnumType.STRING)
-    private ExperienceLevel experienceLevel;
+    // Stored as String for backward compatibility with existing data
+    private String experienceLevel; // JUNIOR, MID, SENIOR, EXPERT
 
     @Builder.Default
     private Boolean remote = false;
@@ -64,10 +64,9 @@ public class Offer {
     @Column(nullable = false)
     private Long companyId;
 
-    @Enumerated(EnumType.STRING)
     @Builder.Default
     @Column(nullable = false)
-    private OfferStatus status = OfferStatus.ACTIVE;
+    private String status = "ACTIVE"; // ACTIVE, CLOSED, DRAFT, EXPIRED
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "offer_required_skills", joinColumns = @JoinColumn(name = "offer_id"))
@@ -91,7 +90,7 @@ public class Offer {
         if (viewCount == null) viewCount = 0L;
         if (positions == null) positions = 1;
         if (remote == null) remote = false;
-        if (status == null) status = OfferStatus.ACTIVE;
+        if (status == null) status = "ACTIVE";
         if (requiredSkills == null) requiredSkills = new HashSet<>();
     }
 
@@ -101,7 +100,7 @@ public class Offer {
     }
 
     public boolean isOpen() {
-        if (status != OfferStatus.ACTIVE) return false;
+        if (!"ACTIVE".equals(status)) return false;
         if (expiresAt != null && expiresAt.isBefore(LocalDateTime.now())) return false;
         return true;
     }

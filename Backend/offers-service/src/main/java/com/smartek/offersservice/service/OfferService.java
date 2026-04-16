@@ -5,7 +5,6 @@ import com.smartek.offersservice.dto.OfferResponse;
 import com.smartek.offersservice.dto.OfferSearchRequest;
 import com.smartek.offersservice.dto.OfferStatsResponse;
 import com.smartek.offersservice.entity.Offer;
-import com.smartek.offersservice.entity.Application;
 import com.smartek.offersservice.exception.BusinessException;
 import com.smartek.offersservice.exception.ResourceNotFoundException;
 import com.smartek.offersservice.mapper.OfferMapper;
@@ -36,7 +35,6 @@ public class OfferService {
 
     @Transactional
     public OfferResponse createOffer(OfferRequest request) {
-        // Validate expiry date
         if (request.getExpiresAt() != null && request.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new BusinessException("La date d'expiration ne peut pas être dans le passé");
         }
@@ -78,10 +76,9 @@ public class OfferService {
                 .collect(Collectors.toList());
     }
 
-    public List<OfferResponse> getOffersByStatus(String status) {
-        return offerRepository.findByStatus(Offer.OfferStatus.valueOf(status)).stream()
-                .map(offerMapper::toResponse)
-                .collect(Collectors.toList());
+    public Page<OfferResponse> getOffersByStatus(String status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return offerRepository.findByStatus(status, pageable).map(offerMapper::toResponse);
     }
 
     public Page<OfferResponse> searchOffers(OfferSearchRequest request) {
@@ -95,7 +92,7 @@ public class OfferService {
                 request.getContractType(),
                 request.getLocation(),
                 request.getDomain(),
-                request.getExperienceLevel() != null ? request.getExperienceLevel().name() : null,
+                request.getExperienceLevel(),
                 request.getRemote(),
                 request.getSalaryMin(),
                 request.getSalaryMax(),
@@ -111,19 +108,23 @@ public class OfferService {
     }
 
     public OfferStatsResponse getStatsByCompany(Long companyId) {
-        long active  = offerRepository.countByCompanyIdAndStatus(companyId, Offer.OfferStatus.ACTIVE);
-        long closed  = offerRepository.countByCompanyIdAndStatus(companyId, Offer.OfferStatus.CLOSED);
-        long draft   = offerRepository.countByCompanyIdAndStatus(companyId, Offer.OfferStatus.DRAFT);
-        long expired = offerRepository.countByCompanyIdAndStatus(companyId, Offer.OfferStatus.EXPIRED);
-        long total   = active + closed + draft + expired;
+        long total   = offerRepository.countByCompanyIdAndStatus(companyId, "ACTIVE")
+                     + offerRepository.countByCompanyIdAndStatus(companyId, "CLOSED")
+                     + offerRepository.countByCompanyIdAndStatus(companyId, "DRAFT")
+                     + offerRepository.countByCompanyIdAndStatus(companyId, "EXPIRED");
+        long active  = offerRepository.countByCompanyIdAndStatus(companyId, "ACTIVE");
+        long closed  = offerRepository.countByCompanyIdAndStatus(companyId, "CLOSED");
+        long draft   = offerRepository.countByCompanyIdAndStatus(companyId, "DRAFT");
+        long expired = offerRepository.countByCompanyIdAndStatus(companyId, "EXPIRED");
 
-        long totalApps = applicationRepository.countByCompanyId(companyId);
-        long pending   = applicationRepository.countByCompanyIdAndStatus(companyId, Application.ApplicationStatus.PENDING);
-        long accepted  = applicationRepository.countByCompanyIdAndStatus(companyId, Application.ApplicationStatus.ACCEPTED);
-        long rejected  = applicationRepository.countByCompanyIdAndStatus(companyId, Application.ApplicationStatus.REJECTED);
+        long totalApps   = applicationRepository.countByCompanyId(companyId);
+        long pending     = applicationRepository.countByCompanyIdAndStatus(companyId, "PENDING");
+        long accepted    = applicationRepository.countByCompanyIdAndStatus(companyId, "ACCEPTED");
+        long rejected    = applicationRepository.countByCompanyIdAndStatus(companyId, "REJECTED");
         long totalInterv = interviewRepository.countByOffer_CompanyId(companyId);
 
         double rate = totalApps > 0 ? (double) accepted / totalApps * 100 : 0.0;
+        double avgScore = applicationRepository.averageScoreByCompanyId(companyId);
 
         return OfferStatsResponse.builder()
                 .companyId(companyId)
@@ -138,6 +139,7 @@ public class OfferService {
                 .rejectedApplications(rejected)
                 .totalInterviews(totalInterv)
                 .acceptanceRate(rate)
+                .averageApplicationScore(avgScore)
                 .build();
     }
 
@@ -153,8 +155,7 @@ public class OfferService {
     public void deleteOffer(Long id) {
         Offer offer = offerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Offer not found with id: " + id));
-        // Check no accepted applications
-        long accepted = applicationRepository.countByOfferIdAndStatus(offer.getId(), Application.ApplicationStatus.ACCEPTED);
+        long accepted = applicationRepository.countByOfferIdAndStatus(offer.getId(), "ACCEPTED");
         if (accepted > 0) {
             throw new BusinessException("Impossible de supprimer une offre avec des candidatures acceptées");
         }
