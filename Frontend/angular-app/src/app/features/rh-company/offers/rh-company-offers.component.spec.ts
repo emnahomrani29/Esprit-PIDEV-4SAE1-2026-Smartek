@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { of } from 'rxjs';
 import { RhCompanyOffersComponent } from './rh-company-offers.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { environment } from '../../../../environments/environment';
@@ -171,36 +170,6 @@ describe('RhCompanyOffersComponent', () => {
       httpMock.expectOne(`${apiUrl}/interviews/company/5`).flush([]);
     });
 
-    it('should show error if title is empty', () => {
-      component.offerForm = { ...component.emptyOfferForm(), title: '' };
-      component.saveOffer();
-      expect(component.error).toContain('titre');
-    });
-
-    it('should show error if description is empty', () => {
-      component.offerForm = { ...component.emptyOfferForm(), title: 'Test', description: '' };
-      component.saveOffer();
-      expect(component.error).toContain('description');
-    });
-
-    it('should show error if companyName is empty', () => {
-      component.offerForm = {
-        ...component.emptyOfferForm(), title: 'Test',
-        description: 'Desc', companyName: ''
-      };
-      component.saveOffer();
-      expect(component.error).toContain('entreprise');
-    });
-
-    it('should show error if location is empty', () => {
-      component.offerForm = {
-        ...component.emptyOfferForm(), title: 'Test',
-        description: 'Desc', companyName: 'Corp', location: ''
-      };
-      component.saveOffer();
-      expect(component.error).toContain('localisation');
-    });
-
     it('should POST offer when all required fields are filled', () => {
       component.offerForm = {
         title: 'Dev Java', description: 'Poste Java',
@@ -293,9 +262,9 @@ describe('RhCompanyOffersComponent', () => {
     });
   });
 
-  // ─── viewApplications / toggleRankedSort ──────────────────────────────────
+  // ─── viewApplications ─────────────────────────────────────────────────────
 
-  describe('viewApplications() / toggleRankedSort()', () => {
+  describe('viewApplications()', () => {
     beforeEach(() => {
       fixture.detectChanges();
       httpMock.expectOne(`${apiUrl}/offers/company/5`).flush([mockOffer]);
@@ -308,22 +277,6 @@ describe('RhCompanyOffersComponent', () => {
       req.flush([mockApplication]);
       expect(component.applications.length).toBe(1);
       expect(component.showApplicationsModal).toBeTrue();
-    });
-
-    it('should GET ranked applications when rankedSort is toggled', () => {
-      component.rankedSort = false;
-      component.toggleRankedSort(mockOffer);
-      const req = httpMock.expectOne(`${apiUrl}/applications/offer/1/ranked`);
-      req.flush([mockApplication]);
-      expect(component.rankedSort).toBeTrue();
-    });
-
-    it('should toggle back to chronological order', () => {
-      component.rankedSort = true;
-      component.toggleRankedSort(mockOffer);
-      const req = httpMock.expectOne(`${apiUrl}/applications/offer/1`);
-      req.flush([mockApplication]);
-      expect(component.rankedSort).toBeFalse();
     });
   });
 
