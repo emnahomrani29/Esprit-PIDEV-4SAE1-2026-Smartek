@@ -488,7 +488,7 @@ class OfferIntegrationTest {
                             .location("Paris").createdBy(5L)
                             .status(com.smartek.offersservice.entity.Interview.InterviewStatus.SCHEDULED)
                             .build();
-            interview.setApplication(savedApp);
+            interview.setApplicationId(savedApp.getId());
             com.smartek.offersservice.entity.Interview savedInterview = interviewRepository.save(interview);
 
             String body = """
