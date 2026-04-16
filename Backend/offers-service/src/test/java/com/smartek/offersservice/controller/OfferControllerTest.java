@@ -262,4 +262,97 @@ class OfferControllerTest {
                 .andExpect(jsonPath("$.content[0].title").value("Dev Java"))
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
+
+    // ─── GET /api/offers (pagination) ─────────────────────────────────────────
+
+    @Test
+    @WithMockUser(roles = "TRAINER")
+    @DisplayName("GET /api/offers → 200 avec pagination")
+    void getAllOffers_shouldReturn200_withPagination() throws Exception {
+        var page = new PageImpl<>(List.of(buildResponse(1L, "Dev Java")), PageRequest.of(0, 10), 1);
+        when(offerService.getAllOffers(0, 10, "createdAt", "desc")).thenReturn(page);
+
+        mockMvc.perform(get("/api/offers?page=0&size=10&sortBy=createdAt&sortDir=desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    // ─── GET /api/offers/company/{companyId} ──────────────────────────────────
+
+    @Test
+    @DisplayName("GET /api/offers/company/{id} → 200 (public)")
+    void getOffersByCompany_shouldReturn200() throws Exception {
+        when(offerService.getOffersByCompanyId(5L)).thenReturn(List.of(buildResponse(1L, "Dev Java")));
+
+        mockMvc.perform(get("/api/offers/company/5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].title").value("Dev Java"));
+    }
+
+    // ─── GET /api/offers/top-viewed ───────────────────────────────────────────
+
+    @Test
+    @DisplayName("GET /api/offers/top-viewed → 200 (public)")
+    void getTopViewedOffers_shouldReturn200() throws Exception {
+        when(offerService.getTopViewedOffers(5)).thenReturn(List.of(buildResponse(1L, "Dev Java")));
+
+        mockMvc.perform(get("/api/offers/top-viewed?limit=5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+    }
+
+    // ─── PUT /api/offers/{id} ─────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("PUT /api/offers/{id}")
+    class UpdateOfferTests {
+
+        @Test
+        @WithMockUser(roles = "TRAINER")
+        @DisplayName("200 avec l'offre mise à jour")
+        void shouldReturn200_whenUpdated() throws Exception {
+            OfferRequest request = OfferRequest.builder()
+                    .title("Dev Java Senior").description("Desc")
+                    .companyName("Corp").location("Paris")
+                    .contractType("CDI").companyId(1L).build();
+            when(offerService.updateOffer(eq(1L), any())).thenReturn(buildResponse(1L, "Dev Java Senior"));
+
+            mockMvc.perform(put("/api/offers/1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.title").value("Dev Java Senior"));
+        }
+
+        @Test
+        @WithMockUser(roles = "TRAINER")
+        @DisplayName("404 si offre non trouvée")
+        void shouldReturn404_whenNotFound() throws Exception {
+            OfferRequest request = OfferRequest.builder()
+                    .title("Dev").description("Desc").companyName("Corp")
+                    .location("Paris").contractType("CDI").companyId(1L).build();
+            when(offerService.updateOffer(eq(99L), any()))
+                    .thenThrow(new com.smartek.offersservice.exception.ResourceNotFoundException("Offer not found with id: 99"));
+
+            mockMvc.perform(put("/api/offers/99")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    // ─── GET /api/offers/status/{status} ──────────────────────────────────────
+
+    @Test
+    @DisplayName("GET /api/offers/status/ACTIVE → 200 (public)")
+    void getOffersByStatus_shouldReturn200() throws Exception {
+        var page = new PageImpl<>(List.of(buildResponse(1L, "Dev Java")), PageRequest.of(0, 10), 1);
+        when(offerService.getOffersByStatus("ACTIVE", 0, 10)).thenReturn(page);
+
+        mockMvc.perform(get("/api/offers/status/ACTIVE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray());
+    }
 }

@@ -394,7 +394,81 @@ describe('RhCompanyOffersComponent', () => {
     });
   });
 
-  // ─── onTabChange ───────────────────────────────────────────────────────────
+  // ─── scoreColor / scoreLabel ──────────────────────────────────────────────
+
+  describe('scoreColor() / scoreLabel()', () => {
+    it('should return green class for score >= 75', () => {
+      expect(component.scoreColor(75)).toContain('green');
+      expect(component.scoreColor(100)).toContain('green');
+    });
+
+    it('should return yellow class for score 50-74', () => {
+      expect(component.scoreColor(50)).toContain('yellow');
+      expect(component.scoreColor(74)).toContain('yellow');
+    });
+
+    it('should return orange class for score 25-49', () => {
+      expect(component.scoreColor(25)).toContain('orange');
+      expect(component.scoreColor(49)).toContain('orange');
+    });
+
+    it('should return red class for score < 25', () => {
+      expect(component.scoreColor(0)).toContain('red');
+      expect(component.scoreColor(24)).toContain('red');
+    });
+
+    it('should return Excellent label for score >= 75', () => {
+      expect(component.scoreLabel(75)).toBe('Excellent');
+      expect(component.scoreLabel(100)).toBe('Excellent');
+    });
+
+    it('should return Bon label for score 50-74', () => {
+      expect(component.scoreLabel(50)).toBe('Bon');
+    });
+
+    it('should return Moyen label for score 25-49', () => {
+      expect(component.scoreLabel(25)).toBe('Moyen');
+    });
+
+    it('should return Faible label for score < 25', () => {
+      expect(component.scoreLabel(0)).toBe('Faible');
+    });
+  });
+
+  // ─── loadMatchAnalysis ────────────────────────────────────────────────────
+
+  describe('loadMatchAnalysis()', () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+      httpMock.expectOne(`${apiUrl}/offers/company/5`).flush([mockOffer]);
+      httpMock.expectOne(`${apiUrl}/interviews/company/5`).flush([]);
+    });
+
+    it('should load match analysis for an application', () => {
+      const mockAnalysis = {
+        totalScore: 75, skillScore: 40, experienceScore: 20, coverLetterScore: 15,
+        matchedSkills: ['Java'], missingSkills: ['Docker'],
+        suggestions: ['Mentionnez Docker'], matchLevel: 'EXCELLENT'
+      };
+      component.loadMatchAnalysis(1);
+      const req = httpMock.expectOne(`${apiUrl}/applications/1/match-analysis`);
+      req.flush(mockAnalysis);
+      expect(component.matchAnalysis[1]).toEqual(mockAnalysis);
+    });
+
+    it('should not reload if already loaded', () => {
+      component.matchAnalysis[1] = { totalScore: 50 };
+      component.loadMatchAnalysis(1);
+      httpMock.expectNone(`${apiUrl}/applications/1/match-analysis`);
+    });
+
+    it('should handle error gracefully', () => {
+      component.loadMatchAnalysis(999);
+      const req = httpMock.expectOne(`${apiUrl}/applications/999/match-analysis`);
+      req.flush('Not found', { status: 404, statusText: 'Not Found' });
+      expect(component.matchAnalysis[999]).toBeUndefined();
+    });
+  });
 
   describe('onTabChange()', () => {
     beforeEach(() => {

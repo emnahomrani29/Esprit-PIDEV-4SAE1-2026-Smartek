@@ -218,4 +218,94 @@ class ApplicationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.hasApplied").value(true));
     }
+
+    // ─── GET /api/applications/offer/{offerId} ────────────────────────────────
+
+    @Test
+    @WithMockUser(roles = "TRAINER")
+    @DisplayName("GET /offer/{offerId} → 200 avec liste des candidatures")
+    void getApplicationsByOffer_shouldReturn200() throws Exception {
+        when(applicationService.getApplicationsByOffer(1L))
+                .thenReturn(List.of(buildResponse(1L, Application.ApplicationStatus.PENDING, 50)));
+
+        mockMvc.perform(get("/api/applications/offer/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].offerId").value(1));
+    }
+
+    // ─── GET /api/applications/learner/{learnerId} ────────────────────────────
+
+    @Test
+    @WithMockUser(roles = "LEARNER")
+    @DisplayName("GET /learner/{learnerId} → 200 avec liste des candidatures")
+    void getApplicationsByLearner_shouldReturn200() throws Exception {
+        when(applicationService.getApplicationsByLearner(10L))
+                .thenReturn(List.of(buildResponse(1L, Application.ApplicationStatus.PENDING, 50)));
+
+        mockMvc.perform(get("/api/applications/learner/10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].learnerId").value(10));
+    }
+
+    // ─── GET /api/applications/{id}/match-analysis ────────────────────────────
+
+    @Nested
+    @DisplayName("GET /api/applications/{id}/match-analysis")
+    class MatchAnalysisTests {
+
+        @Test
+        @WithMockUser
+        @DisplayName("200 avec analyse complète")
+        void matchAnalysis_shouldReturn200() throws Exception {
+            java.util.Map<String, Object> analysis = new java.util.LinkedHashMap<>();
+            analysis.put("totalScore", 75);
+            analysis.put("skillScore", 40);
+            analysis.put("experienceScore", 20);
+            analysis.put("coverLetterScore", 15);
+            analysis.put("matchedSkills", List.of("Java", "Spring"));
+            analysis.put("missingSkills", List.of("Docker"));
+            analysis.put("suggestions", List.of("Mentionnez Docker dans votre lettre"));
+            analysis.put("matchLevel", "EXCELLENT");
+
+            when(applicationService.getMatchAnalysis(1L, 3)).thenReturn(analysis);
+
+            mockMvc.perform(get("/api/applications/1/match-analysis")
+                            .param("yearsOfExperience", "3"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalScore").value(75))
+                    .andExpect(jsonPath("$.matchLevel").value("EXCELLENT"))
+                    .andExpect(jsonPath("$.matchedSkills").isArray())
+                    .andExpect(jsonPath("$.missingSkills").isArray())
+                    .andExpect(jsonPath("$.suggestions").isArray());
+        }
+
+        @Test
+        @WithMockUser
+        @DisplayName("200 sans yearsOfExperience (paramètre optionnel)")
+        void matchAnalysis_withoutYears_shouldReturn200() throws Exception {
+            java.util.Map<String, Object> analysis = java.util.Map.of(
+                    "totalScore", 30, "matchLevel", "MOYEN",
+                    "matchedSkills", List.of(), "missingSkills", List.of("Java"),
+                    "suggestions", List.of("Précisez vos années d'expérience")
+            );
+            when(applicationService.getMatchAnalysis(1L, null)).thenReturn(analysis);
+
+            mockMvc.perform(get("/api/applications/1/match-analysis"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalScore").value(30));
+        }
+
+        @Test
+        @WithMockUser
+        @DisplayName("404 si candidature non trouvée")
+        void matchAnalysis_notFound_returns404() throws Exception {
+            when(applicationService.getMatchAnalysis(99L, null))
+                    .thenThrow(new com.smartek.offersservice.exception.ResourceNotFoundException("Candidature non trouvée: 99"));
+
+            mockMvc.perform(get("/api/applications/99/match-analysis"))
+                    .andExpect(status().isNotFound());
+        }
+    }
 }

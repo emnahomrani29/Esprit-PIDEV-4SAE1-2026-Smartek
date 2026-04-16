@@ -248,4 +248,53 @@ class ApplicationServiceTest {
             assertThat(applicationService.hasApplied(100L, 99L)).isFalse();
         }
     }
+
+    @Nested
+    @DisplayName("Match Analysis")
+    class MatchAnalysisTests {
+
+        @Test
+        @DisplayName("getMatchAnalysis → retourne analyse complète")
+        void getMatchAnalysis_returnsCompleteAnalysis() {
+            Offer offer = activeOffer;
+            offer.setRequiredSkills(java.util.Set.of("Java", "Spring"));
+            offer.setExperienceLevel("MID");
+            pendingApp.setCoverLetter("J'ai de l'expérience en Java et Spring.");
+            pendingApp.setOffer(offer);
+
+            when(applicationRepository.findById(1L)).thenReturn(Optional.of(pendingApp));
+
+            java.util.Map<String, Object> result = applicationService.getMatchAnalysis(1L, 3);
+
+            assertThat(result).containsKey("totalScore");
+            assertThat(result).containsKey("matchedSkills");
+            assertThat(result).containsKey("missingSkills");
+            assertThat(result).containsKey("suggestions");
+            assertThat(result).containsKey("matchLevel");
+        }
+
+        @Test
+        @DisplayName("getMatchAnalysis → ResourceNotFoundException si candidature introuvable")
+        void getMatchAnalysis_notFound_throwsException() {
+            when(applicationRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> applicationService.getMatchAnalysis(99L, null))
+                    .isInstanceOf(ResourceNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("getMatchAnalysis → charge l'offre via offerRepository si offer null")
+        void getMatchAnalysis_loadsOfferFromRepo() {
+            pendingApp.setOffer(null);
+            pendingApp.setOfferId(100L);
+
+            when(applicationRepository.findById(1L)).thenReturn(Optional.of(pendingApp));
+            when(offerRepository.findById(100L)).thenReturn(Optional.of(activeOffer));
+
+            java.util.Map<String, Object> result = applicationService.getMatchAnalysis(1L, 2);
+
+            assertThat(result).containsKey("totalScore");
+            verify(offerRepository).findById(100L);
+        }
+    }
 }
