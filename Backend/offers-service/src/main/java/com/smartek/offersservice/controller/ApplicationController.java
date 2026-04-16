@@ -21,8 +21,7 @@ public class ApplicationController {
 
     @PostMapping
     public ResponseEntity<ApplicationResponse> applyToOffer(@Valid @RequestBody ApplicationRequest request) {
-        ApplicationResponse response = applicationService.applyToOffer(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(applicationService.applyToOffer(request));
     }
 
     @GetMapping("/offer/{offerId}")

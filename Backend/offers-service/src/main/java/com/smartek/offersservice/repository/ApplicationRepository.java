@@ -13,17 +13,11 @@ import java.util.Optional;
 public interface ApplicationRepository extends JpaRepository<Application, Long> {
 
     List<Application> findByOfferId(Long offerId);
-
     List<Application> findByOfferIdOrderByScoreDesc(Long offerId);
-
     List<Application> findByLearnerId(Long learnerId);
-
     Optional<Application> findByOfferIdAndLearnerId(Long offerId, Long learnerId);
-
     boolean existsByOfferIdAndLearnerId(Long offerId, Long learnerId);
-
     long countByOfferId(Long offerId);
-
     long countByOfferIdAndStatus(Long offerId, String status);
 
     @Query("SELECT COUNT(a) FROM Application a WHERE a.offerId IN (SELECT o.id FROM Offer o WHERE o.companyId = :companyId)")

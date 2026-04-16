@@ -16,13 +16,9 @@ import java.util.List;
 public interface OfferRepository extends JpaRepository<Offer, Long> {
 
     List<Offer> findByCompanyId(Long companyId);
-
     List<Offer> findByStatus(String status);
-
     Page<Offer> findByStatus(String status, Pageable pageable);
-
     List<Offer> findByCompanyIdAndStatus(Long companyId, String status);
-
     Page<Offer> findAll(Pageable pageable);
 
     @Query("SELECT o FROM Offer o WHERE " +
@@ -37,16 +33,11 @@ public interface OfferRepository extends JpaRepository<Offer, Long> {
            "(:keyword IS NULL OR LOWER(o.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(o.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Offer> searchWithFilters(
-            @Param("keyword") String keyword,
-            @Param("status") String status,
-            @Param("contractType") String contractType,
-            @Param("location") String location,
-            @Param("domain") String domain,
-            @Param("experienceLevel") String experienceLevel,
-            @Param("remote") Boolean remote,
-            @Param("salaryMin") Integer salaryMin,
-            @Param("salaryMax") Integer salaryMax,
-            Pageable pageable);
+            @Param("keyword") String keyword, @Param("status") String status,
+            @Param("contractType") String contractType, @Param("location") String location,
+            @Param("domain") String domain, @Param("experienceLevel") String experienceLevel,
+            @Param("remote") Boolean remote, @Param("salaryMin") Integer salaryMin,
+            @Param("salaryMax") Integer salaryMax, Pageable pageable);
 
     @Query("SELECT COUNT(o) FROM Offer o WHERE o.companyId = :companyId AND o.status = :status")
     long countByCompanyIdAndStatus(@Param("companyId") Long companyId, @Param("status") String status);

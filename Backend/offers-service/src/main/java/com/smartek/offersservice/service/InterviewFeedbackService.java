@@ -2,7 +2,6 @@ package com.smartek.offersservice.service;
 
 import com.smartek.offersservice.dto.InterviewFeedbackRequest;
 import com.smartek.offersservice.dto.InterviewFeedbackResponse;
-import com.smartek.offersservice.entity.Application;
 import com.smartek.offersservice.entity.Interview;
 import com.smartek.offersservice.entity.InterviewFeedback;
 import com.smartek.offersservice.exception.BusinessException;
@@ -58,7 +57,6 @@ public class InterviewFeedbackService {
 
         InterviewFeedback saved = feedbackRepository.save(feedback);
 
-        // Sync application status based on decision
         if (feedback.getDecision() == InterviewFeedback.FeedbackDecision.HIRED) {
             updateApplicationStatus(request.getApplicationId(), "ACCEPTED");
         } else if (feedback.getDecision() == InterviewFeedback.FeedbackDecision.REJECTED) {

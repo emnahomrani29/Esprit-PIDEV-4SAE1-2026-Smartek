@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class InterviewFeedbackMapper {
-
     public InterviewFeedbackResponse toResponse(InterviewFeedback feedback) {
         return InterviewFeedbackResponse.builder()
                 .id(feedback.getId())

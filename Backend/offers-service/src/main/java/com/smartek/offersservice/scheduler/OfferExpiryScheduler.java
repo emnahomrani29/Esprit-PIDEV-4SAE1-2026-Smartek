@@ -22,18 +22,11 @@ public class OfferExpiryScheduler {
     @Transactional
     public void closeExpiredOffers() {
         List<Offer> expired = offerRepository.findExpiredOffers(LocalDateTime.now());
-
-        if (expired.isEmpty()) {
-            log.debug("No expired offers found.");
-            return;
-        }
-
+        if (expired.isEmpty()) { log.debug("No expired offers found."); return; }
         expired.forEach(offer -> {
             offer.setStatus("EXPIRED");
-            log.info("Offer id={} '{}' marked as EXPIRED (was due {})",
-                    offer.getId(), offer.getTitle(), offer.getExpiresAt());
+            log.info("Offer id={} '{}' marked as EXPIRED", offer.getId(), offer.getTitle());
         });
-
         offerRepository.saveAll(expired);
         log.info("Closed {} expired offer(s).", expired.size());
     }

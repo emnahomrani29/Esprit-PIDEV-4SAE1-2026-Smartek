@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class InterviewMapper {
-
     public InterviewResponse toResponse(Interview interview) {
         return InterviewResponse.builder()
                 .id(interview.getId())

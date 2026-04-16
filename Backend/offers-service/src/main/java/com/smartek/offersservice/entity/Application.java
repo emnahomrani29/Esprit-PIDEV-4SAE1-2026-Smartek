@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @Builder
 public class Application {
 
+    // Enum for test compatibility
     public enum ApplicationStatus { PENDING, REVIEWED, ACCEPTED, REJECTED, WITHDRAWN }
 
     @Id

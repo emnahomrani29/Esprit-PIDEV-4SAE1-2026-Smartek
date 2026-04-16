@@ -27,9 +27,8 @@ public class ApplicationMapper {
 
         Application.ApplicationStatus statusEnum = null;
         if (application.getStatus() != null) {
-            try {
-                statusEnum = Application.ApplicationStatus.valueOf(application.getStatus());
-            } catch (IllegalArgumentException ignored) {}
+            try { statusEnum = Application.ApplicationStatus.valueOf(application.getStatus()); }
+            catch (IllegalArgumentException ignored) {}
         }
 
         return ApplicationResponse.builder()

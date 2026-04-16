@@ -5,9 +5,7 @@ import com.smartek.offersservice.dto.OfferResponse;
 import com.smartek.offersservice.dto.OfferSearchRequest;
 import com.smartek.offersservice.dto.OfferStatsResponse;
 import com.smartek.offersservice.entity.Offer;
-import com.smartek.offersservice.exception.BusinessException;
 import com.smartek.offersservice.exception.ResourceNotFoundException;
-import com.smartek.offersservice.mapper.OfferMapper;
 import com.smartek.offersservice.repository.ApplicationRepository;
 import com.smartek.offersservice.repository.InterviewRepository;
 import com.smartek.offersservice.repository.OfferRepository;
@@ -18,7 +16,6 @@ import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,36 +28,52 @@ public class OfferService {
     private final ApplicationRepository applicationRepository;
     private final InterviewRepository interviewRepository;
     private final SavedOfferRepository savedOfferRepository;
-    private final OfferMapper offerMapper;
+    private final com.smartek.offersservice.mapper.OfferMapper offerMapper;
 
     @Transactional
     public OfferResponse createOffer(OfferRequest request) {
-        if (request.getExpiresAt() != null && request.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new BusinessException("La date d'expiration ne peut pas être dans le passé");
+        if (request.getExpiresAt() != null && request.getExpiresAt().isBefore(java.time.LocalDateTime.now())) {
+            throw new com.smartek.offersservice.exception.BusinessException("La date d'expiration ne peut pas être dans le passé");
         }
-        Offer offer = offerMapper.toEntity(request);
-        return offerMapper.toResponse(offerRepository.save(offer));
+        Offer offer = new Offer();
+        offer.setTitle(request.getTitle());
+        offer.setDescription(request.getDescription());
+        offer.setCompanyName(request.getCompanyName());
+        offer.setLocation(request.getLocation());
+        offer.setContractType(request.getContractType());
+        offer.setSalary(request.getSalary());
+        offer.setSalaryMin(request.getSalaryMin());
+        offer.setSalaryMax(request.getSalaryMax());
+        offer.setDomain(request.getDomain());
+        offer.setExperienceLevel(request.getExperienceLevel());
+        offer.setRemote(request.getRemote() != null ? request.getRemote() : false);
+        offer.setPositions(request.getPositions() != null ? request.getPositions() : 1);
+        offer.setCompanyId(request.getCompanyId());
+        offer.setStatus(request.getStatus() != null ? request.getStatus() : "ACTIVE");
+        offer.setExpiresAt(request.getExpiresAt());
+        return mapToResponse(offerRepository.save(offer));
     }
 
     public Page<OfferResponse> getAllOffers(int page, int size, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        return offerRepository.findAll(pageable).map(offerMapper::toResponse);
+        return offerRepository.findAll(pageable).map(this::mapToResponse);
     }
 
     public OfferResponse getOfferById(Long id) {
         Offer offer = offerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Offer not found with id: " + id));
+        // Incrémenter le compteur de vues
         offerRepository.incrementViewCount(id);
         offer.setViewCount(offer.getViewCount() + 1);
-        return offerMapper.toResponse(offer);
+        return mapToResponse(offer);
     }
 
     public OfferResponse getOfferByIdWithCounts(Long id) {
         Offer offer = offerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Offer not found with id: " + id));
         offerRepository.incrementViewCount(id);
-        OfferResponse r = offerMapper.toResponse(offer);
+        OfferResponse r = mapToResponse(offer);
         r.setApplicationCount(applicationRepository.countByOfferId(id));
         r.setSavedCount(savedOfferRepository.countByOfferId(id));
         return r;
@@ -69,7 +82,7 @@ public class OfferService {
     public List<OfferResponse> getOffersByCompanyId(Long companyId) {
         return offerRepository.findByCompanyId(companyId).stream()
                 .map(offer -> {
-                    OfferResponse r = offerMapper.toResponse(offer);
+                    OfferResponse r = mapToResponse(offer);
                     r.setApplicationCount(applicationRepository.countByOfferId(offer.getId()));
                     return r;
                 })
@@ -78,7 +91,7 @@ public class OfferService {
 
     public Page<OfferResponse> getOffersByStatus(String status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return offerRepository.findByStatus(status, pageable).map(offerMapper::toResponse);
+        return offerRepository.findByStatus(status, pageable).map(this::mapToResponse);
     }
 
     public Page<OfferResponse> searchOffers(OfferSearchRequest request) {
@@ -97,13 +110,13 @@ public class OfferService {
                 request.getSalaryMin(),
                 request.getSalaryMax(),
                 pageable
-        ).map(offerMapper::toResponse);
+        ).map(this::mapToResponse);
     }
 
     public List<OfferResponse> getTopViewedOffers(int limit) {
         Pageable pageable = PageRequest.of(0, limit);
         return offerRepository.findTopViewedOffers(pageable).stream()
-                .map(offerMapper::toResponse)
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
@@ -147,8 +160,21 @@ public class OfferService {
     public OfferResponse updateOffer(Long id, OfferRequest request) {
         Offer offer = offerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Offer not found with id: " + id));
-        offerMapper.updateEntityFromRequest(offer, request);
-        return offerMapper.toResponse(offerRepository.save(offer));
+        offer.setTitle(request.getTitle());
+        offer.setDescription(request.getDescription());
+        offer.setCompanyName(request.getCompanyName());
+        offer.setLocation(request.getLocation());
+        offer.setContractType(request.getContractType());
+        offer.setSalary(request.getSalary());
+        offer.setSalaryMin(request.getSalaryMin());
+        offer.setSalaryMax(request.getSalaryMax());
+        offer.setDomain(request.getDomain());
+        offer.setExperienceLevel(request.getExperienceLevel());
+        if (request.getRemote() != null) offer.setRemote(request.getRemote());
+        if (request.getPositions() != null) offer.setPositions(request.getPositions());
+        if (request.getStatus() != null) offer.setStatus(request.getStatus());
+        if (request.getExpiresAt() != null) offer.setExpiresAt(request.getExpiresAt());
+        return mapToResponse(offerRepository.save(offer));
     }
 
     @Transactional
@@ -157,8 +183,34 @@ public class OfferService {
                 .orElseThrow(() -> new ResourceNotFoundException("Offer not found with id: " + id));
         long accepted = applicationRepository.countByOfferIdAndStatus(offer.getId(), "ACCEPTED");
         if (accepted > 0) {
-            throw new BusinessException("Impossible de supprimer une offre avec des candidatures acceptées");
+            throw new com.smartek.offersservice.exception.BusinessException("Impossible de supprimer une offre avec des candidatures acceptées");
         }
         offerRepository.deleteById(id);
+    }
+
+    private OfferResponse mapToResponse(Offer offer) {
+        OfferResponse r = new OfferResponse();
+        r.setId(offer.getId());
+        r.setTitle(offer.getTitle());
+        r.setDescription(offer.getDescription());
+        r.setCompanyName(offer.getCompanyName());
+        r.setLocation(offer.getLocation());
+        r.setContractType(offer.getContractType());
+        r.setSalary(offer.getSalary());
+        r.setSalaryMin(offer.getSalaryMin());
+        r.setSalaryMax(offer.getSalaryMax());
+        r.setDomain(offer.getDomain());
+        r.setExperienceLevel(offer.getExperienceLevel());
+        r.setRemote(offer.getRemote());
+        r.setPositions(offer.getPositions());
+        r.setViewCount(offer.getViewCount());
+        r.setCompanyId(offer.getCompanyId());
+        r.setStatus(offer.getStatus());
+        r.setExpiresAt(offer.getExpiresAt());
+        r.setCreatedAt(offer.getCreatedAt());
+        r.setUpdatedAt(offer.getUpdatedAt());
+        r.setRequiredSkills(offer.getRequiredSkills());
+        r.setOpen(offer.isOpen());
+        return r;
     }
 }

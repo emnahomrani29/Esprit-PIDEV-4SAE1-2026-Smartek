@@ -17,6 +17,7 @@ import java.util.Set;
 @Builder
 public class Offer {
 
+    // Enums for test compatibility (stored as String in DB)
     public enum OfferStatus { ACTIVE, CLOSED, DRAFT, EXPIRED }
     public enum ExperienceLevel { JUNIOR, MID, SENIOR, EXPERT }
 
@@ -46,8 +47,6 @@ public class Offer {
     private Integer salaryMin;
     private Integer salaryMax;
     private String domain;
-
-    // Stored as String for backward compatibility with existing data
     private String experienceLevel; // JUNIOR, MID, SENIOR, EXPERT
 
     @Builder.Default

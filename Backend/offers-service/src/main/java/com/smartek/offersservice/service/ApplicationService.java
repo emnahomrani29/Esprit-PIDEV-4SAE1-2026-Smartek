@@ -47,26 +47,22 @@ public class ApplicationService {
         application.setScore(score);
 
         Application saved = applicationRepository.save(application);
-        log.info("Application {} created with score {}", saved.getId(), score);
         return applicationMapper.toResponse(saved);
     }
 
     public List<ApplicationResponse> getApplicationsByOffer(Long offerId) {
         return applicationRepository.findByOfferId(offerId).stream()
-                .map(applicationMapper::toResponse)
-                .collect(Collectors.toList());
+                .map(applicationMapper::toResponse).collect(Collectors.toList());
     }
 
     public List<ApplicationResponse> getApplicationsByOfferSortedByScore(Long offerId) {
         return applicationRepository.findByOfferIdOrderByScoreDesc(offerId).stream()
-                .map(applicationMapper::toResponse)
-                .collect(Collectors.toList());
+                .map(applicationMapper::toResponse).collect(Collectors.toList());
     }
 
     public List<ApplicationResponse> getApplicationsByLearner(Long learnerId) {
         return applicationRepository.findByLearnerId(learnerId).stream()
-                .map(applicationMapper::toResponse)
-                .collect(Collectors.toList());
+                .map(applicationMapper::toResponse).collect(Collectors.toList());
     }
 
     public boolean hasApplied(Long offerId, Long learnerId) {
