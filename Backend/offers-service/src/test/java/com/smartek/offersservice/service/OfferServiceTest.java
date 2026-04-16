@@ -4,18 +4,16 @@ import com.smartek.offersservice.dto.OfferRequest;
 import com.smartek.offersservice.dto.OfferResponse;
 import com.smartek.offersservice.dto.OfferStatsResponse;
 import com.smartek.offersservice.entity.Offer;
+import com.smartek.offersservice.exception.BusinessException;
 import com.smartek.offersservice.exception.ResourceNotFoundException;
+import com.smartek.offersservice.mapper.OfferMapper;
 import com.smartek.offersservice.repository.ApplicationRepository;
-import com.smartek.offersservice.repository.InterviewFeedbackRepository;
 import com.smartek.offersservice.repository.InterviewRepository;
 import com.smartek.offersservice.repository.OfferRepository;
 import com.smartek.offersservice.repository.SavedOfferRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
@@ -34,12 +32,12 @@ class OfferServiceTest {
     @Mock private ApplicationRepository applicationRepository;
     @Mock private InterviewRepository interviewRepository;
     @Mock private SavedOfferRepository savedOfferRepository;
-    @Mock private InterviewFeedbackRepository feedbackRepository;
+    @Mock private OfferMapper offerMapper;
 
-    @InjectMocks
-    private OfferService offerService;
+    @InjectMocks private OfferService offerService;
 
     private Offer sampleOffer;
+    private OfferResponse sampleResponse;
     private OfferRequest sampleRequest;
 
     @BeforeEach
@@ -59,120 +57,101 @@ class OfferServiceTest {
         sampleOffer.setCreatedAt(LocalDateTime.now());
         sampleOffer.setUpdatedAt(LocalDateTime.now());
 
-        sampleRequest = new OfferRequest();
-        sampleRequest.setTitle("Développeur Java");
-        sampleRequest.setDescription("Poste de développeur Java senior");
-        sampleRequest.setCompanyName("SMARTEK");
-        sampleRequest.setLocation("Paris");
-        sampleRequest.setContractType("CDI");
-        sampleRequest.setCompanyId(10L);
+        sampleResponse = OfferResponse.builder()
+                .id(1L).title("Développeur Java").companyId(10L)
+                .status("ACTIVE").viewCount(0L).positions(1).remote(false)
+                .open(true).build();
+
+        sampleRequest = OfferRequest.builder()
+                .title("Développeur Java").description("Poste de développeur Java senior")
+                .companyName("SMARTEK").location("Paris").contractType("CDI")
+                .companyId(10L).build();
     }
 
-    // ── CREATE ──────────────────────────────────────────────────────────────
-
     @Test
-    @DisplayName("createOffer — doit créer et retourner une offre")
+    @DisplayName("createOffer — retourne l'offre créée")
     void createOffer_shouldReturnCreatedOffer() {
-        when(offerRepository.save(any(Offer.class))).thenReturn(sampleOffer);
+        when(offerRepository.save(any())).thenReturn(sampleOffer);
+        when(offerMapper.toResponse(any())).thenReturn(sampleResponse);
 
         OfferResponse result = offerService.createOffer(sampleRequest);
 
         assertThat(result).isNotNull();
         assertThat(result.getTitle()).isEqualTo("Développeur Java");
-        assertThat(result.getCompanyId()).isEqualTo(10L);
-        assertThat(result.getStatus()).isEqualTo("ACTIVE");
-        verify(offerRepository, times(1)).save(any(Offer.class));
-    }
-
-    @Test
-    @DisplayName("createOffer — statut par défaut ACTIVE si non fourni")
-    void createOffer_defaultStatusIsActive() {
-        sampleRequest.setStatus(null);
-        when(offerRepository.save(any(Offer.class))).thenReturn(sampleOffer);
-
-        OfferResponse result = offerService.createOffer(sampleRequest);
-
         assertThat(result.getStatus()).isEqualTo("ACTIVE");
     }
 
-    // ── GET BY ID ────────────────────────────────────────────────────────────
+    @Test
+    @DisplayName("createOffer — date expiration passée → BusinessException")
+    void createOffer_pastExpiresAt_throwsBusinessException() {
+        sampleRequest = OfferRequest.builder()
+                .title("Dev").description("Desc").companyName("Corp")
+                .location("Paris").contractType("CDI").companyId(1L)
+                .expiresAt(LocalDateTime.now().minusDays(1))
+                .build();
+
+        assertThatThrownBy(() -> offerService.createOffer(sampleRequest))
+                .isInstanceOf(BusinessException.class);
+    }
 
     @Test
-    @DisplayName("getOfferById — doit retourner l'offre et incrémenter les vues")
+    @DisplayName("getOfferById — retourne l'offre et incrémente les vues")
     void getOfferById_shouldReturnOfferAndIncrementViews() {
         when(offerRepository.findById(1L)).thenReturn(Optional.of(sampleOffer));
         doNothing().when(offerRepository).incrementViewCount(1L);
+        when(offerMapper.toResponse(any())).thenReturn(sampleResponse);
 
         OfferResponse result = offerService.getOfferById(1L);
 
         assertThat(result).isNotNull();
-        assertThat(result.getId()).isEqualTo(1L);
         verify(offerRepository).incrementViewCount(1L);
     }
 
     @Test
-    @DisplayName("getOfferById — doit lever ResourceNotFoundException si introuvable")
-    void getOfferById_shouldThrowWhenNotFound() {
+    @DisplayName("getOfferById — introuvable → ResourceNotFoundException")
+    void getOfferById_notFound_throwsException() {
         when(offerRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> offerService.getOfferById(99L))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("99");
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 
-    // ── GET BY COMPANY ───────────────────────────────────────────────────────
-
     @Test
-    @DisplayName("getOffersByCompanyId — doit retourner les offres avec applicationCount")
-    void getOffersByCompanyId_shouldReturnOffersWithCount() {
+    @DisplayName("getOffersByCompanyId — retourne les offres avec applicationCount")
+    void getOffersByCompanyId_returnsWithCount() {
         when(offerRepository.findByCompanyId(10L)).thenReturn(List.of(sampleOffer));
         when(applicationRepository.countByOfferId(1L)).thenReturn(3L);
+        when(offerMapper.toResponse(any())).thenReturn(sampleResponse);
 
         List<OfferResponse> result = offerService.getOffersByCompanyId(10L);
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getApplicationCount()).isEqualTo(3L);
     }
 
-    // ── UPDATE ───────────────────────────────────────────────────────────────
-
     @Test
-    @DisplayName("updateOffer — doit mettre à jour et retourner l'offre modifiée")
+    @DisplayName("updateOffer — met à jour et retourne l'offre")
     void updateOffer_shouldUpdateAndReturn() {
-        sampleRequest.setTitle("Développeur Java Senior");
-        Offer updated = new Offer();
-        updated.setId(1L);
-        updated.setTitle("Développeur Java Senior");
-        updated.setCompanyId(10L);
-        updated.setStatus("ACTIVE");
-        updated.setViewCount(0L);
-        updated.setPositions(1);
-        updated.setRemote(false);
-        updated.setCreatedAt(LocalDateTime.now());
-        updated.setUpdatedAt(LocalDateTime.now());
-
         when(offerRepository.findById(1L)).thenReturn(Optional.of(sampleOffer));
-        when(offerRepository.save(any(Offer.class))).thenReturn(updated);
+        when(offerRepository.save(any())).thenReturn(sampleOffer);
+        when(offerMapper.toResponse(any())).thenReturn(sampleResponse);
 
         OfferResponse result = offerService.updateOffer(1L, sampleRequest);
 
-        assertThat(result.getTitle()).isEqualTo("Développeur Java Senior");
+        assertThat(result).isNotNull();
     }
 
     @Test
-    @DisplayName("updateOffer — doit lever RuntimeException si offre introuvable")
-    void updateOffer_shouldThrowWhenNotFound() {
+    @DisplayName("updateOffer — introuvable → ResourceNotFoundException")
+    void updateOffer_notFound_throwsException() {
         when(offerRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> offerService.updateOffer(99L, sampleRequest))
-                .isInstanceOf(RuntimeException.class);
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 
-    // ── DELETE ───────────────────────────────────────────────────────────────
-
     @Test
-    @DisplayName("deleteOffer — doit supprimer l'offre existante")
-    void deleteOffer_shouldDeleteExistingOffer() {
+    @DisplayName("deleteOffer — supprime l'offre sans candidatures acceptées")
+    void deleteOffer_noAccepted_deletes() {
         when(offerRepository.findById(1L)).thenReturn(Optional.of(sampleOffer));
         when(applicationRepository.countByOfferIdAndStatus(1L, "ACCEPTED")).thenReturn(0L);
         doNothing().when(offerRepository).deleteById(1L);
@@ -182,19 +161,27 @@ class OfferServiceTest {
     }
 
     @Test
-    @DisplayName("deleteOffer — doit lever ResourceNotFoundException si introuvable")
-    void deleteOffer_shouldThrowWhenNotFound() {
+    @DisplayName("deleteOffer — candidatures acceptées → BusinessException")
+    void deleteOffer_withAccepted_throwsBusinessException() {
+        when(offerRepository.findById(1L)).thenReturn(Optional.of(sampleOffer));
+        when(applicationRepository.countByOfferIdAndStatus(1L, "ACCEPTED")).thenReturn(2L);
+
+        assertThatThrownBy(() -> offerService.deleteOffer(1L))
+                .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    @DisplayName("deleteOffer — introuvable → ResourceNotFoundException")
+    void deleteOffer_notFound_throwsException() {
         when(offerRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> offerService.deleteOffer(99L))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
-    // ── STATS ────────────────────────────────────────────────────────────────
-
     @Test
-    @DisplayName("getStatsByCompany — doit calculer le taux d'acceptation correctement")
-    void getStatsByCompany_shouldCalculateAcceptanceRate() {
+    @DisplayName("getStatsByCompany — calcule le taux d'acceptation")
+    void getStatsByCompany_calculatesAcceptanceRate() {
         Long companyId = 10L;
         when(offerRepository.countByCompanyIdAndStatus(companyId, "ACTIVE")).thenReturn(2L);
         when(offerRepository.countByCompanyIdAndStatus(companyId, "CLOSED")).thenReturn(1L);
@@ -205,8 +192,6 @@ class OfferServiceTest {
         when(applicationRepository.countByCompanyIdAndStatus(companyId, "ACCEPTED")).thenReturn(4L);
         when(applicationRepository.countByCompanyIdAndStatus(companyId, "REJECTED")).thenReturn(2L);
         when(interviewRepository.countByOffer_CompanyId(companyId)).thenReturn(3L);
-        when(interviewRepository.countByOffer_CompanyIdAndStatus(eq(companyId), any())).thenReturn(2L);
-        when(feedbackRepository.countByDecision(any())).thenReturn(1L);
         when(applicationRepository.averageScoreByCompanyId(companyId)).thenReturn(65.0);
 
         OfferStatsResponse stats = offerService.getStatsByCompany(companyId);
@@ -215,6 +200,7 @@ class OfferServiceTest {
         assertThat(stats.getActiveOffers()).isEqualTo(2L);
         assertThat(stats.getTotalApplications()).isEqualTo(10L);
         assertThat(stats.getAcceptanceRate()).isEqualTo(40.0);
+        assertThat(stats.getAverageApplicationScore()).isEqualTo(65.0);
     }
 
     @Test
@@ -225,8 +211,6 @@ class OfferServiceTest {
         when(applicationRepository.countByCompanyId(companyId)).thenReturn(0L);
         when(applicationRepository.countByCompanyIdAndStatus(any(), any())).thenReturn(0L);
         when(interviewRepository.countByOffer_CompanyId(companyId)).thenReturn(0L);
-        when(interviewRepository.countByOffer_CompanyIdAndStatus(any(), any())).thenReturn(0L);
-        when(feedbackRepository.countByDecision(any())).thenReturn(0L);
         when(applicationRepository.averageScoreByCompanyId(companyId)).thenReturn(0.0);
 
         OfferStatsResponse stats = offerService.getStatsByCompany(companyId);

@@ -10,17 +10,11 @@ import com.smartek.offersservice.exception.ResourceNotFoundException;
 import com.smartek.offersservice.repository.ApplicationRepository;
 import com.smartek.offersservice.repository.InterviewFeedbackRepository;
 import com.smartek.offersservice.repository.InterviewRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,10 +22,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for InterviewFeedbackService.
- * Covers: feedback submission rules, decision → application status sync, duplicate prevention.
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("InterviewFeedbackService Unit Tests")
 class InterviewFeedbackServiceTest {
@@ -51,20 +41,12 @@ class InterviewFeedbackServiceTest {
     @BeforeEach
     void setUp() {
         completedInterview = Interview.builder()
-                .id(10L)
-                .applicationId(1L)
-                .offerId(100L)
-                .learnerId(2L)
-                .status(Interview.InterviewStatus.COMPLETED)
-                .build();
+                .id(10L).applicationId(1L).offerId(100L).learnerId(2L)
+                .status(Interview.InterviewStatus.COMPLETED).build();
 
         scheduledInterview = Interview.builder()
-                .id(11L)
-                .applicationId(2L)
-                .offerId(100L)
-                .learnerId(3L)
-                .status(Interview.InterviewStatus.SCHEDULED)
-                .build();
+                .id(11L).applicationId(2L).offerId(100L).learnerId(3L)
+                .status(Interview.InterviewStatus.SCHEDULED).build();
 
         application = new Application();
         application.setId(1L);
@@ -83,16 +65,10 @@ class InterviewFeedbackServiceTest {
         validRequest.setSubmittedBy(5L);
 
         savedFeedback = InterviewFeedback.builder()
-                .id(100L)
-                .interviewId(10L)
-                .applicationId(1L)
-                .rating(4)
-                .decision(InterviewFeedback.FeedbackDecision.HIRED)
-                .submittedBy(5L)
-                .build();
+                .id(100L).interviewId(10L).applicationId(1L)
+                .rating(4).decision(InterviewFeedback.FeedbackDecision.HIRED)
+                .submittedBy(5L).build();
     }
-
-    // ─── SUBMIT FEEDBACK ──────────────────────────────────────────────────────
 
     @Nested
     @DisplayName("Submit Feedback")
@@ -119,10 +95,9 @@ class InterviewFeedbackServiceTest {
         void scheduledInterview_autoCompletedAndFeedbackSubmitted() {
             validRequest.setInterviewId(11L);
             validRequest.setApplicationId(2L);
+
             Application app2 = new Application();
             app2.setId(2L);
-            app2.setOfferId(100L);
-            app2.setLearnerId(3L);
             app2.setStatus("PENDING");
 
             InterviewFeedback scheduledFeedback = InterviewFeedback.builder()
@@ -131,8 +106,8 @@ class InterviewFeedbackServiceTest {
                     .submittedBy(5L).build();
 
             when(interviewRepository.findById(11L)).thenReturn(Optional.of(scheduledInterview));
-            when(feedbackRepository.findByInterviewId(11L)).thenReturn(Optional.empty());
             when(interviewRepository.save(any())).thenReturn(scheduledInterview);
+            when(feedbackRepository.findByInterviewId(11L)).thenReturn(Optional.empty());
             when(feedbackRepository.save(any())).thenReturn(scheduledFeedback);
             when(applicationRepository.findById(2L)).thenReturn(Optional.of(app2));
             when(applicationRepository.save(any())).thenReturn(app2);
@@ -168,14 +143,12 @@ class InterviewFeedbackServiceTest {
         }
     }
 
-    // ─── DECISION → APPLICATION STATUS SYNC ──────────────────────────────────
-
     @Nested
-    @DisplayName("Decision → Application Status Synchronization")
+    @DisplayName("Decision → Application Status Sync")
     class DecisionSyncTests {
 
         @Test
-        @DisplayName("HIRED decision → application status set to ACCEPTED")
+        @DisplayName("HIRED → application set to ACCEPTED")
         void hiredDecision_applicationSetToAccepted() {
             validRequest.setDecision("HIRED");
             when(interviewRepository.findById(10L)).thenReturn(Optional.of(completedInterview));
@@ -192,17 +165,13 @@ class InterviewFeedbackServiceTest {
         }
 
         @Test
-        @DisplayName("REJECTED decision → application status set to REJECTED")
+        @DisplayName("REJECTED → application set to REJECTED")
         void rejectedDecision_applicationSetToRejected() {
             validRequest.setDecision("REJECTED");
             InterviewFeedback rejectedFeedback = InterviewFeedback.builder()
-                    .id(101L)
-                    .interviewId(10L)
-                    .applicationId(1L)
-                    .rating(2)
-                    .decision(InterviewFeedback.FeedbackDecision.REJECTED)
-                    .submittedBy(5L)
-                    .build();
+                    .id(101L).interviewId(10L).applicationId(1L)
+                    .rating(2).decision(InterviewFeedback.FeedbackDecision.REJECTED)
+                    .submittedBy(5L).build();
 
             when(interviewRepository.findById(10L)).thenReturn(Optional.of(completedInterview));
             when(feedbackRepository.findByInterviewId(10L)).thenReturn(Optional.empty());
@@ -218,17 +187,13 @@ class InterviewFeedbackServiceTest {
         }
 
         @Test
-        @DisplayName("PENDING decision → application status NOT changed")
+        @DisplayName("PENDING → application status NOT changed")
         void pendingDecision_applicationStatusUnchanged() {
             validRequest.setDecision("PENDING");
             InterviewFeedback pendingFeedback = InterviewFeedback.builder()
-                    .id(102L)
-                    .interviewId(10L)
-                    .applicationId(1L)
-                    .rating(3)
-                    .decision(InterviewFeedback.FeedbackDecision.PENDING)
-                    .submittedBy(5L)
-                    .build();
+                    .id(102L).interviewId(10L).applicationId(1L)
+                    .rating(3).decision(InterviewFeedback.FeedbackDecision.PENDING)
+                    .submittedBy(5L).build();
 
             when(interviewRepository.findById(10L)).thenReturn(Optional.of(completedInterview));
             when(feedbackRepository.findByInterviewId(10L)).thenReturn(Optional.empty());
@@ -236,16 +201,13 @@ class InterviewFeedbackServiceTest {
 
             feedbackService.submitFeedback(validRequest);
 
-            // Application status should NOT be updated for PENDING decision
             verify(applicationRepository, never()).save(any());
         }
     }
 
-    // ─── GET FEEDBACK ─────────────────────────────────────────────────────────
-
     @Test
-    @DisplayName("Get feedback by interview — found → returns response")
-    void getFeedbackByInterview_found_returnsResponse() {
+    @DisplayName("getFeedbackByInterview — found → returns response")
+    void getFeedbackByInterview_found() {
         when(feedbackRepository.findByInterviewId(10L)).thenReturn(Optional.of(savedFeedback));
 
         InterviewFeedbackResponse result = feedbackService.getFeedbackByInterview(10L);
@@ -255,8 +217,8 @@ class InterviewFeedbackServiceTest {
     }
 
     @Test
-    @DisplayName("Get feedback by interview — not found → ResourceNotFoundException")
-    void getFeedbackByInterview_notFound_throwsException() {
+    @DisplayName("getFeedbackByInterview — not found → ResourceNotFoundException")
+    void getFeedbackByInterview_notFound() {
         when(feedbackRepository.findByInterviewId(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> feedbackService.getFeedbackByInterview(99L))
@@ -264,7 +226,7 @@ class InterviewFeedbackServiceTest {
     }
 
     @Test
-    @DisplayName("Get feedbacks by application → returns list")
+    @DisplayName("getFeedbacksByApplication → returns list")
     void getFeedbacksByApplication_returnsList() {
         when(feedbackRepository.findByApplicationId(1L)).thenReturn(List.of(savedFeedback));
 
