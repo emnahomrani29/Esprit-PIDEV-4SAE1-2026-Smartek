@@ -24,7 +24,7 @@ public class OfferMapper {
                 .salaryMin(request.getSalaryMin())
                 .salaryMax(request.getSalaryMax())
                 .domain(request.getDomain())
-                .experienceLevel(request.getExperienceLevel())
+                .experienceLevel(request.getExperienceLevel() != null ? request.getExperienceLevel().name() : null)
                 .remote(request.getRemote() != null ? request.getRemote() : false)
                 .positions(request.getPositions() != null ? request.getPositions() : 1)
                 .requiredSkills(request.getRequiredSkills() != null ? request.getRequiredSkills() : new java.util.HashSet<>())
@@ -47,7 +47,7 @@ public class OfferMapper {
                 .salaryMin(offer.getSalaryMin())
                 .salaryMax(offer.getSalaryMax())
                 .domain(offer.getDomain())
-                .experienceLevel(offer.getExperienceLevel())
+                .experienceLevel(offer.getExperienceLevel() != null ? Offer.ExperienceLevel.valueOf(offer.getExperienceLevel()) : null)
                 .remote(offer.getRemote())
                 .positions(offer.getPositions())
                 .requiredSkills(offer.getRequiredSkills())
@@ -72,7 +72,7 @@ public class OfferMapper {
         offer.setSalaryMin(request.getSalaryMin());
         offer.setSalaryMax(request.getSalaryMax());
         offer.setDomain(request.getDomain());
-        offer.setExperienceLevel(request.getExperienceLevel());
+        offer.setExperienceLevel(request.getExperienceLevel() != null ? request.getExperienceLevel().name() : null);
         if (request.getRemote() != null) offer.setRemote(request.getRemote());
         if (request.getPositions() != null) offer.setPositions(request.getPositions());
         if (request.getRequiredSkills() != null) offer.setRequiredSkills(request.getRequiredSkills());

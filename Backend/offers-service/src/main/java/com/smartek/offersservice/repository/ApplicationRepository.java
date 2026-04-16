@@ -14,6 +14,8 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 
     List<Application> findByOfferId(Long offerId);
 
+    List<Application> findByOfferIdOrderByScoreDesc(Long offerId);
+
     List<Application> findByLearnerId(Long learnerId);
 
     Optional<Application> findByOfferIdAndLearnerId(Long offerId, Long learnerId);

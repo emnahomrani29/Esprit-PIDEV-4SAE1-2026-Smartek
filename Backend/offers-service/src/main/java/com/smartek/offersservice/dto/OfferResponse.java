@@ -1,14 +1,15 @@
 package com.smartek.offersservice.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.smartek.offersservice.entity.Offer;
+import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class OfferResponse {
     private Long id;
     private String title;
@@ -20,16 +21,17 @@ public class OfferResponse {
     private Integer salaryMin;
     private Integer salaryMax;
     private String domain;
-    private String experienceLevel;
+    private Offer.ExperienceLevel experienceLevel;
     private Boolean remote;
     private Integer positions;
+    private Set<String> requiredSkills;
     private Long viewCount;
     private Long companyId;
-    private String status;
+    private Offer.OfferStatus status;
     private LocalDateTime expiresAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    // Nombre de candidatures (enrichi à la demande)
+    private Boolean open;
     private Long applicationCount;
     private Long savedCount;
 }

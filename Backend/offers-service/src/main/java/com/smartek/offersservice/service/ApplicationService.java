@@ -3,79 +3,99 @@ package com.smartek.offersservice.service;
 import com.smartek.offersservice.dto.ApplicationRequest;
 import com.smartek.offersservice.dto.ApplicationResponse;
 import com.smartek.offersservice.entity.Application;
+import com.smartek.offersservice.entity.Offer;
+import com.smartek.offersservice.exception.BusinessException;
+import com.smartek.offersservice.exception.ResourceNotFoundException;
+import com.smartek.offersservice.mapper.ApplicationMapper;
 import com.smartek.offersservice.repository.ApplicationRepository;
+import com.smartek.offersservice.repository.OfferRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ApplicationService {
-    
+
     private final ApplicationRepository applicationRepository;
-    
+    private final OfferRepository offerRepository;
+    private final ApplicationMapper applicationMapper;
+    private final ApplicationScoringService scoringService;
+
     @Transactional
     public ApplicationResponse applyToOffer(ApplicationRequest request) {
         // Vérifier si l'utilisateur a déjà postulé
         if (applicationRepository.existsByOfferIdAndLearnerId(request.getOfferId(), request.getLearnerId())) {
-            throw new RuntimeException("Vous avez déjà postulé à cette offre");
+            throw new BusinessException("Vous avez déjà postulé à cette offre");
         }
-        
-        Application application = new Application();
-        application.setOfferId(request.getOfferId());
-        application.setLearnerId(request.getLearnerId());
-        application.setLearnerName(request.getLearnerName());
-        application.setLearnerEmail(request.getLearnerEmail());
-        application.setCoverLetter(request.getCoverLetter());
-        application.setCvBase64(request.getCvBase64());
-        application.setCvFileName(request.getCvFileName());
-        application.setStatus("PENDING");
-        
-        Application savedApplication = applicationRepository.save(application);
-        return mapToResponse(savedApplication);
+
+        Offer offer = offerRepository.findById(request.getOfferId())
+                .orElseThrow(() -> new ResourceNotFoundException("Offre non trouvée: " + request.getOfferId()));
+
+        if (offer.getStatus() != Offer.OfferStatus.ACTIVE) {
+            throw new BusinessException("Cette offre n'est plus disponible");
+        }
+
+        Application application = applicationMapper.toEntity(request);
+        application.setOffer(offer);
+
+        // Calculer le score
+        Set<String> skills = request.getCandidateSkills() != null
+                ? new HashSet<>(request.getCandidateSkills()) : new HashSet<>();
+        int score = scoringService.calculateScore(application, offer, request.getYearsOfExperience());
+        application.setScore(score);
+
+        Application saved = applicationRepository.save(application);
+        log.info("Application {} created with score {}", saved.getId(), score);
+        return applicationMapper.toResponse(saved);
     }
-    
+
     public List<ApplicationResponse> getApplicationsByOffer(Long offerId) {
         return applicationRepository.findByOfferId(offerId).stream()
-                .map(this::mapToResponse)
+                .map(applicationMapper::toResponse)
                 .collect(Collectors.toList());
     }
-    
+
+    public List<ApplicationResponse> getApplicationsByOfferSortedByScore(Long offerId) {
+        return applicationRepository.findByOfferIdOrderByScoreDesc(offerId).stream()
+                .map(applicationMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
     public List<ApplicationResponse> getApplicationsByLearner(Long learnerId) {
         return applicationRepository.findByLearnerId(learnerId).stream()
-                .map(this::mapToResponse)
+                .map(applicationMapper::toResponse)
                 .collect(Collectors.toList());
     }
-    
+
     public boolean hasApplied(Long offerId, Long learnerId) {
         return applicationRepository.existsByOfferIdAndLearnerId(offerId, learnerId);
     }
-    
+
     @Transactional
-    public ApplicationResponse updateApplicationStatus(Long applicationId, String status) {
+    public ApplicationResponse updateApplicationStatus(Long applicationId, String status, String recruiterNote) {
         Application application = applicationRepository.findById(applicationId)
-                .orElseThrow(() -> new RuntimeException("Application not found"));
-        
-        application.setStatus(status);
-        Application updatedApplication = applicationRepository.save(application);
-        return mapToResponse(updatedApplication);
+                .orElseThrow(() -> new ResourceNotFoundException("Candidature non trouvée: " + applicationId));
+        application.setStatus(Application.ApplicationStatus.valueOf(status));
+        if (recruiterNote != null) application.setRecruiterNote(recruiterNote);
+        return applicationMapper.toResponse(applicationRepository.save(application));
     }
-    
-    private ApplicationResponse mapToResponse(Application application) {
-        return new ApplicationResponse(
-                application.getId(),
-                application.getOfferId(),
-                application.getLearnerId(),
-                application.getLearnerName(),
-                application.getLearnerEmail(),
-                application.getCoverLetter(),
-                application.getCvBase64(),
-                application.getCvFileName(),
-                application.getStatus(),
-                application.getAppliedAt()
-        );
+
+    @Transactional
+    public ApplicationResponse withdrawApplication(Long applicationId, Long learnerId) {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Candidature non trouvée: " + applicationId));
+        if (!application.getLearnerId().equals(learnerId)) {
+            throw new BusinessException("Vous ne pouvez pas retirer cette candidature");
+        }
+        application.setStatus(Application.ApplicationStatus.WITHDRAWN);
+        return applicationMapper.toResponse(applicationRepository.save(application));
     }
 }
