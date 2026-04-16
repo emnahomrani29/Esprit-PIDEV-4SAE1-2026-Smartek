@@ -259,6 +259,7 @@ describe('RhCompanyOffersComponent', () => {
       spyOn(window, 'confirm').and.returnValue(false);
       component.deleteOffer(1);
       httpMock.expectNone(`${apiUrl}/offers/1`);
+      expect(component.offers.length).toBe(1); // offers unchanged
     });
   });
 
