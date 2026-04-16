@@ -14,9 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,7 +29,6 @@ public class ApplicationService {
 
     @Transactional
     public ApplicationResponse applyToOffer(ApplicationRequest request) {
-        // Vérifier si l'utilisateur a déjà postulé
         if (applicationRepository.existsByOfferIdAndLearnerId(request.getOfferId(), request.getLearnerId())) {
             throw new BusinessException("Vous avez déjà postulé à cette offre");
         }
@@ -39,16 +36,13 @@ public class ApplicationService {
         Offer offer = offerRepository.findById(request.getOfferId())
                 .orElseThrow(() -> new ResourceNotFoundException("Offre non trouvée: " + request.getOfferId()));
 
-        if (offer.getStatus() != Offer.OfferStatus.ACTIVE) {
+        if (!"ACTIVE".equals(offer.getStatus())) {
             throw new BusinessException("Cette offre n'est plus disponible");
         }
 
         Application application = applicationMapper.toEntity(request);
         application.setOffer(offer);
 
-        // Calculer le score
-        Set<String> skills = request.getCandidateSkills() != null
-                ? new HashSet<>(request.getCandidateSkills()) : new HashSet<>();
         int score = scoringService.calculateScore(application, offer, request.getYearsOfExperience());
         application.setScore(score);
 
@@ -83,7 +77,7 @@ public class ApplicationService {
     public ApplicationResponse updateApplicationStatus(Long applicationId, String status, String recruiterNote) {
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Candidature non trouvée: " + applicationId));
-        application.setStatus(Application.ApplicationStatus.valueOf(status));
+        application.setStatus(status);
         if (recruiterNote != null) application.setRecruiterNote(recruiterNote);
         return applicationMapper.toResponse(applicationRepository.save(application));
     }
@@ -95,7 +89,7 @@ public class ApplicationService {
         if (!application.getLearnerId().equals(learnerId)) {
             throw new BusinessException("Vous ne pouvez pas retirer cette candidature");
         }
-        application.setStatus(Application.ApplicationStatus.WITHDRAWN);
+        application.setStatus("WITHDRAWN");
         return applicationMapper.toResponse(applicationRepository.save(application));
     }
 }

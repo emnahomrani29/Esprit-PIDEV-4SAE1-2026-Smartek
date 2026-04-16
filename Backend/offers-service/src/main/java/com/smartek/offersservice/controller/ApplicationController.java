@@ -49,8 +49,9 @@ public class ApplicationController {
     @PutMapping("/{applicationId}/status")
     public ResponseEntity<ApplicationResponse> updateStatus(
             @PathVariable Long applicationId,
-            @RequestParam String status) {
-        ApplicationResponse response = applicationService.updateApplicationStatus(applicationId, status);
+            @RequestParam String status,
+            @RequestParam(required = false) String recruiterNote) {
+        ApplicationResponse response = applicationService.updateApplicationStatus(applicationId, status, recruiterNote);
         return ResponseEntity.ok(response);
     }
 }

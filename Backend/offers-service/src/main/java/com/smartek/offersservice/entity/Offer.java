@@ -17,6 +17,7 @@ import java.util.Set;
 @Builder
 public class Offer {
 
+    // Kept as nested enums for test compatibility, but stored as String in DB
     public enum OfferStatus { ACTIVE, CLOSED, DRAFT, EXPIRED }
     public enum ExperienceLevel { JUNIOR, MID, SENIOR, EXPERT }
 
@@ -47,7 +48,7 @@ public class Offer {
     private Integer salaryMax;
     private String domain;
 
-    // Niveau d'expérience requis (stocké comme String pour compatibilité)
+    // Stored as String for backward compatibility
     private String experienceLevel;
 
     @Builder.Default
@@ -64,10 +65,10 @@ public class Offer {
     @Column(nullable = false)
     private Long companyId;
 
-    @Enumerated(EnumType.STRING)
+    // Stored as String for backward compatibility
     @Builder.Default
     @Column(nullable = false)
-    private OfferStatus status = OfferStatus.ACTIVE;
+    private String status = "ACTIVE";
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "offer_required_skills", joinColumns = @JoinColumn(name = "offer_id"))
@@ -91,7 +92,7 @@ public class Offer {
         if (viewCount == null) viewCount = 0L;
         if (positions == null) positions = 1;
         if (remote == null) remote = false;
-        if (status == null) status = OfferStatus.ACTIVE;
+        if (status == null) status = "ACTIVE";
         if (requiredSkills == null) requiredSkills = new HashSet<>();
     }
 
@@ -100,9 +101,8 @@ public class Offer {
         updatedAt = LocalDateTime.now();
     }
 
-    /** Retourne true si l'offre est active et non expirée */
     public boolean isOpen() {
-        if (status != OfferStatus.ACTIVE) return false;
+        if (!"ACTIVE".equals(status)) return false;
         if (expiresAt != null && expiresAt.isBefore(LocalDateTime.now())) return false;
         return true;
     }

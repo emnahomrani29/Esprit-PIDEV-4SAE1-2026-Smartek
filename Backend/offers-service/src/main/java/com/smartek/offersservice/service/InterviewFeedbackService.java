@@ -83,7 +83,7 @@ public class InterviewFeedbackService {
 
     private void updateApplicationStatus(Long applicationId, String status) {
         applicationRepository.findById(applicationId).ifPresent(app -> {
-            app.setStatus(Application.ApplicationStatus.valueOf(status));
+            app.setStatus(status);
             applicationRepository.save(app);
             log.info("Application {} status updated to {}", applicationId, status);
         });

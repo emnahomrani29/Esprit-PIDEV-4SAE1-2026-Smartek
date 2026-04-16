@@ -5,9 +5,6 @@ import com.smartek.offersservice.dto.ApplicationResponse;
 import com.smartek.offersservice.entity.Application;
 import org.springframework.stereotype.Component;
 
-/**
- * Mapper pour la conversion entre l'entité Application et ses DTOs.
- */
 @Component
 public class ApplicationMapper {
 
@@ -19,14 +16,14 @@ public class ApplicationMapper {
                 .coverLetter(request.getCoverLetter())
                 .cvBase64(request.getCvBase64())
                 .cvFileName(request.getCvFileName())
-                .status(Application.ApplicationStatus.PENDING)
+                .status("PENDING")
                 .score(0)
                 .build();
     }
 
     public ApplicationResponse toResponse(Application application) {
         String offerTitle = application.getOffer() != null ? application.getOffer().getTitle() : null;
-        Long offerId = application.getOffer() != null ? application.getOffer().getId() : null;
+        Long offerId = application.getOffer() != null ? application.getOffer().getId() : application.getOfferId();
 
         return ApplicationResponse.builder()
                 .id(application.getId())

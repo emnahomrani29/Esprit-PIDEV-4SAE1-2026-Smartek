@@ -5,14 +5,11 @@ import com.smartek.offersservice.dto.OfferResponse;
 import com.smartek.offersservice.entity.Offer;
 import org.springframework.stereotype.Component;
 
-/**
- * Mapper pour la conversion entre l'entité Offer et ses DTOs.
- * Design Pattern : Mapper / Converter
- */
+import java.util.HashSet;
+
 @Component
 public class OfferMapper {
 
-    /** Convertit un OfferRequest en entité Offer */
     public Offer toEntity(OfferRequest request) {
         return Offer.builder()
                 .title(request.getTitle())
@@ -24,17 +21,16 @@ public class OfferMapper {
                 .salaryMin(request.getSalaryMin())
                 .salaryMax(request.getSalaryMax())
                 .domain(request.getDomain())
-                .experienceLevel(request.getExperienceLevel() != null ? request.getExperienceLevel().name() : null)
+                .experienceLevel(request.getExperienceLevel())
                 .remote(request.getRemote() != null ? request.getRemote() : false)
                 .positions(request.getPositions() != null ? request.getPositions() : 1)
-                .requiredSkills(request.getRequiredSkills() != null ? request.getRequiredSkills() : new java.util.HashSet<>())
+                .requiredSkills(request.getRequiredSkills() != null ? request.getRequiredSkills() : new HashSet<>())
                 .companyId(request.getCompanyId())
-                .status(request.getStatus() != null ? request.getStatus() : Offer.OfferStatus.ACTIVE)
+                .status(request.getStatus() != null ? request.getStatus() : "ACTIVE")
                 .expiresAt(request.getExpiresAt())
                 .build();
     }
 
-    /** Convertit une entité Offer en OfferResponse */
     public OfferResponse toResponse(Offer offer) {
         return OfferResponse.builder()
                 .id(offer.getId())
@@ -47,7 +43,7 @@ public class OfferMapper {
                 .salaryMin(offer.getSalaryMin())
                 .salaryMax(offer.getSalaryMax())
                 .domain(offer.getDomain())
-                .experienceLevel(offer.getExperienceLevel() != null ? Offer.ExperienceLevel.valueOf(offer.getExperienceLevel()) : null)
+                .experienceLevel(offer.getExperienceLevel())
                 .remote(offer.getRemote())
                 .positions(offer.getPositions())
                 .requiredSkills(offer.getRequiredSkills())
@@ -61,7 +57,6 @@ public class OfferMapper {
                 .build();
     }
 
-    /** Met à jour une entité Offer existante depuis un OfferRequest */
     public void updateEntityFromRequest(Offer offer, OfferRequest request) {
         offer.setTitle(request.getTitle());
         offer.setDescription(request.getDescription());
@@ -72,7 +67,7 @@ public class OfferMapper {
         offer.setSalaryMin(request.getSalaryMin());
         offer.setSalaryMax(request.getSalaryMax());
         offer.setDomain(request.getDomain());
-        offer.setExperienceLevel(request.getExperienceLevel() != null ? request.getExperienceLevel().name() : null);
+        offer.setExperienceLevel(request.getExperienceLevel());
         if (request.getRemote() != null) offer.setRemote(request.getRemote());
         if (request.getPositions() != null) offer.setPositions(request.getPositions());
         if (request.getRequiredSkills() != null) offer.setRequiredSkills(request.getRequiredSkills());
