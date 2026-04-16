@@ -45,6 +45,10 @@ spring:
           uri: lb://offers-service
           predicates:
             - Path=/api/interviews/**
+        - id: interview-feedbacks-service
+          uri: lb://offers-service
+          predicates:
+            - Path=/api/interview-feedbacks/**
         - id: course-service
           uri: lb://course-service
           predicates:
