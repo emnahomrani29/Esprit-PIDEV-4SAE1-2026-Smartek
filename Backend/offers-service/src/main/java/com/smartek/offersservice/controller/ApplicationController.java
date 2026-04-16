@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/applications")
@@ -20,12 +21,8 @@ public class ApplicationController {
     
     @PostMapping
     public ResponseEntity<ApplicationResponse> applyToOffer(@Valid @RequestBody ApplicationRequest request) {
-        try {
-            ApplicationResponse response = applicationService.applyToOffer(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        ApplicationResponse response = applicationService.applyToOffer(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
     
     @GetMapping("/offer/{offerId}")
@@ -41,11 +38,23 @@ public class ApplicationController {
     }
     
     @GetMapping("/check/{offerId}/{learnerId}")
-    public ResponseEntity<Boolean> hasApplied(@PathVariable Long offerId, @PathVariable Long learnerId) {
+    public ResponseEntity<Map<String, Boolean>> hasApplied(@PathVariable Long offerId, @PathVariable Long learnerId) {
         boolean hasApplied = applicationService.hasApplied(offerId, learnerId);
-        return ResponseEntity.ok(hasApplied);
+        return ResponseEntity.ok(Map.of("hasApplied", hasApplied));
     }
     
+    @GetMapping("/offer/{offerId}/ranked")
+    public ResponseEntity<List<ApplicationResponse>> getRankedApplications(@PathVariable Long offerId) {
+        return ResponseEntity.ok(applicationService.getApplicationsByOfferSortedByScore(offerId));
+    }
+
+    @PutMapping("/{applicationId}/withdraw")
+    public ResponseEntity<ApplicationResponse> withdrawApplication(
+            @PathVariable Long applicationId,
+            @RequestParam Long learnerId) {
+        return ResponseEntity.ok(applicationService.withdrawApplication(applicationId, learnerId));
+    }
+
     @PutMapping("/{applicationId}/status")
     public ResponseEntity<ApplicationResponse> updateStatus(
             @PathVariable Long applicationId,

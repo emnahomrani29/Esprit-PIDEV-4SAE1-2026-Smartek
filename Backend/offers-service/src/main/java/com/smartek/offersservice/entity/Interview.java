@@ -23,6 +23,10 @@ public class Interview {
     @Column(nullable = false)
     private Long applicationId;
     
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "application_ref_id")
+    private Application application;
+    
     @Column(nullable = false)
     private Long offerId;
     

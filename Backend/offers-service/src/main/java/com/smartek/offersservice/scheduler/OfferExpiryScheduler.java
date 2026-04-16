@@ -40,7 +40,7 @@ public class OfferExpiryScheduler {
         }
 
         expired.forEach(offer -> {
-            offer.setStatus("EXPIRED");
+            offer.setStatus(Offer.OfferStatus.EXPIRED);
             log.info("Offer id={} '{}' marked as EXPIRED (was due {})",
                     offer.getId(), offer.getTitle(), offer.getExpiresAt());
         });

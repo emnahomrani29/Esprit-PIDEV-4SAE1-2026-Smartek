@@ -1,10 +1,10 @@
 package com.smartek.offersservice.service;
 
 import com.smartek.offersservice.dto.OfferResponse;
-import com.smartek.offersservice.entity.Offer;
 import com.smartek.offersservice.entity.SavedOffer;
 import com.smartek.offersservice.exception.BusinessException;
 import com.smartek.offersservice.exception.ResourceNotFoundException;
+import com.smartek.offersservice.mapper.OfferMapper;
 import com.smartek.offersservice.repository.OfferRepository;
 import com.smartek.offersservice.repository.SavedOfferRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +22,7 @@ public class SavedOfferService {
 
     private final SavedOfferRepository savedOfferRepository;
     private final OfferRepository offerRepository;
+    private final OfferMapper offerMapper;
 
     @Transactional
     public void saveOffer(Long offerId, Long learnerId) {
@@ -52,30 +53,11 @@ public class SavedOfferService {
                 .map(saved -> offerRepository.findById(saved.getOfferId()))
                 .filter(java.util.Optional::isPresent)
                 .map(java.util.Optional::get)
-                .map(this::mapToResponse)
+                .map(offerMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     public boolean isSaved(Long offerId, Long learnerId) {
         return savedOfferRepository.existsByOfferIdAndLearnerId(offerId, learnerId);
-    }
-
-    private OfferResponse mapToResponse(Offer offer) {
-        OfferResponse r = new OfferResponse();
-        r.setId(offer.getId());
-        r.setTitle(offer.getTitle());
-        r.setDescription(offer.getDescription());
-        r.setCompanyName(offer.getCompanyName());
-        r.setLocation(offer.getLocation());
-        r.setContractType(offer.getContractType());
-        r.setSalary(offer.getSalary());
-        r.setDomain(offer.getDomain());
-        r.setExperienceLevel(offer.getExperienceLevel());
-        r.setRemote(offer.getRemote());
-        r.setCompanyId(offer.getCompanyId());
-        r.setStatus(offer.getStatus());
-        r.setExpiresAt(offer.getExpiresAt());
-        r.setCreatedAt(offer.getCreatedAt());
-        return r;
     }
 }

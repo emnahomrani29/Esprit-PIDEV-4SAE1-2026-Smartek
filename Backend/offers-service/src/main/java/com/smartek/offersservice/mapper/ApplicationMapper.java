@@ -16,7 +16,7 @@ public class ApplicationMapper {
                 .coverLetter(request.getCoverLetter())
                 .cvBase64(request.getCvBase64())
                 .cvFileName(request.getCvFileName())
-                .status("PENDING")
+                .status(Application.ApplicationStatus.PENDING)
                 .score(0)
                 .build();
     }

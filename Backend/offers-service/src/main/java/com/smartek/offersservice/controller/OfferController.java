@@ -57,13 +57,9 @@ public class OfferController {
         return ResponseEntity.ok(offerService.getOffersByCompanyId(userId));
     }
 
-    // Pagination par statut : GET /api/offers/status/ACTIVE?page=0&size=10
     @GetMapping("/status/{status}")
-    public ResponseEntity<Page<OfferResponse>> getOffersByStatus(
-            @PathVariable String status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(offerService.getOffersByStatus(status, page, size));
+    public ResponseEntity<List<OfferResponse>> getOffersByStatus(@PathVariable String status) {
+        return ResponseEntity.ok(offerService.getOffersByStatus(status));
     }
 
     // Recherche avancée : POST /api/offers/search

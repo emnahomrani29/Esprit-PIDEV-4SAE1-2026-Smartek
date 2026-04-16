@@ -1,5 +1,6 @@
 package com.smartek.offersservice.dto;
 
+import com.smartek.offersservice.entity.Application;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -18,7 +19,7 @@ public class ApplicationResponse {
     private String coverLetter;
     private String cvBase64;
     private String cvFileName;
-    private String status;
+    private Application.ApplicationStatus status;
     private int score;
     private String recruiterNote;
     private LocalDateTime appliedAt;

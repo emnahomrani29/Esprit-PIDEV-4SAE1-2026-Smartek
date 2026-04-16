@@ -17,7 +17,6 @@ import java.util.Set;
 @Builder
 public class Offer {
 
-    // Kept as nested enums for test compatibility, but stored as String in DB
     public enum OfferStatus { ACTIVE, CLOSED, DRAFT, EXPIRED }
     public enum ExperienceLevel { JUNIOR, MID, SENIOR, EXPERT }
 
@@ -48,8 +47,8 @@ public class Offer {
     private Integer salaryMax;
     private String domain;
 
-    // Stored as String for backward compatibility
-    private String experienceLevel;
+    @Enumerated(EnumType.STRING)
+    private ExperienceLevel experienceLevel;
 
     @Builder.Default
     private Boolean remote = false;
@@ -65,10 +64,10 @@ public class Offer {
     @Column(nullable = false)
     private Long companyId;
 
-    // Stored as String for backward compatibility
+    @Enumerated(EnumType.STRING)
     @Builder.Default
     @Column(nullable = false)
-    private String status = "ACTIVE";
+    private OfferStatus status = OfferStatus.ACTIVE;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "offer_required_skills", joinColumns = @JoinColumn(name = "offer_id"))
@@ -92,7 +91,7 @@ public class Offer {
         if (viewCount == null) viewCount = 0L;
         if (positions == null) positions = 1;
         if (remote == null) remote = false;
-        if (status == null) status = "ACTIVE";
+        if (status == null) status = OfferStatus.ACTIVE;
         if (requiredSkills == null) requiredSkills = new HashSet<>();
     }
 
@@ -102,7 +101,7 @@ public class Offer {
     }
 
     public boolean isOpen() {
-        if (!"ACTIVE".equals(status)) return false;
+        if (status != OfferStatus.ACTIVE) return false;
         if (expiresAt != null && expiresAt.isBefore(LocalDateTime.now())) return false;
         return true;
     }

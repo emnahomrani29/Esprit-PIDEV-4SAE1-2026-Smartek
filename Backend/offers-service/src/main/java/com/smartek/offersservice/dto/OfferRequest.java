@@ -1,5 +1,6 @@
 package com.smartek.offersservice.dto;
 
+import com.smartek.offersservice.entity.Offer;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -32,7 +33,7 @@ public class OfferRequest {
     private Integer salaryMin;
     private Integer salaryMax;
     private String domain;
-    private String experienceLevel;
+    private Offer.ExperienceLevel experienceLevel;
     private Boolean remote;
     private Integer positions;
     private Set<String> requiredSkills;
@@ -40,6 +41,6 @@ public class OfferRequest {
     @NotNull(message = "Company ID is required")
     private Long companyId;
 
-    private String status;
+    private Offer.OfferStatus status;
     private LocalDateTime expiresAt;
 }

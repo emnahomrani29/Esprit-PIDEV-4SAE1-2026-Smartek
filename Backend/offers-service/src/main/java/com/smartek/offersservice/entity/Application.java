@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 @Builder
 public class Application {
 
-    // Kept as nested enum for test compatibility
     public enum ApplicationStatus { PENDING, REVIEWED, ACCEPTED, REJECTED, WITHDRAWN }
 
     @Id
@@ -24,7 +23,6 @@ public class Application {
     @JoinColumn(name = "offer_id")
     private Offer offer;
 
-    // Denormalized for queries without join
     @Column(name = "offer_id", insertable = false, updatable = false)
     private Long offerId;
 
@@ -45,10 +43,10 @@ public class Application {
 
     private String cvFileName;
 
-    // Stored as String for backward compatibility
+    @Enumerated(EnumType.STRING)
     @Builder.Default
     @Column(nullable = false)
-    private String status = "PENDING";
+    private ApplicationStatus status = ApplicationStatus.PENDING;
 
     @Builder.Default
     private int score = 0;
@@ -65,7 +63,7 @@ public class Application {
     protected void onCreate() {
         appliedAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (status == null) status = "PENDING";
+        if (status == null) status = ApplicationStatus.PENDING;
     }
 
     @PreUpdate

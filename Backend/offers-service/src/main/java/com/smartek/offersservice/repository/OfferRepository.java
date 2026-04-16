@@ -17,11 +17,11 @@ public interface OfferRepository extends JpaRepository<Offer, Long> {
 
     List<Offer> findByCompanyId(Long companyId);
 
-    List<Offer> findByStatus(String status);
+    List<Offer> findByStatus(Offer.OfferStatus status);
 
-    Page<Offer> findByStatus(String status, Pageable pageable);
+    Page<Offer> findByStatus(Offer.OfferStatus status, Pageable pageable);
 
-    List<Offer> findByCompanyIdAndStatus(Long companyId, String status);
+    List<Offer> findByCompanyIdAndStatus(Long companyId, Offer.OfferStatus status);
 
     Page<Offer> findAll(Pageable pageable);
 
@@ -59,7 +59,7 @@ public interface OfferRepository extends JpaRepository<Offer, Long> {
 
     // Statistiques par entreprise
     @Query("SELECT COUNT(o) FROM Offer o WHERE o.companyId = :companyId AND o.status = :status")
-    long countByCompanyIdAndStatus(@Param("companyId") Long companyId, @Param("status") String status);
+    long countByCompanyIdAndStatus(@Param("companyId") Long companyId, @Param("status") Offer.OfferStatus status);
 
     // Offres expirées à fermer automatiquement
     @Query("SELECT o FROM Offer o WHERE o.status = 'ACTIVE' AND o.expiresAt IS NOT NULL AND o.expiresAt < :now")

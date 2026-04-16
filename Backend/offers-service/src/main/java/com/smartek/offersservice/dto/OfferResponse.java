@@ -1,5 +1,6 @@
 package com.smartek.offersservice.dto;
 
+import com.smartek.offersservice.entity.Offer;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -20,13 +21,13 @@ public class OfferResponse {
     private Integer salaryMin;
     private Integer salaryMax;
     private String domain;
-    private String experienceLevel;
+    private Offer.ExperienceLevel experienceLevel;
     private Boolean remote;
     private Integer positions;
     private Set<String> requiredSkills;
     private Long viewCount;
     private Long companyId;
-    private String status;
+    private Offer.OfferStatus status;
     private LocalDateTime expiresAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
