@@ -14,7 +14,7 @@ export class OfferService {
   constructor(private http: HttpClient) {}
 
   getAllOffers(): Observable<Offer[]> {
-    return this.http.get<any>(this.apiUrl).pipe(
+    return this.http.get<any>(`${this.apiUrl}?page=0&size=100&sortBy=createdAt&sortDir=desc`).pipe(
       map(res => Array.isArray(res) ? res : (res?.content ?? []))
     );
   }
