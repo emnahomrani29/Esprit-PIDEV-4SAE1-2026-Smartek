@@ -265,7 +265,7 @@ export class RhCompanyOffersComponent implements OnInit {
   }
 
   saveFeedback() {
-    this.http.post<any>(`${environment.apiUrl}/interview-feedbacks`, this.feedbackForm).subscribe({
+    this.http.post<any>(`${environment.apiUrl}/interviews/feedback`, this.feedbackForm).subscribe({
       next: () => {
         this.showFeedbackModal = false;
         this.loadCompanyInterviews();
