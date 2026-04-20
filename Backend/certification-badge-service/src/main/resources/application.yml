@@ -87,6 +87,8 @@ management:
   health:
     db:
       enabled: true
+    mail:
+      enabled: false
 
 # JWT Configuration (align with Auth Service)
 jwt:
@@ -105,6 +107,16 @@ auth-service:
 certificate:
   keystore:
     path: smartek-keystore.p12
+    password: smartek123
+    alias: smartek
+  verification:
+    base-url: http://localhost:8083
+
+pdf:
+  signing:
+    keystore-path: smartek-keystore.p12
+    keystore-password: smartek123
+    key-alias: smartek
     password: smartek123
     alias: smartek
   verification:
