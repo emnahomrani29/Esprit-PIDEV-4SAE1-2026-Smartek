@@ -1,0 +1,80 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'JDK-17'
+        maven 'Maven-3.9'
+    }
+
+    options {
+        timeout(time: 20, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+
+    triggers {
+        // Déclenché automatiquement via webhook GitHub
+        githubPush()
+    }
+
+    environment {
+        SERVICE_DIR = 'Backend/offers-service'
+        IMAGE_NAME  = "smartek/offers-service"
+        IMAGE_TAG   = "${env.GIT_COMMIT?.take(7) ?: 'latest'}"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Tests & Coverage') {
+            steps {
+                dir("${SERVICE_DIR}") {
+                    sh 'mvn verify -Dspring.profiles.active=test -B'
+                }
+            }
+            post {
+                always {
+                    // Rapport JUnit (Surefire)
+                    junit testResults: "${SERVICE_DIR}/target/surefire-reports/*.xml",
+                          allowEmptyResults: true
+
+                    // Rapport JaCoCo
+                    jacoco(
+                        execPattern:   "${SERVICE_DIR}/target/jacoco.exec",
+                        classPattern:  "${SERVICE_DIR}/target/classes",
+                        sourcePattern: "${SERVICE_DIR}/src/main/java"
+                    )
+
+                    // Archive les rapports HTML
+                    archiveArtifacts artifacts: "${SERVICE_DIR}/target/surefire-reports/**",
+                                     allowEmptyArchive: true
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                dir("${SERVICE_DIR}") {
+                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                }
+            }
+        }
+
+    }
+
+    post {
+        success {
+            echo "Pipeline offers-service réussi — image: ${IMAGE_NAME}:${IMAGE_TAG}"
+        }
+        failure {
+            echo "Pipeline offers-service échoué — voir les logs ci-dessus"
+        }
+        always {
+            cleanWs()
+        }
+    }
+}
