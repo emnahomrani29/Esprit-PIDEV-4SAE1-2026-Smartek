@@ -10,6 +10,7 @@ import com.smartek.courseservice.exception.ResourceNotFoundException;
 import com.smartek.courseservice.mapper.CourseMapper;
 import com.smartek.courseservice.repository.CourseRepository;
 import com.smartek.courseservice.repository.CourseCompletionRepository;
+import com.smartek.courseservice.repository.LiveSessionRepository;
 import com.smartek.courseservice.client.TrainingClient;
 import com.smartek.courseservice.client.dto.TrainingResponse;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +21,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -33,6 +32,7 @@ public class CourseService {
     
     private final CourseRepository courseRepository;
     private final CourseMapper courseMapper;
+    private final LiveSessionRepository liveSessionRepository;
     private final CourseCompletionRepository courseCompletionRepository;
     private final TrainingClient trainingClient;
 
@@ -102,11 +102,17 @@ public class CourseService {
     @CacheEvict(value = {"course", "courses", "coursesByTrainer"}, allEntries = true)
     public void deleteCourse(Long id) {
         log.info("Suppression du cours avec ID: {}", id);
-        
+
         if (!courseRepository.existsById(id)) {
             throw new ResourceNotFoundException("Cours", "id", id);
         }
-        
+
+        // Supprimer d'abord les live_sessions via SQL natif pour contourner
+        // le problème de contrainte FK avec le batch Hibernate
+        liveSessionRepository.deleteByCourseId(id);
+        log.info("Live sessions du cours {} supprimées", id);
+
+        // Supprimer le cours (chapters supprimés en cascade par orphanRemoval)
         courseRepository.deleteById(id);
         log.info("Cours supprimé avec succès: ID {}", id);
     }

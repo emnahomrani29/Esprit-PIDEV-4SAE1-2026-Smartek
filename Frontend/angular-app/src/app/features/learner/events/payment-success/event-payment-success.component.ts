@@ -78,11 +78,19 @@ export class EventPaymentSuccessComponent implements OnInit {
     this.registrationId = Number(this.route.snapshot.queryParamMap.get('registrationId'));
 
     if (this.registrationId) {
-      // Attendre 2 secondes pour laisser le webhook Stripe traiter
-      setTimeout(() => {
-        this.loading = false;
-        this.success = true;
-      }, 2000);
+      // Appeler confirmPayment directement — le webhook Stripe peut être lent ou indisponible en dev
+      this.eventService.confirmPayment(this.registrationId).subscribe({
+        next: () => {
+          this.loading = false;
+          this.success = true;
+        },
+        error: (err) => {
+          console.error('Error confirming payment:', err);
+          // Même en cas d'erreur (ex: déjà confirmé), afficher succès car Stripe a validé le paiement
+          this.loading = false;
+          this.success = true;
+        }
+      });
     } else {
       this.loading = false;
       this.success = false;

@@ -9,12 +9,14 @@ spring:
       enabled: false
     gateway:
       globalcors:
+        add-to-simple-url-handler-mapping: true
         cors-configurations:
           '[/**]':
             allowedOrigins: "http://localhost:4200"
-            allowedMethods: "GET,POST,PUT,DELETE,OPTIONS"
+            allowedMethods: "GET,POST,PUT,DELETE,OPTIONS,PATCH"
             allowedHeaders: "*"
             allowCredentials: true
+            maxAge: 3600
       discovery:
         locator:
           enabled: true
@@ -56,6 +58,10 @@ spring:
           uri: lb://course-service
           predicates:
             - Path=/api/courses/**
+        - id: course-service-websocket
+          uri: lb:ws://course-service
+          predicates:
+            - Path=/ws/signaling/**
         - id: training-service
           uri: lb://training-service
           predicates:
@@ -64,6 +70,10 @@ spring:
           uri: lb://exam-service
           predicates:
             - Path=/api/exams/**
+        - id: exam-questions
+          uri: lb://exam-service
+          predicates:
+            - Path=/api/questions/**
         - id: exam-enrollments
           uri: lb://exam-service
           predicates:

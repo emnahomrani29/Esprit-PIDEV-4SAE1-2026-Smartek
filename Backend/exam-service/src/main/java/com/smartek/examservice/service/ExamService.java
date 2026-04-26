@@ -86,9 +86,32 @@ public class ExamService {
     }
 
     @Cacheable(value = "exams", unless = "#result.isEmpty()")
+    @Transactional(readOnly = true)
     public List<ExamResponse> getAllExams() {
+        // Utiliser EntityGraph pour charger questions en une seule requête JOIN
+        // et éviter LazyInitializationException hors session
         return examRepository.findAll().stream()
-                .map(this::mapToResponse)
+                .map(exam -> {
+                    ExamResponse response = new ExamResponse();
+                    response.setId(exam.getId());
+                    response.setCourseId(exam.getCourseId());
+                    response.setTrainingId(exam.getTrainingId());
+                    response.setExamType(exam.getExamType());
+                    response.setTitle(exam.getTitle());
+                    response.setDescription(exam.getDescription());
+                    response.setDuration(exam.getDuration());
+                    response.setPassingScore(exam.getPassingScore());
+                    response.setTotalMarks(exam.getTotalMarks());
+                    response.setStartDate(exam.getStartDate());
+                    response.setEndDate(exam.getEndDate());
+                    response.setIsActive(exam.getIsActive());
+                    // Accès aux collections dans la session — pas de LazyInitializationException
+                    response.setQuestionCount(exam.getQuestions() != null ? exam.getQuestions().size() : 0);
+                    response.setExerciseCount(exam.getExercises() != null ? exam.getExercises().size() : 0);
+                    response.setCreatedAt(exam.getCreatedAt());
+                    response.setUpdatedAt(exam.getUpdatedAt());
+                    return response;
+                })
                 .collect(Collectors.toList());
     }
     

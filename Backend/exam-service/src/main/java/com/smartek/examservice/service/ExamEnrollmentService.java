@@ -180,7 +180,7 @@ public class ExamEnrollmentService {
                 });
     }
     
-    @Transactional(readOnly = true)
+    @Transactional
     public List<LearnerExamResponse> getMyExams(Long userId) {
         log.info("Récupération dynamique des examens pour l'utilisateur {}", userId);
         

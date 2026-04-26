@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -211,53 +210,46 @@ public class TrainingService {
         List<TrainingResponse.CourseInfo> courses = new ArrayList<>();
 
         if (training.getCourseIds() != null && !training.getCourseIds().isEmpty()) {
-            // Fetch all courses in parallel using CompletableFuture to reduce latency
-            List<CompletableFuture<TrainingResponse.CourseInfo>> futures = training.getCourseIds().stream()
-                    .map(courseId -> CompletableFuture.supplyAsync(() -> {
-                        try {
-                            CourseResponse courseResponse = courseClient.getCourseById(courseId);
-                            List<ChapterResponse> chapterResponses = courseClient.getChaptersByCourseId(courseId);
+            // Fetch courses sequentially in the current thread so that the JWT token
+            // propagated by FeignClientInterceptor (via RequestContextHolder) is available.
+            // Using supplyAsync() would lose the HTTP request context in the worker thread.
+            for (Long courseId : training.getCourseIds()) {
+                try {
+                    CourseResponse courseResponse = courseClient.getCourseById(courseId);
+                    List<ChapterResponse> chapterResponses = courseClient.getChaptersByCourseId(courseId);
 
-                            List<TrainingResponse.ChapterInfo> chapters = chapterResponses.stream()
-                                    .map(ch -> TrainingResponse.ChapterInfo.builder()
-                                            .chapterId(ch.getChapterId())
-                                            .title(ch.getTitle())
-                                            .description(ch.getDescription())
-                                            .orderIndex(ch.getOrderIndex())
-                                            .pdfFileName(ch.getPdfFileName())
-                                            .pdfFilePath(ch.getPdfFilePath())
-                                            .build())
-                                    .collect(Collectors.toList());
+                    List<TrainingResponse.ChapterInfo> chapters = chapterResponses.stream()
+                            .map(ch -> TrainingResponse.ChapterInfo.builder()
+                                    .chapterId(ch.getChapterId())
+                                    .title(ch.getTitle())
+                                    .description(ch.getDescription())
+                                    .orderIndex(ch.getOrderIndex())
+                                    .pdfFileName(ch.getPdfFileName())
+                                    .pdfFilePath(ch.getPdfFilePath())
+                                    .build())
+                            .collect(Collectors.toList());
 
-                            LocalDate duration = null;
-                            try {
-                                if (courseResponse.getDuration() != null) {
-                                    duration = LocalDate.parse(courseResponse.getDuration());
-                                }
-                            } catch (Exception e) {
-                                log.warn("Failed to parse duration: {}", courseResponse.getDuration());
-                            }
-
-                            return TrainingResponse.CourseInfo.builder()
-                                    .courseId(courseResponse.getCourseId())
-                                    .title(courseResponse.getTitle())
-                                    .content(courseResponse.getContent())
-                                    .duration(duration)
-                                    .deliveryMode(courseResponse.getDeliveryMode())
-                                    .chapters(chapters)
-                                    .build();
-                        } catch (Exception e) {
-                            log.error("Erreur lors de la récupération du cours {}: {}", courseId, e.getMessage());
-                            return null;
+                    LocalDate duration = null;
+                    try {
+                        if (courseResponse.getDuration() != null) {
+                            duration = LocalDate.parse(courseResponse.getDuration());
                         }
-                    }))
-                    .collect(Collectors.toList());
+                    } catch (Exception e) {
+                        log.warn("Failed to parse duration: {}", courseResponse.getDuration());
+                    }
 
-            // Wait for all futures and collect non-null results
-            courses = futures.stream()
-                    .map(CompletableFuture::join)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+                    courses.add(TrainingResponse.CourseInfo.builder()
+                            .courseId(courseResponse.getCourseId())
+                            .title(courseResponse.getTitle())
+                            .content(courseResponse.getContent())
+                            .duration(duration)
+                            .deliveryMode(courseResponse.getDeliveryMode())
+                            .chapters(chapters)
+                            .build());
+                } catch (Exception e) {
+                    log.error("Erreur lors de la récupération du cours {}: {}", courseId, e.getMessage());
+                }
+            }
         }
 
         return TrainingResponse.builder()

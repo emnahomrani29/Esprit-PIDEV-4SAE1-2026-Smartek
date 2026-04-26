@@ -11,17 +11,14 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
  * Configuration de sécurité pour l'Exam Service.
+ * Le CORS est géré exclusivement par l'API Gateway (globalcors).
  *
  * Règles de rôles :
  * - TRAINER : peut créer, modifier, supprimer des examens et questions
  * - LEARNER  : peut soumettre des réponses, consulter ses résultats
- * - Les deux rôles peuvent lire les examens disponibles
  */
 @Configuration
 @EnableWebSecurity
@@ -36,9 +33,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // CORS désactivé côté service : géré par l'API Gateway (globalcors)
+                .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // Preflight CORS
+                        // Preflight OPTIONS — toujours permis
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Actuator
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
@@ -46,11 +44,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/exams/health").permitAll()
 
                         // ── Examens ────────────────────────────────────────────────────────
-                        // Seul le TRAINER peut créer / modifier / supprimer
                         .requestMatchers(HttpMethod.POST,   "/api/exams").hasRole("TRAINER")
                         .requestMatchers(HttpMethod.PUT,    "/api/exams/**").hasRole("TRAINER")
                         .requestMatchers(HttpMethod.DELETE, "/api/exams/**").hasRole("TRAINER")
-                        // Lecture accessible à tous les utilisateurs authentifiés
                         .requestMatchers(HttpMethod.GET,    "/api/exams/**").authenticated()
 
                         // ── Questions ──────────────────────────────────────────────────────
@@ -64,11 +60,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,    "/api/exams/*/exercises/**").authenticated()
 
                         // ── Résultats d'examen ─────────────────────────────────────────────
-                        // Le LEARNER soumet ses réponses
                         .requestMatchers(HttpMethod.POST,   "/api/exam-results/submit").hasRole("LEARNER")
                         .requestMatchers(HttpMethod.POST,   "/api/exam-results/submit-old").hasRole("LEARNER")
-                        // Lecture des résultats : les deux rôles
+                        .requestMatchers(HttpMethod.POST,   "/api/exams/*/submit-quiz").hasRole("LEARNER")
+                        .requestMatchers(HttpMethod.POST,   "/api/exams/*/submit-exam").hasRole("LEARNER")
                         .requestMatchers(HttpMethod.GET,    "/api/exam-results/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT,    "/api/exam-results/*/finalize").hasRole("TRAINER")
+                        .requestMatchers(HttpMethod.GET,    "/api/exam-results/pending").hasRole("TRAINER")
+                        .requestMatchers(HttpMethod.PUT,    "/api/exams/exercise-answers/*/correct").hasRole("TRAINER")
 
                         // ── Enrollments ────────────────────────────────────────────────────
                         .requestMatchers("/api/exam-enrollments/**").authenticated()
@@ -91,24 +90,5 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOriginPattern("*");
-        config.addAllowedMethod("GET");
-        config.addAllowedMethod("POST");
-        config.addAllowedMethod("PUT");
-        config.addAllowedMethod("DELETE");
-        config.addAllowedMethod("OPTIONS");
-        config.addAllowedMethod("PATCH");
-        config.addAllowedHeader("*");
-        config.setAllowCredentials(true);
-        config.addExposedHeader("Authorization");
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
     }
 }

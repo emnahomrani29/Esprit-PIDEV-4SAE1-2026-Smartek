@@ -11,17 +11,11 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
  * Configuration de sécurité pour le Course Service.
- *
- * Règles de rôles :
- * - TRAINER : peut créer, modifier, supprimer des cours et chapitres
- * - LEARNER  : peut lire les cours et marquer les complétions
- * - Les deux rôles peuvent accéder aux sessions live en lecture
+ * Le CORS est géré exclusivement par l'API Gateway (globalcors).
+ * Ne pas configurer le CORS ici pour éviter les headers dupliqués.
  */
 @Configuration
 @EnableWebSecurity
@@ -36,42 +30,47 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // CORS désactivé côté service : géré par l'API Gateway (globalcors)
+                .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // Preflight CORS
+                        // Preflight OPTIONS — toujours permis
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // Actuator
+                        // Actuator & health
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                        // Health check interne
                         .requestMatchers("/api/courses/health").permitAll()
+                        // WebSocket signaling — pas d'auth HTTP possible lors du handshake WS
+                        .requestMatchers("/ws/signaling", "/ws/signaling/**").permitAll()
 
-                        // ── Cours ──────────────────────────────────────────────────────────
-                        // Seul le TRAINER peut créer / modifier / supprimer un cours
-                        .requestMatchers(HttpMethod.POST,   "/api/courses").hasRole("TRAINER")
-                        .requestMatchers(HttpMethod.PUT,    "/api/courses/**").hasRole("TRAINER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/courses/**").hasRole("TRAINER")
-                        // Lecture accessible à tous les utilisateurs authentifiés
-                        .requestMatchers(HttpMethod.GET,    "/api/courses/**").authenticated()
-
-                        // ── Chapitres ──────────────────────────────────────────────────────
-                        .requestMatchers(HttpMethod.POST,   "/api/courses/*/chapters").hasRole("TRAINER")
-                        .requestMatchers(HttpMethod.PUT,    "/api/courses/*/chapters/**").hasRole("TRAINER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/courses/*/chapters/**").hasRole("TRAINER")
-                        .requestMatchers(HttpMethod.GET,    "/api/courses/*/chapters/**").authenticated()
-
-                        // ── Complétion de cours ────────────────────────────────────────────
-                        // Le LEARNER marque ses propres complétions
+                        // ── Complétion de cours (LEARNER) — avant les règles génériques ───
                         .requestMatchers(HttpMethod.POST,   "/api/courses/*/complete").hasRole("LEARNER")
                         .requestMatchers(HttpMethod.DELETE, "/api/courses/*/uncomplete").hasRole("LEARNER")
                         .requestMatchers(HttpMethod.GET,    "/api/courses/*/is-completed").authenticated()
                         .requestMatchers(HttpMethod.GET,    "/api/courses/completed-count").authenticated()
 
-                        // ── Sessions live ──────────────────────────────────────────────────
+                        // ── Sessions live — avant les règles génériques ────────────────────
                         .requestMatchers(HttpMethod.POST,   "/api/courses/sessions").hasRole("TRAINER")
-                        .requestMatchers(HttpMethod.GET,    "/api/courses/*/sessions/**").authenticated()
+                        .requestMatchers(HttpMethod.GET,    "/api/courses/course/*/sessions").authenticated()
+                        .requestMatchers(HttpMethod.GET,    "/api/courses/course/*/sessions/**").authenticated()
+                        .requestMatchers(HttpMethod.GET,    "/api/courses/sessions/**").authenticated()
+                        .requestMatchers(HttpMethod.GET,    "/api/courses/trainer/*/sessions").authenticated()
+                        .requestMatchers(HttpMethod.PUT,    "/api/courses/sessions/**").hasRole("TRAINER")
+                        .requestMatchers(HttpMethod.PATCH,  "/api/courses/sessions/**").hasRole("TRAINER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/courses/sessions/**").hasRole("TRAINER")
+
+                        // ── Chapitres — avant les règles génériques ────────────────────────
+                        .requestMatchers(HttpMethod.POST,   "/api/courses/*/chapters").hasRole("TRAINER")
+                        .requestMatchers(HttpMethod.PUT,    "/api/courses/*/chapters/**").hasRole("TRAINER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/courses/*/chapters/**").hasRole("TRAINER")
+                        .requestMatchers(HttpMethod.GET,    "/api/courses/*/chapters/**").authenticated()
 
                         // ── Statistiques ───────────────────────────────────────────────────
                         .requestMatchers(HttpMethod.GET,    "/api/courses/stats/**").authenticated()
+
+                        // ── Cours — règles génériques ──────────────────────────────────────
+                        .requestMatchers(HttpMethod.POST,   "/api/courses").hasRole("TRAINER")
+                        .requestMatchers(HttpMethod.PUT,    "/api/courses/**").hasRole("TRAINER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/courses/**").hasRole("TRAINER")
+                        .requestMatchers(HttpMethod.GET,    "/api/courses/**").authenticated()
 
                         // Tout le reste nécessite une authentification
                         .anyRequest().authenticated()
@@ -85,24 +84,5 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOriginPattern("*");
-        config.addAllowedMethod("GET");
-        config.addAllowedMethod("POST");
-        config.addAllowedMethod("PUT");
-        config.addAllowedMethod("DELETE");
-        config.addAllowedMethod("OPTIONS");
-        config.addAllowedMethod("PATCH");
-        config.addAllowedHeader("*");
-        config.setAllowCredentials(true);
-        config.addExposedHeader("Authorization");
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
     }
 }

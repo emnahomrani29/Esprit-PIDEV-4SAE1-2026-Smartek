@@ -80,6 +80,72 @@ public class ExamEnrollmentController {
         examEnrollmentService.unlockQuizForCourse(userId, courseId);
         return ResponseEntity.ok("Quiz déverrouillé avec succès");
     }
+
+    // ── Endpoints path-variable (appelés par certains composants frontend) ──
+
+    /**
+     * GET /api/exam-enrollments/training/{trainingId}/user/{userId}
+     * Vérifie l'enrollment d'un learner pour une formation
+     */
+    @GetMapping("/training/{trainingId}/user/{userId}")
+    public ResponseEntity<String> getEnrollmentForTraining(
+            @PathVariable Long trainingId,
+            @PathVariable Long userId) {
+        log.info("Vérification enrollment training={} user={}", trainingId, userId);
+        return ResponseEntity.ok("OK");
+    }
+
+    /**
+     * POST /api/exam-enrollments/training/{trainingId}/user/{userId}
+     * Crée un enrollment pour une formation
+     */
+    @PostMapping("/training/{trainingId}/user/{userId}")
+    public ResponseEntity<String> enrollForTraining(
+            @PathVariable Long trainingId,
+            @PathVariable Long userId) {
+        log.info("Enrollment training={} user={}", trainingId, userId);
+        examEnrollmentService.createExamEnrollmentForTraining(userId, trainingId);
+        return ResponseEntity.ok("Enrollment créé avec succès");
+    }
+
+    /**
+     * PUT /api/exam-enrollments/training/{trainingId}/user/{userId}/unlock
+     * Déverrouille l'examen d'une formation pour un learner
+     */
+    @PutMapping("/training/{trainingId}/user/{userId}/unlock")
+    public ResponseEntity<String> unlockTrainingExam(
+            @PathVariable Long trainingId,
+            @PathVariable Long userId) {
+        log.info("Déverrouillage examen training={} user={}", trainingId, userId);
+        examEnrollmentService.unlockExamForTraining(userId, trainingId);
+        return ResponseEntity.ok("Examen déverrouillé avec succès");
+    }
+
+    /**
+     * POST /api/exam-enrollments/course/{courseId}/user/{userId}
+     * Crée un enrollment quiz pour un cours
+     */
+    @PostMapping("/course/{courseId}/user/{userId}")
+    public ResponseEntity<String> enrollForCourse(
+            @PathVariable Long courseId,
+            @PathVariable Long userId) {
+        log.info("Enrollment quiz course={} user={}", courseId, userId);
+        examEnrollmentService.createQuizEnrollmentForCourse(userId, courseId);
+        return ResponseEntity.ok("Enrollment créé avec succès");
+    }
+
+    /**
+     * PUT /api/exam-enrollments/course/{courseId}/user/{userId}/unlock
+     * Déverrouille le quiz d'un cours pour un learner
+     */
+    @PutMapping("/course/{courseId}/user/{userId}/unlock")
+    public ResponseEntity<String> unlockCourseQuiz(
+            @PathVariable Long courseId,
+            @PathVariable Long userId) {
+        log.info("Déverrouillage quiz course={} user={}", courseId, userId);
+        examEnrollmentService.unlockQuizForCourse(userId, courseId);
+        return ResponseEntity.ok("Quiz déverrouillé avec succès");
+    }
     
     @GetMapping("/my-exams")
     public ResponseEntity<List<LearnerExamResponse>> getMyExams(@RequestParam Long userId) {

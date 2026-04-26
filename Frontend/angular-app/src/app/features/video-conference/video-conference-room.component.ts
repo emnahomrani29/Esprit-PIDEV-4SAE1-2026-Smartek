@@ -168,7 +168,9 @@ export class VideoConferenceRoomComponent implements OnInit, OnDestroy, AfterVie
   // ─── WebSocket Signaling ──────────────────────────────────────────────────
 
   connectSignaling() {
-    this.ws = new WebSocket('ws://localhost:8086/ws/signaling');
+    // WebSocket via l'API Gateway (port 8090) — ne pas se connecter directement au course-service
+    const wsUrl = 'ws://localhost:8090/ws/signaling';
+    this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
       this.wsConnected = true;

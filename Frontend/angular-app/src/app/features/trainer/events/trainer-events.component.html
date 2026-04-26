@@ -112,14 +112,28 @@
 
           <!-- Étiquette revenus totaux -->
           <div *ngIf="event.isPaid && getRevenue(event.eventId) as rev"
-            class="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-sm">
-            <div class="flex items-center gap-1 text-emerald-700 font-semibold">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              Revenus collectés
+            class="space-y-1.5">
+            <!-- Revenus collectés -->
+            <div class="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-sm">
+              <div class="flex items-center gap-1 text-emerald-700 font-semibold">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Revenus collectés
+              </div>
+              <span class="font-bold text-emerald-800">{{ rev.totalRevenue | number:'1.0-0' }} TND</span>
             </div>
-            <span class="font-bold text-emerald-800">{{ rev.totalRevenue | number:'1.0-0' }} TND</span>
+            <!-- Paiements en attente -->
+            <div *ngIf="rev.pendingPayments && rev.pendingPayments > 0"
+              class="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm">
+              <div class="flex items-center gap-1 text-amber-700 font-semibold">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                En attente ({{ rev.pendingPayments }})
+              </div>
+              <span class="font-bold text-amber-800">{{ rev.potentialRevenue - rev.totalRevenue | number:'1.0-0' }} TND</span>
+            </div>
           </div>
         </div>
 

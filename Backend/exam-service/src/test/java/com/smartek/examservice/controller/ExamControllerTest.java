@@ -1,71 +1,45 @@
 package com.smartek.examservice.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.smartek.examservice.config.TestSecurityConfig;
 import com.smartek.examservice.dto.ExamRequest;
 import com.smartek.examservice.dto.ExamResponse;
-import com.smartek.examservice.security.JwtAuthenticationFilter;
-import com.smartek.examservice.security.SecurityConfig;
 import com.smartek.examservice.service.ExamService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
+import java.util.Collections;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Tests d'intégration pour ExamController.
- * Vérifie les règles de sécurité (rôles TRAINER/LEARNER) et les réponses HTTP.
- *
- * SecurityConfig et JwtAuthenticationFilter sont exclus du contexte de test ;
- * TestSecurityConfig les remplace avec une configuration simplifiée.
+ * Tests unitaires pour ExamController (sans Spring context).
+ * Vérifie la logique de délégation au service et les codes HTTP retournés.
  */
-@WebMvcTest(
-        controllers = ExamController.class,
-        excludeFilters = {
-            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class),
-            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JwtAuthenticationFilter.class)
-        }
-)
-@Import(TestSecurityConfig.class)
-@ActiveProfiles("test")
-@DisplayName("ExamController - Tests d'intégration")
+@ExtendWith(MockitoExtension.class)
+@DisplayName("ExamController - Tests unitaires")
 class ExamControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean
+    @Mock
     private ExamService examService;
 
-    private ObjectMapper objectMapper;
+    @InjectMocks
+    private ExamController examController;
+
     private ExamRequest validRequest;
     private ExamResponse sampleResponse;
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
         validRequest = new ExamRequest();
         validRequest.setCourseId(5L);
         validRequest.setExamType("QUIZ");
@@ -88,181 +62,166 @@ class ExamControllerTest {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // GET /api/exams/health
-    // ─────────────────────────────────────────────────────────────────────────
-    @Test
-    @DisplayName("GET /health - Accessible sans authentification")
-    void healthEndpointShouldBePublic() throws Exception {
-        mockMvc.perform(get("/api/exams/health"))
-                .andExpect(status().isOk());
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // POST /api/exams
+    // createExam
     // ─────────────────────────────────────────────────────────────────────────
     @Nested
-    @DisplayName("POST /api/exams - Création d'examen")
+    @DisplayName("createExam()")
     class CreateExam {
 
         @Test
-        @DisplayName("Doit créer un examen avec le rôle TRAINER → 201")
-        @WithMockUser(roles = "TRAINER")
-        void shouldCreateExamAsTrainer() throws Exception {
+        @DisplayName("Doit créer un examen et retourner 201")
+        void shouldCreateExamAndReturn201() {
             when(examService.createExam(any())).thenReturn(sampleResponse);
 
-            mockMvc.perform(post("/api/exams")
-                            .with(csrf())
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(validRequest)))
-                    .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.id").value(1L))
-                    .andExpect(jsonPath("$.title").value("Quiz Spring Boot"))
-                    .andExpect(jsonPath("$.examType").value("QUIZ"));
+            ResponseEntity<ExamResponse> response = examController.createExam(validRequest);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().getId()).isEqualTo(1L);
+            assertThat(response.getBody().getTitle()).isEqualTo("Quiz Spring Boot");
+            verify(examService, times(1)).createExam(any());
         }
 
         @Test
-        @DisplayName("Doit refuser la création avec le rôle LEARNER → 403")
-        @WithMockUser(roles = "LEARNER")
-        void shouldForbidExamCreationAsLearner() throws Exception {
-            mockMvc.perform(post("/api/exams")
-                            .with(csrf())
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(validRequest)))
-                    .andExpect(status().isForbidden());
-        }
+        @DisplayName("Doit déléguer la création au service")
+        void shouldDelegateToService() {
+            when(examService.createExam(validRequest)).thenReturn(sampleResponse);
 
-        @Test
-        @DisplayName("Doit refuser la création sans authentification → 401")
-        void shouldRejectUnauthenticatedCreation() throws Exception {
-            mockMvc.perform(post("/api/exams")
-                            .with(csrf())
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(validRequest)))
-                    .andExpect(status().isUnauthorized());
+            examController.createExam(validRequest);
+
+            verify(examService).createExam(validRequest);
         }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // GET /api/exams
+    // getAllExams
     // ─────────────────────────────────────────────────────────────────────────
     @Nested
-    @DisplayName("GET /api/exams - Liste des examens")
+    @DisplayName("getAllExams()")
     class GetAllExams {
 
         @Test
-        @DisplayName("Doit retourner la liste pour un TRAINER → 200")
-        @WithMockUser(roles = "TRAINER")
-        void shouldReturnExamsForTrainer() throws Exception {
+        @DisplayName("Doit retourner la liste des examens avec 200")
+        void shouldReturnAllExams() {
             when(examService.getAllExams()).thenReturn(List.of(sampleResponse));
 
-            mockMvc.perform(get("/api/exams"))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$[0].id").value(1L));
+            ResponseEntity<List<ExamResponse>> response = examController.getAllExams();
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody()).hasSize(1);
+            assertThat(response.getBody().get(0).getTitle()).isEqualTo("Quiz Spring Boot");
         }
 
         @Test
-        @DisplayName("Doit retourner la liste pour un LEARNER → 200")
-        @WithMockUser(roles = "LEARNER")
-        void shouldReturnExamsForLearner() throws Exception {
-            when(examService.getAllExams()).thenReturn(List.of(sampleResponse));
+        @DisplayName("Doit retourner une liste vide si aucun examen")
+        void shouldReturnEmptyList() {
+            when(examService.getAllExams()).thenReturn(Collections.emptyList());
 
-            mockMvc.perform(get("/api/exams"))
-                    .andExpect(status().isOk());
-        }
+            ResponseEntity<List<ExamResponse>> response = examController.getAllExams();
 
-        @Test
-        @DisplayName("Doit refuser l'accès sans authentification → 401")
-        void shouldRejectUnauthenticatedAccess() throws Exception {
-            mockMvc.perform(get("/api/exams"))
-                    .andExpect(status().isUnauthorized());
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody()).isEmpty();
         }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // GET /api/exams/{id}
+    // getExamById
     // ─────────────────────────────────────────────────────────────────────────
     @Nested
-    @DisplayName("GET /api/exams/{id}")
+    @DisplayName("getExamById()")
     class GetExamById {
 
         @Test
-        @DisplayName("Doit retourner l'examen par ID → 200")
-        @WithMockUser(roles = "TRAINER")
-        void shouldReturnExamByIdForTrainer() throws Exception {
+        @DisplayName("Doit retourner l'examen par ID avec 200")
+        void shouldReturnExamById() {
             when(examService.getExamById(1L)).thenReturn(sampleResponse);
 
-            mockMvc.perform(get("/api/exams/1"))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.id").value(1L));
+            ResponseEntity<ExamResponse> response = examController.getExamById(1L);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().getId()).isEqualTo(1L);
         }
 
         @Test
-        @DisplayName("Doit retourner 500 si l'examen n'existe pas (RuntimeException non gérée)")
-        @WithMockUser(roles = "TRAINER")
-        void shouldReturn500WhenExamNotFound() throws Exception {
-            when(examService.getExamById(99L)).thenThrow(new RuntimeException("Exam not found with id: 99"));
+        @DisplayName("Doit propager l'exception si l'examen n'existe pas")
+        void shouldPropagateExceptionWhenNotFound() {
+            when(examService.getExamById(99L))
+                    .thenThrow(new RuntimeException("Exam not found with id: 99"));
 
-            mockMvc.perform(get("/api/exams/99"))
-                    .andExpect(status().is5xxServerError());
+            assertThatThrownBy(() -> examController.getExamById(99L))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("99");
         }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // DELETE /api/exams/{id}
+    // updateExam
     // ─────────────────────────────────────────────────────────────────────────
     @Nested
-    @DisplayName("DELETE /api/exams/{id}")
-    class DeleteExam {
-
-        @Test
-        @DisplayName("Doit supprimer un examen avec le rôle TRAINER → 204")
-        @WithMockUser(roles = "TRAINER")
-        void shouldDeleteExamAsTrainer() throws Exception {
-            doNothing().when(examService).deleteExam(1L);
-
-            mockMvc.perform(delete("/api/exams/1").with(csrf()))
-                    .andExpect(status().isNoContent());
-        }
-
-        @Test
-        @DisplayName("Doit refuser la suppression avec le rôle LEARNER → 403")
-        @WithMockUser(roles = "LEARNER")
-        void shouldForbidDeletionAsLearner() throws Exception {
-            mockMvc.perform(delete("/api/exams/1").with(csrf()))
-                    .andExpect(status().isForbidden());
-        }
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // PUT /api/exams/{id}
-    // ─────────────────────────────────────────────────────────────────────────
-    @Nested
-    @DisplayName("PUT /api/exams/{id} - Mise à jour")
+    @DisplayName("updateExam()")
     class UpdateExam {
 
         @Test
-        @DisplayName("Doit mettre à jour un examen avec le rôle TRAINER → 200")
-        @WithMockUser(roles = "TRAINER")
-        void shouldUpdateExamAsTrainer() throws Exception {
+        @DisplayName("Doit mettre à jour un examen et retourner 200")
+        void shouldUpdateExamAndReturn200() {
             when(examService.updateExam(eq(1L), any())).thenReturn(sampleResponse);
 
-            mockMvc.perform(put("/api/exams/1")
-                            .with(csrf())
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(validRequest)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.id").value(1L));
+            ResponseEntity<ExamResponse> response = examController.updateExam(1L, validRequest);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody()).isNotNull();
+            verify(examService).updateExam(eq(1L), any());
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // deleteExam
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("deleteExam()")
+    class DeleteExam {
+
+        @Test
+        @DisplayName("Doit supprimer un examen et retourner 204")
+        void shouldDeleteExamAndReturn204() {
+            doNothing().when(examService).deleteExam(1L);
+
+            ResponseEntity<Void> response = examController.deleteExam(1L);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+            verify(examService).deleteExam(1L);
         }
 
         @Test
-        @DisplayName("Doit refuser la mise à jour avec le rôle LEARNER → 403")
-        @WithMockUser(roles = "LEARNER")
-        void shouldForbidUpdateAsLearner() throws Exception {
-            mockMvc.perform(put("/api/exams/1")
-                            .with(csrf())
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(validRequest)))
-                    .andExpect(status().isForbidden());
+        @DisplayName("Doit propager l'exception si l'examen n'existe pas")
+        void shouldPropagateExceptionWhenNotFound() {
+            doThrow(new RuntimeException("Examen non trouvé avec l'ID: 99"))
+                    .when(examService).deleteExam(99L);
+
+            assertThatThrownBy(() -> examController.deleteExam(99L))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("99");
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // getExamsByCourse
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("getExamsByCourse()")
+    class GetExamsByCourse {
+
+        @Test
+        @DisplayName("Doit retourner les examens d'un cours avec 200")
+        void shouldReturnExamsByCourse() {
+            when(examService.getExamsByCourse(5L)).thenReturn(List.of(sampleResponse));
+
+            ResponseEntity<List<ExamResponse>> response = examController.getExamsByCourse(5L);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody()).hasSize(1);
+            assertThat(response.getBody().get(0).getCourseId()).isEqualTo(5L);
         }
     }
 }

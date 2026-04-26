@@ -52,6 +52,9 @@ class CourseServiceTest {
     @Mock
     private TrainingClient trainingClient;
 
+    @Mock
+    private com.smartek.courseservice.repository.LiveSessionRepository liveSessionRepository;
+
     @InjectMocks
     private CourseService courseService;
 
@@ -254,9 +257,11 @@ class CourseServiceTest {
         @DisplayName("Doit supprimer un cours existant")
         void shouldDeleteCourseSuccessfully() {
             when(courseRepository.existsById(1L)).thenReturn(true);
+            doNothing().when(liveSessionRepository).deleteByCourseId(1L);
 
             courseService.deleteCourse(1L);
 
+            verify(liveSessionRepository).deleteByCourseId(1L);
             verify(courseRepository).deleteById(1L);
         }
 

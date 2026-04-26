@@ -142,4 +142,12 @@ export class EventService {
   getEventRevenue(eventId: number): Observable<EventRevenueResponse> {
     return this.http.get<EventRevenueResponse>(`${environment.apiUrl}/events/business/${eventId}/revenue`);
   }
+
+  // Confirmer le paiement d'une inscription (fallback si webhook Stripe non reçu)
+  confirmPayment(registrationId: number): Observable<any> {
+    return this.http.post<any>(
+      `${environment.apiUrl}/events/business/registrations/${registrationId}/confirm-payment`,
+      {}
+    );
+  }
 }

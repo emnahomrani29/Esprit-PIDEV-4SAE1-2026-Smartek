@@ -18,6 +18,11 @@ public interface LiveSessionRepository extends JpaRepository<LiveSession, Long> 
      */
     @Query(value = "SELECT ls.* FROM live_sessions ls INNER JOIN courses c ON ls.course_id = c.course_id WHERE ls.course_id = :courseId ORDER BY ls.start_time ASC", nativeQuery = true)
     List<LiveSession> findByCourseId(@Param("courseId") Long courseId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query(value = "DELETE FROM live_sessions WHERE course_id = :courseId", nativeQuery = true)
+    void deleteByCourseId(@Param("courseId") Long courseId);
     
     /**
      * Récupère les sessions à venir d'un cours - native SQL

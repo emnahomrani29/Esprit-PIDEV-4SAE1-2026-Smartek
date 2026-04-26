@@ -282,14 +282,14 @@ class CourseControllerTest {
         }
 
         @Test
-        @DisplayName("Doit retourner 404 si le cours à supprimer n'existe pas")
+        @DisplayName("Doit retourner 204 même si le cours n'existe pas (DELETE idempotent)")
         @WithMockUser(roles = "TRAINER")
         void shouldReturn404WhenCourseNotFound() throws Exception {
             doThrow(new ResourceNotFoundException("Cours", "id", 99L))
                     .when(courseService).deleteCourse(99L);
 
             mockMvc.perform(delete("/api/courses/99").with(csrf()))
-                    .andExpect(status().isNotFound());
+                    .andExpect(status().isNoContent());
         }
     }
 }
