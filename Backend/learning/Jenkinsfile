@@ -2,17 +2,10 @@ pipeline {
     agent any
 
     environment {
-        SERVICE_NAME    = 'learning'
-        IMAGE_NAME      = "smartek/${SERVICE_NAME}"
-        IMAGE_TAG       = "${BUILD_NUMBER}"
-        CONTAINER_PORT  = '8085'
-        JAR_FILE        = 'learning-0.0.1-SNAPSHOT.jar'
-        DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
-    }
-
-    tools {
-        maven 'Maven-3.9'
-        jdk   'JDK-17'
+        SERVICE_NAME   = 'learning'
+        IMAGE_NAME     = "smartek/${SERVICE_NAME}"
+        IMAGE_TAG      = "${BUILD_NUMBER}"
+        CONTAINER_PORT = '8092'
     }
 
     stages {
@@ -25,7 +18,7 @@ pipeline {
         stage('Build') {
             steps {
                 dir('Backend/learning') {
-                    sh 'mvn clean package -DskipTests'
+                    sh 'mvn clean package -DskipTests --no-transfer-progress'
                 }
             }
         }
@@ -33,12 +26,13 @@ pipeline {
         stage('Test') {
             steps {
                 dir('Backend/learning') {
-                    sh 'mvn test'
+                    sh 'mvn test --no-transfer-progress'
                 }
             }
             post {
                 always {
-                    junit 'Backend/learning/target/surefire-reports/*.xml'
+                    junit allowEmptyResults: true,
+                          testResults: 'Backend/learning/target/surefire-reports/*.xml'
                 }
             }
         }
@@ -51,30 +45,14 @@ pipeline {
             }
         }
 
-        stage('Docker Push') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: "${DOCKER_CREDENTIALS_ID}",
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    sh """
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                        docker push ${IMAGE_NAME}:latest
-                    """
-                }
-            }
-        }
-
-        stage('Deploy') {
+        stage('Deploy Local') {
             steps {
                 sh """
                     docker stop ${SERVICE_NAME} || true
                     docker rm   ${SERVICE_NAME} || true
                     docker run -d \
                         --name ${SERVICE_NAME} \
-                        --network smartek-network \
+                        --network esprit-pi-4sae1-2026-smartek_smartek-network \
                         -p ${CONTAINER_PORT}:${CONTAINER_PORT} \
                         --restart unless-stopped \
                         ${IMAGE_NAME}:${IMAGE_TAG}
@@ -89,10 +67,6 @@ pipeline {
         }
         failure {
             echo "Pipeline ${SERVICE_NAME} échoué - vérifier les logs"
-        }
-        always {
-            sh "docker logout || true"
-            cleanWs()
         }
     }
 }
