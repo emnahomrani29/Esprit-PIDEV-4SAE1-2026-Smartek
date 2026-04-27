@@ -232,6 +232,54 @@ services:
       - smartek-network
 
   # ─────────────────────────────────────────
+  # LEARNING SERVICE
+  # ─────────────────────────────────────────
+  learning:
+    build:
+      context: ./Backend/learning
+      dockerfile: Dockerfile
+    container_name: smartek-learning
+    restart: unless-stopped
+    ports:
+      - "8092:8092"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/learning_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # SKILL EVIDENCE SERVICE
+  # ─────────────────────────────────────────
+  skill-evidence-service:
+    build:
+      context: ./Backend/skiil-evidence-service
+      dockerfile: Dockerfile
+    container_name: smartek-skill-evidence
+    restart: unless-stopped
+    ports:
+      - "8091:8091"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/skill_evidence_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
   # API GATEWAY
   # ─────────────────────────────────────────
   api-gateway:
@@ -261,6 +309,10 @@ services:
       event-service:
         condition: service_started
       planning-service:
+        condition: service_started
+      learning:
+        condition: service_started
+      skill-evidence-service:
         condition: service_started
     networks:
       - smartek-network

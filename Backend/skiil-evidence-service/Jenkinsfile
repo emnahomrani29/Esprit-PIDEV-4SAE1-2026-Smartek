@@ -1,0 +1,98 @@
+pipeline {
+    agent any
+
+    environment {
+        SERVICE_NAME    = 'skill-evidence-service'
+        IMAGE_NAME      = "smartek/${SERVICE_NAME}"
+        IMAGE_TAG       = "${BUILD_NUMBER}"
+        CONTAINER_PORT  = '8089'
+        JAR_FILE        = 'skill-evidence-service-1.0.0.jar'
+        DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
+    }
+
+    tools {
+        maven 'Maven-3.9'
+        jdk   'JDK-17'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                dir('Backend/skiil-evidence-service') {
+                    sh 'mvn clean package -DskipTests'
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                dir('Backend/skiil-evidence-service') {
+                    sh 'mvn test'
+                }
+            }
+            post {
+                always {
+                    junit 'Backend/skiil-evidence-service/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                dir('Backend/skiil-evidence-service') {
+                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:latest ."
+                }
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: "${DOCKER_CREDENTIALS_ID}",
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh """
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                        docker push ${IMAGE_NAME}:latest
+                    """
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh """
+                    docker stop ${SERVICE_NAME} || true
+                    docker rm   ${SERVICE_NAME} || true
+                    docker run -d \
+                        --name ${SERVICE_NAME} \
+                        --network smartek-network \
+                        -p ${CONTAINER_PORT}:${CONTAINER_PORT} \
+                        --restart unless-stopped \
+                        ${IMAGE_NAME}:${IMAGE_TAG}
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline ${SERVICE_NAME} terminé avec succès - image: ${IMAGE_NAME}:${IMAGE_TAG}"
+        }
+        failure {
+            echo "Pipeline ${SERVICE_NAME} échoué - vérifier les logs"
+        }
+        always {
+            sh "docker logout || true"
+            cleanWs()
+        }
+    }
+}
