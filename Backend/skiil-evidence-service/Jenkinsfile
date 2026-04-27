@@ -50,6 +50,8 @@ pipeline {
                 sh """
                     docker stop ${SERVICE_NAME} || true
                     docker rm   ${SERVICE_NAME} || true
+                    docker stop smartek-skill-evidence || true
+                    docker rm   smartek-skill-evidence || true
                     docker run -d \
                         --name ${SERVICE_NAME} \
                         --network esprit-pi-4sae1-2026-smartek_smartek-network \
