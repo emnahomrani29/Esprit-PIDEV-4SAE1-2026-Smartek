@@ -6,6 +6,9 @@ pipeline {
         IMAGE_NAME     = "smartek/${SERVICE_NAME}"
         IMAGE_TAG      = "${BUILD_NUMBER}"
         CONTAINER_PORT = '8092'
+        SONAR_URL      = 'http://smartek-sonarqube:9000'
+        SONAR_TOKEN    = 'sqa_9666920e6bb5daeaa01417f39e831be36fac7b97'
+        SONAR_PROJECT  = 'learning-service'
     }
 
     stages {
@@ -33,6 +36,21 @@ pipeline {
                 always {
                     junit allowEmptyResults: true,
                           testResults: 'Backend/learning/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                dir('Backend/learning') {
+                    sh """
+                        mvn sonar:sonar \
+                            -Dsonar.projectKey=${SONAR_PROJECT} \
+                            -Dsonar.projectName=${SONAR_PROJECT} \
+                            -Dsonar.host.url=${SONAR_URL} \
+                            -Dsonar.token=${SONAR_TOKEN} \
+                            --no-transfer-progress
+                    """
                 }
             }
         }
