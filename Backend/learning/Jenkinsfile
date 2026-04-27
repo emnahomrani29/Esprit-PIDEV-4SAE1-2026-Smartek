@@ -9,6 +9,8 @@ pipeline {
         SONAR_URL      = 'http://smartek-sonarqube:9000'
         SONAR_TOKEN    = 'sqa_9666920e6bb5daeaa01417f39e831be36fac7b97'
         SONAR_PROJECT  = 'learning-service'
+        NEXUS_URL      = 'http://smartek-nexus:8081'
+        NEXUS_REPO     = 'maven-snapshots'
     }
 
     stages {
@@ -49,6 +51,19 @@ pipeline {
                             -Dsonar.projectName=${SONAR_PROJECT} \
                             -Dsonar.host.url=${SONAR_URL} \
                             -Dsonar.token=${SONAR_TOKEN} \
+                            --no-transfer-progress
+                    """
+                }
+            }
+        }
+
+        stage('Push to Nexus') {
+            steps {
+                dir('Backend/learning') {
+                    sh """
+                        mvn deploy -DskipTests \
+                            -DaltDeploymentRepository=nexus::default::${NEXUS_URL}/repository/${NEXUS_REPO}/ \
+                            -Dusername=admin -Dpassword=admin123 \
                             --no-transfer-progress
                     """
                 }
