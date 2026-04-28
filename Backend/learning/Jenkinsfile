@@ -7,19 +7,13 @@ pipeline {
         IMAGE_TAG      = "${BUILD_NUMBER}"
         CONTAINER_PORT = '8092'
         SONAR_URL      = 'http://smartek-sonarqube:9000'
-        SONAR_TOKEN    = 'sqa_9666920e6bb5daeaa01417f39e831be36fac7b97'
+        SONAR_TOKEN    = 'squ_d2989c206eee595136c3e96ec64f086567126eca'
         SONAR_PROJECT  = 'learning-service'
         NEXUS_URL      = 'http://smartek-nexus:8081'
         NEXUS_REPO     = 'maven-snapshots'
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Build') {
             steps {
                 dir('Backend/learning') {
@@ -62,8 +56,8 @@ pipeline {
                 dir('Backend/learning') {
                     sh """
                         mvn deploy -DskipTests \
-                            -DaltDeploymentRepository=nexus::default::${NEXUS_URL}/repository/${NEXUS_REPO}/ \
-                            -Dusername=admin -Dpassword=admin123 \
+                            -s /var/jenkins_home/maven-settings.xml \
+                            -DaltDeploymentRepository=nexus::http://smartek-nexus:8081/repository/maven-snapshots/ \
                             --no-transfer-progress
                     """
                 }

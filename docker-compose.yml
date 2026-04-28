@@ -333,11 +333,64 @@ services:
     networks:
       - smartek-network
 
+  # ─────────────────────────────────────────
+  # SONARQUBE
+  # ─────────────────────────────────────────
+  sonarqube:
+    image: sonarqube:community
+    container_name: smartek-sonarqube
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # NEXUS
+  # ─────────────────────────────────────────
+  nexus:
+    image: sonatype/nexus3:latest
+    container_name: smartek-nexus
+    restart: unless-stopped
+    ports:
+      - "8089:8081"
+    volumes:
+      - nexus_data:/nexus-data
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # JENKINS
+  # ─────────────────────────────────────────
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: smartek-jenkins
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - smartek-network
+
 # ─────────────────────────────────────────
 # VOLUMES & NETWORKS
 # ─────────────────────────────────────────
 volumes:
   mysql_data:
+  sonarqube_data:
+  sonarqube_logs:
+  sonarqube_extensions:
+  nexus_data:
+  jenkins_data:
 
 networks:
   smartek-network:
