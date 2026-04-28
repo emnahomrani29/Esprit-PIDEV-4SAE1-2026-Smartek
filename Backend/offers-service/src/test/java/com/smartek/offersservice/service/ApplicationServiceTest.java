@@ -30,26 +30,37 @@ class ApplicationServiceTest {
 
     @Mock private ApplicationRepository applicationRepository;
     @Mock private OfferRepository offerRepository;
-    @Mock private ApplicationMapper applicationMapper;
     @Mock private ApplicationScoringService scoringService;
 
-    @InjectMocks private ApplicationService applicationService;
+    // ApplicationMapper est un composant simple → instanciation directe
+    private final ApplicationMapper applicationMapper = new ApplicationMapper();
+
+    private ApplicationService applicationService;
 
     private Application pendingApp;
-    private ApplicationResponse pendingResponse;
-    private ApplicationRequest validRequest;
     private Offer activeOffer;
+    private ApplicationRequest validRequest;
 
     @BeforeEach
     void setUp() {
+        applicationService = new ApplicationService(
+                applicationRepository, offerRepository, applicationMapper, scoringService);
+
         activeOffer = new Offer();
         activeOffer.setId(100L);
         activeOffer.setTitle("Dev Java");
         activeOffer.setStatus("ACTIVE");
+        activeOffer.setCompanyId(1L);
+        activeOffer.setCompanyName("TechCorp");
+        activeOffer.setLocation("Paris");
+        activeOffer.setContractType("CDI");
+        activeOffer.setViewCount(0L);
+        activeOffer.setPositions(1);
+        activeOffer.setRemote(false);
 
         pendingApp = new Application();
         pendingApp.setId(1L);
-        pendingApp.setOfferId(100L);
+        pendingApp.setOffer(activeOffer);
         pendingApp.setLearnerId(2L);
         pendingApp.setLearnerName("Alice Martin");
         pendingApp.setLearnerEmail("alice@test.com");
@@ -57,13 +68,6 @@ class ApplicationServiceTest {
         pendingApp.setStatus("PENDING");
         pendingApp.setScore(0);
         pendingApp.setAppliedAt(LocalDateTime.now());
-
-        pendingResponse = ApplicationResponse.builder()
-                .id(1L).offerId(100L).learnerId(2L)
-                .learnerName("Alice Martin").learnerEmail("alice@test.com")
-                .status(Application.ApplicationStatus.PENDING).score(0)
-                .appliedAt(LocalDateTime.now())
-                .build();
 
         validRequest = ApplicationRequest.builder()
                 .offerId(100L).learnerId(2L)
@@ -81,10 +85,8 @@ class ApplicationServiceTest {
         void firstApplication_savedWithPendingStatus() {
             when(applicationRepository.existsByOfferIdAndLearnerId(100L, 2L)).thenReturn(false);
             when(offerRepository.findById(100L)).thenReturn(Optional.of(activeOffer));
-            when(applicationMapper.toEntity(any())).thenReturn(pendingApp);
             when(scoringService.calculateScore(any(), any(), any())).thenReturn(42);
             when(applicationRepository.save(any())).thenReturn(pendingApp);
-            when(applicationMapper.toResponse(any())).thenReturn(pendingResponse);
 
             ApplicationResponse result = applicationService.applyToOffer(validRequest);
 
@@ -139,7 +141,6 @@ class ApplicationServiceTest {
         void validStatusTransitions(String newStatus) {
             when(applicationRepository.findById(1L)).thenReturn(Optional.of(pendingApp));
             when(applicationRepository.save(any())).thenReturn(pendingApp);
-            when(applicationMapper.toResponse(any())).thenReturn(pendingResponse);
 
             applicationService.updateApplicationStatus(1L, newStatus, null);
 
@@ -153,7 +154,6 @@ class ApplicationServiceTest {
         void updateWithRecruiterNote_noteSaved() {
             when(applicationRepository.findById(1L)).thenReturn(Optional.of(pendingApp));
             when(applicationRepository.save(any())).thenReturn(pendingApp);
-            when(applicationMapper.toResponse(any())).thenReturn(pendingResponse);
 
             applicationService.updateApplicationStatus(1L, "ACCEPTED", "Excellent profil");
 
@@ -181,7 +181,6 @@ class ApplicationServiceTest {
         void withdrawOwnApplication_success() {
             when(applicationRepository.findById(1L)).thenReturn(Optional.of(pendingApp));
             when(applicationRepository.save(any())).thenReturn(pendingApp);
-            when(applicationMapper.toResponse(any())).thenReturn(pendingResponse);
 
             applicationService.withdrawApplication(1L, 2L);
 
@@ -208,7 +207,6 @@ class ApplicationServiceTest {
         @DisplayName("Get by offer → returns list")
         void getByOffer_returnsList() {
             when(applicationRepository.findByOfferId(100L)).thenReturn(List.of(pendingApp));
-            when(applicationMapper.toResponse(any())).thenReturn(pendingResponse);
 
             List<ApplicationResponse> result = applicationService.getApplicationsByOffer(100L);
             assertThat(result).hasSize(1);
@@ -218,7 +216,6 @@ class ApplicationServiceTest {
         @DisplayName("Get ranked by offer → sorted by score")
         void getRankedByOffer_returnsSortedList() {
             when(applicationRepository.findByOfferIdOrderByScoreDesc(100L)).thenReturn(List.of(pendingApp));
-            when(applicationMapper.toResponse(any())).thenReturn(pendingResponse);
 
             List<ApplicationResponse> result = applicationService.getApplicationsByOfferSortedByScore(100L);
             assertThat(result).hasSize(1);
@@ -228,7 +225,6 @@ class ApplicationServiceTest {
         @DisplayName("Get by learner → returns list")
         void getByLearner_returnsList() {
             when(applicationRepository.findByLearnerId(2L)).thenReturn(List.of(pendingApp));
-            when(applicationMapper.toResponse(any())).thenReturn(pendingResponse);
 
             List<ApplicationResponse> result = applicationService.getApplicationsByLearner(2L);
             assertThat(result).hasSize(1);
@@ -253,18 +249,27 @@ class ApplicationServiceTest {
     @DisplayName("Match Analysis")
     class MatchAnalysisTests {
 
+        // Pour ces tests, on utilise un vrai scoringService (pas de dépendances)
+        private ApplicationService serviceWithRealScoring;
+
+        @BeforeEach
+        void setUpRealScoring() {
+            serviceWithRealScoring = new ApplicationService(
+                    applicationRepository, offerRepository,
+                    applicationMapper, new ApplicationScoringService());
+        }
+
         @Test
         @DisplayName("getMatchAnalysis → retourne analyse complète")
         void getMatchAnalysis_returnsCompleteAnalysis() {
-            Offer offer = activeOffer;
-            offer.setRequiredSkills(java.util.Set.of("Java", "Spring"));
-            offer.setExperienceLevel("MID");
+            activeOffer.setRequiredSkills(java.util.Set.of("Java", "Spring"));
+            activeOffer.setExperienceLevel("MID");
             pendingApp.setCoverLetter("J'ai de l'expérience en Java et Spring.");
-            pendingApp.setOffer(offer);
+            pendingApp.setOffer(activeOffer);
 
             when(applicationRepository.findById(1L)).thenReturn(Optional.of(pendingApp));
 
-            java.util.Map<String, Object> result = applicationService.getMatchAnalysis(1L, 3);
+            java.util.Map<String, Object> result = serviceWithRealScoring.getMatchAnalysis(1L, 3);
 
             assertThat(result).containsKey("totalScore");
             assertThat(result).containsKey("matchedSkills");
@@ -278,7 +283,7 @@ class ApplicationServiceTest {
         void getMatchAnalysis_notFound_throwsException() {
             when(applicationRepository.findById(99L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> applicationService.getMatchAnalysis(99L, null))
+            assertThatThrownBy(() -> serviceWithRealScoring.getMatchAnalysis(99L, null))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
 
@@ -291,7 +296,7 @@ class ApplicationServiceTest {
             when(applicationRepository.findById(1L)).thenReturn(Optional.of(pendingApp));
             when(offerRepository.findById(100L)).thenReturn(Optional.of(activeOffer));
 
-            java.util.Map<String, Object> result = applicationService.getMatchAnalysis(1L, 2);
+            java.util.Map<String, Object> result = serviceWithRealScoring.getMatchAnalysis(1L, 2);
 
             assertThat(result).containsKey("totalScore");
             verify(offerRepository).findById(100L);

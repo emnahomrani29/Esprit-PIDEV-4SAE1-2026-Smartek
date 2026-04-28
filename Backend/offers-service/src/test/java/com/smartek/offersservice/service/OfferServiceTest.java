@@ -32,16 +32,20 @@ class OfferServiceTest {
     @Mock private ApplicationRepository applicationRepository;
     @Mock private InterviewRepository interviewRepository;
     @Mock private SavedOfferRepository savedOfferRepository;
-    @Mock private OfferMapper offerMapper;
 
-    @InjectMocks private OfferService offerService;
+    // OfferMapper est un composant simple sans dépendances → instanciation directe
+    private final OfferMapper offerMapper = new OfferMapper();
+
+    private OfferService offerService;
 
     private Offer sampleOffer;
-    private OfferResponse sampleResponse;
     private OfferRequest sampleRequest;
 
     @BeforeEach
     void setUp() {
+        offerService = new OfferService(offerRepository, applicationRepository,
+                interviewRepository, savedOfferRepository, offerMapper);
+
         sampleOffer = new Offer();
         sampleOffer.setId(1L);
         sampleOffer.setTitle("Développeur Java");
@@ -57,11 +61,6 @@ class OfferServiceTest {
         sampleOffer.setCreatedAt(LocalDateTime.now());
         sampleOffer.setUpdatedAt(LocalDateTime.now());
 
-        sampleResponse = OfferResponse.builder()
-                .id(1L).title("Développeur Java").companyId(10L)
-                .status("ACTIVE").viewCount(0L).positions(1).remote(false)
-                .open(true).build();
-
         sampleRequest = OfferRequest.builder()
                 .title("Développeur Java").description("Poste de développeur Java senior")
                 .companyName("SMARTEK").location("Paris").contractType("CDI")
@@ -72,7 +71,6 @@ class OfferServiceTest {
     @DisplayName("createOffer — retourne l'offre créée")
     void createOffer_shouldReturnCreatedOffer() {
         when(offerRepository.save(any())).thenReturn(sampleOffer);
-        when(offerMapper.toResponse(any())).thenReturn(sampleResponse);
 
         OfferResponse result = offerService.createOffer(sampleRequest);
 
@@ -99,7 +97,6 @@ class OfferServiceTest {
     void getOfferById_shouldReturnOfferAndIncrementViews() {
         when(offerRepository.findById(1L)).thenReturn(Optional.of(sampleOffer));
         doNothing().when(offerRepository).incrementViewCount(1L);
-        when(offerMapper.toResponse(any())).thenReturn(sampleResponse);
 
         OfferResponse result = offerService.getOfferById(1L);
 
@@ -121,11 +118,11 @@ class OfferServiceTest {
     void getOffersByCompanyId_returnsWithCount() {
         when(offerRepository.findByCompanyId(10L)).thenReturn(List.of(sampleOffer));
         when(applicationRepository.countByOfferId(1L)).thenReturn(3L);
-        when(offerMapper.toResponse(any())).thenReturn(sampleResponse);
 
         List<OfferResponse> result = offerService.getOffersByCompanyId(10L);
 
         assertThat(result).hasSize(1);
+        assertThat(result.get(0).getApplicationCount()).isEqualTo(3L);
     }
 
     @Test
@@ -133,11 +130,11 @@ class OfferServiceTest {
     void updateOffer_shouldUpdateAndReturn() {
         when(offerRepository.findById(1L)).thenReturn(Optional.of(sampleOffer));
         when(offerRepository.save(any())).thenReturn(sampleOffer);
-        when(offerMapper.toResponse(any())).thenReturn(sampleResponse);
 
         OfferResponse result = offerService.updateOffer(1L, sampleRequest);
 
         assertThat(result).isNotNull();
+        assertThat(result.getTitle()).isEqualTo("Développeur Java");
     }
 
     @Test
@@ -216,5 +213,285 @@ class OfferServiceTest {
         OfferStatsResponse stats = offerService.getStatsByCompany(companyId);
 
         assertThat(stats.getAcceptanceRate()).isEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("getOfferByIdWithCounts — retourne l'offre avec applicationCount et savedCount")
+    void getOfferByIdWithCounts_returnsWithCounts() {
+        when(offerRepository.findById(1L)).thenReturn(Optional.of(sampleOffer));
+        doNothing().when(offerRepository).incrementViewCount(1L);
+        when(applicationRepository.countByOfferId(1L)).thenReturn(5L);
+        when(savedOfferRepository.countByOfferId(1L)).thenReturn(3L);
+
+        OfferResponse result = offerService.getOfferByIdWithCounts(1L);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getApplicationCount()).isEqualTo(5L);
+        assertThat(result.getSavedCount()).isEqualTo(3L);
+    }
+
+    @Test
+    @DisplayName("getTopViewedOffers — retourne les offres les plus vues")
+    void getTopViewedOffers_returnsTopOffers() {
+        when(offerRepository.findTopViewedOffers(any())).thenReturn(List.of(sampleOffer));
+
+        List<OfferResponse> result = offerService.getTopViewedOffers(5);
+
+        assertThat(result).hasSize(1);
+    }
+
+    // ─── getAllOffers ─────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("getAllOffers — retourne une page triée par createdAt desc")
+    void getAllOffers_returnsSortedPage() {
+        org.springframework.data.domain.Page<Offer> page =
+                new org.springframework.data.domain.PageImpl<>(List.of(sampleOffer));
+        when(offerRepository.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
+
+        org.springframework.data.domain.Page<OfferResponse> result =
+                offerService.getAllOffers(0, 10, "createdAt", "desc");
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getTitle()).isEqualTo("Développeur Java");
+    }
+
+    @Test
+    @DisplayName("getAllOffers — tri ascendant")
+    void getAllOffers_ascendingSort() {
+        org.springframework.data.domain.Page<Offer> page =
+                new org.springframework.data.domain.PageImpl<>(List.of(sampleOffer));
+        when(offerRepository.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
+
+        org.springframework.data.domain.Page<OfferResponse> result =
+                offerService.getAllOffers(0, 5, "title", "asc");
+
+        assertThat(result).isNotNull();
+        verify(offerRepository).findAll(any(org.springframework.data.domain.Pageable.class));
+    }
+
+    // ─── getOffersByStatus ────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("getOffersByStatus — retourne les offres filtrées par statut")
+    void getOffersByStatus_returnsFilteredPage() {
+        org.springframework.data.domain.Page<Offer> page =
+                new org.springframework.data.domain.PageImpl<>(List.of(sampleOffer));
+        when(offerRepository.findByStatus(eq("ACTIVE"), any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(page);
+
+        org.springframework.data.domain.Page<OfferResponse> result =
+                offerService.getOffersByStatus("ACTIVE", 0, 10);
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getStatus()).isEqualTo("ACTIVE");
+    }
+
+    // ─── searchOffers ─────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("searchOffers — retourne les résultats paginés selon les filtres")
+    void searchOffers_returnsPagedResults() {
+        org.springframework.data.domain.Page<Offer> page =
+                new org.springframework.data.domain.PageImpl<>(List.of(sampleOffer));
+        when(offerRepository.searchWithFilters(
+                any(), any(), any(), any(), any(), any(), any(), any(), any(),
+                any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(page);
+
+        com.smartek.offersservice.dto.OfferSearchRequest req =
+                new com.smartek.offersservice.dto.OfferSearchRequest();
+        req.setKeyword("Java");
+        req.setContractType("CDI");
+        req.setPage(0);
+        req.setSize(10);
+
+        org.springframework.data.domain.Page<OfferResponse> result = offerService.searchOffers(req);
+
+        assertThat(result.getContent()).hasSize(1);
+        verify(offerRepository).searchWithFilters(
+                eq("Java"), isNull(), eq("CDI"), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(),
+                any(org.springframework.data.domain.Pageable.class));
+    }
+
+    @Test
+    @DisplayName("searchOffers — tri ascendant respecté")
+    void searchOffers_ascendingSortRespected() {
+        org.springframework.data.domain.Page<Offer> page =
+                new org.springframework.data.domain.PageImpl<>(List.of(sampleOffer));
+        when(offerRepository.searchWithFilters(
+                any(), any(), any(), any(), any(), any(), any(), any(), any(),
+                any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(page);
+
+        com.smartek.offersservice.dto.OfferSearchRequest req =
+                new com.smartek.offersservice.dto.OfferSearchRequest();
+        req.setSortBy("title");
+        req.setSortDir("asc");
+        req.setPage(0);
+        req.setSize(5);
+
+        org.springframework.data.domain.Page<OfferResponse> result = offerService.searchOffers(req);
+
+        assertThat(result).isNotNull();
+    }
+
+    // ─── createOffer — valeurs par défaut ────────────────────────────────────
+
+    @Test
+    @DisplayName("createOffer — remote null → false par défaut")
+    void createOffer_nullRemote_defaultsFalse() {
+        sampleRequest = OfferRequest.builder()
+                .title("Dev").description("Desc").companyName("Corp")
+                .location("Paris").contractType("CDI").companyId(1L)
+                .remote(null).build();
+
+        Offer savedOffer = new Offer();
+        savedOffer.setId(2L);
+        savedOffer.setTitle("Dev");
+        savedOffer.setDescription("Desc");
+        savedOffer.setCompanyName("Corp");
+        savedOffer.setLocation("Paris");
+        savedOffer.setContractType("CDI");
+        savedOffer.setCompanyId(1L);
+        savedOffer.setStatus("ACTIVE");
+        savedOffer.setRemote(false);
+        savedOffer.setPositions(1);
+        savedOffer.setViewCount(0L);
+
+        when(offerRepository.save(any())).thenReturn(savedOffer);
+
+        OfferResponse result = offerService.createOffer(sampleRequest);
+
+        assertThat(result.getRemote()).isFalse();
+    }
+
+    @Test
+    @DisplayName("createOffer — positions null → 1 par défaut")
+    void createOffer_nullPositions_defaults1() {
+        sampleRequest = OfferRequest.builder()
+                .title("Dev").description("Desc").companyName("Corp")
+                .location("Paris").contractType("CDI").companyId(1L)
+                .positions(null).build();
+
+        Offer savedOffer = new Offer();
+        savedOffer.setId(3L);
+        savedOffer.setTitle("Dev");
+        savedOffer.setDescription("Desc");
+        savedOffer.setCompanyName("Corp");
+        savedOffer.setLocation("Paris");
+        savedOffer.setContractType("CDI");
+        savedOffer.setCompanyId(1L);
+        savedOffer.setStatus("ACTIVE");
+        savedOffer.setRemote(false);
+        savedOffer.setPositions(1);
+        savedOffer.setViewCount(0L);
+
+        when(offerRepository.save(any())).thenReturn(savedOffer);
+
+        OfferResponse result = offerService.createOffer(sampleRequest);
+
+        assertThat(result.getPositions()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("createOffer — status null → ACTIVE par défaut")
+    void createOffer_nullStatus_defaultsActive() {
+        sampleRequest = OfferRequest.builder()
+                .title("Dev").description("Desc").companyName("Corp")
+                .location("Paris").contractType("CDI").companyId(1L)
+                .status(null).build();
+
+        when(offerRepository.save(any())).thenReturn(sampleOffer);
+
+        OfferResponse result = offerService.createOffer(sampleRequest);
+
+        assertThat(result.getStatus()).isEqualTo("ACTIVE");
+    }
+
+    @Test
+    @DisplayName("createOffer — date expiration future → pas d'exception")
+    void createOffer_futureExpiresAt_noException() {
+        sampleRequest = OfferRequest.builder()
+                .title("Dev").description("Desc").companyName("Corp")
+                .location("Paris").contractType("CDI").companyId(1L)
+                .expiresAt(LocalDateTime.now().plusDays(30))
+                .build();
+
+        when(offerRepository.save(any())).thenReturn(sampleOffer);
+
+        assertThatCode(() -> offerService.createOffer(sampleRequest)).doesNotThrowAnyException();
+    }
+
+    // ─── Offer.isOpen() — logique métier ─────────────────────────────────────
+
+    @Test
+    @DisplayName("isOpen — false si statut CLOSED")
+    void isOpen_false_whenStatusClosed() {
+        sampleOffer.setStatus("CLOSED");
+        assertThat(sampleOffer.isOpen()).isFalse();
+    }
+
+    @Test
+    @DisplayName("isOpen — false si expiresAt dans le passé")
+    void isOpen_false_whenExpired() {
+        sampleOffer.setStatus("ACTIVE");
+        sampleOffer.setExpiresAt(LocalDateTime.now().minusDays(1));
+        assertThat(sampleOffer.isOpen()).isFalse();
+    }
+
+    @Test
+    @DisplayName("isOpen — true si ACTIVE et expiresAt dans le futur")
+    void isOpen_true_whenActiveAndNotExpired() {
+        sampleOffer.setStatus("ACTIVE");
+        sampleOffer.setExpiresAt(LocalDateTime.now().plusDays(7));
+        assertThat(sampleOffer.isOpen()).isTrue();
+    }
+
+    @Test
+    @DisplayName("isOpen — true si ACTIVE et expiresAt null")
+    void isOpen_true_whenActiveAndNoExpiry() {
+        sampleOffer.setStatus("ACTIVE");
+        sampleOffer.setExpiresAt(null);
+        assertThat(sampleOffer.isOpen()).isTrue();
+    }
+
+    // ─── getStatsByCompany — détail des statuts ───────────────────────────────
+
+    @Test
+    @DisplayName("getStatsByCompany — totalOffers = somme de tous les statuts")
+    void getStatsByCompany_totalIsSum() {
+        Long companyId = 5L;
+        when(offerRepository.countByCompanyIdAndStatus(companyId, "ACTIVE")).thenReturn(3L);
+        when(offerRepository.countByCompanyIdAndStatus(companyId, "CLOSED")).thenReturn(2L);
+        when(offerRepository.countByCompanyIdAndStatus(companyId, "DRAFT")).thenReturn(1L);
+        when(offerRepository.countByCompanyIdAndStatus(companyId, "EXPIRED")).thenReturn(4L);
+        when(applicationRepository.countByCompanyId(companyId)).thenReturn(0L);
+        when(applicationRepository.countByCompanyIdAndStatus(any(), any())).thenReturn(0L);
+        when(interviewRepository.countByOffer_CompanyId(companyId)).thenReturn(0L);
+        when(applicationRepository.averageScoreByCompanyId(companyId)).thenReturn(0.0);
+
+        OfferStatsResponse stats = offerService.getStatsByCompany(companyId);
+
+        assertThat(stats.getTotalOffers()).isEqualTo(10L); // 3+2+1+4
+        assertThat(stats.getActiveOffers()).isEqualTo(3L);
+        assertThat(stats.getClosedOffers()).isEqualTo(2L);
+        assertThat(stats.getDraftOffers()).isEqualTo(1L);
+        assertThat(stats.getExpiredOffers()).isEqualTo(4L);
+    }
+
+    @Test
+    @DisplayName("getStatsByCompany — totalInterviews correctement renseigné")
+    void getStatsByCompany_totalInterviewsSet() {
+        Long companyId = 7L;
+        when(offerRepository.countByCompanyIdAndStatus(any(), any())).thenReturn(0L);
+        when(applicationRepository.countByCompanyId(companyId)).thenReturn(0L);
+        when(applicationRepository.countByCompanyIdAndStatus(any(), any())).thenReturn(0L);
+        when(interviewRepository.countByOffer_CompanyId(companyId)).thenReturn(8L);
+        when(applicationRepository.averageScoreByCompanyId(companyId)).thenReturn(0.0);
+
+        OfferStatsResponse stats = offerService.getStatsByCompany(companyId);
+
+        assertThat(stats.getTotalInterviews()).isEqualTo(8L);
     }
 }
