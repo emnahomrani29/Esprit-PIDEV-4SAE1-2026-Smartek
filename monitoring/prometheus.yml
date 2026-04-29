@@ -9,12 +9,12 @@ scrape_configs:
   - job_name: 'learning-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['smartek-learning:8092']
+      - targets: ['learning:8092']
 
   - job_name: 'skill-evidence-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['smartek-skill-evidence:8091']
+      - targets: ['skill-evidence-service:8091']
 
   - job_name: 'auth-service'
     metrics_path: '/actuator/prometheus'
