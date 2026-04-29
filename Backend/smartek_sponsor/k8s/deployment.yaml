@@ -32,16 +32,10 @@ spec:
         runAsUser: 1000
         fsGroup: 1000
       
-      # Init Container for database readiness
-      initContainers:
-      - name: wait-for-db
-        image: busybox:1.36
-        command: ['sh', '-c', 'until nc -z mysql-service 3306; do echo waiting for mysql; sleep 2; done;']
-      
       containers:
       - name: smartek-sponsor
-        image: your-nexus-registry:8083/smartek-sponsor:latest
-        imagePullPolicy: Always
+        image: localhost:5000/smartek-sponsor:latest
+        imagePullPolicy: IfNotPresent
         
         ports:
         - name: http
@@ -67,7 +61,7 @@ spec:
         # Liveness Probe
         livenessProbe:
           httpGet:
-            path: /actuator/health/liveness
+            path: /actuator/health
             port: 8080
           initialDelaySeconds: 60
           periodSeconds: 10
@@ -77,7 +71,7 @@ spec:
         # Readiness Probe
         readinessProbe:
           httpGet:
-            path: /actuator/health/readiness
+            path: /actuator/health
             port: 8080
           initialDelaySeconds: 30
           periodSeconds: 5
@@ -119,8 +113,8 @@ spec:
         emptyDir: {}
       
       # Image Pull Secrets (if using private registry)
-      imagePullSecrets:
-      - name: nexus-registry-secret
+      # imagePullSecrets:
+      # - name: nexus-registry-secret
       
       # Affinity Rules
       affinity:

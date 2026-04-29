@@ -11,7 +11,7 @@ data:
   SERVER_PORT: "8080"
   
   # Database Configuration
-  SPRING_DATASOURCE_URL: "jdbc:mysql://mysql-service:3306/smartek_sponsor?useSSL=false&serverTimezone=UTC"
+  SPRING_DATASOURCE_URL: "jdbc:mysql://host.docker.internal:3306/smartek_sponsor?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
   SPRING_JPA_SHOW_SQL: "false"
   SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: "org.hibernate.dialect.MySQL8Dialect"
