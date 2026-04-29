@@ -43,6 +43,18 @@ eureka:
 jwt:
   secret: smartek-secret-key-for-jwt-token-generation-2024-very-secure
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
 logging:
   level:
     com.smartek.examservice: DEBUG

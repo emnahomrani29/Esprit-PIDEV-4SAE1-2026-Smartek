@@ -263,6 +263,119 @@ jobs:
         run: docker images | grep smartek
 
   # ─────────────────────────────────────────────────────────────
+  # CI — Validation config Prometheus & Grafana
+  # ─────────────────────────────────────────────────────────────
+  monitoring-check:
+    name: "CI - Validation config Prometheus & Grafana"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Vérifier que prometheus.yml existe
+        run: |
+          test -f monitoring/prometheus/prometheus.yml && echo "✅ prometheus.yml trouvé" || (echo "❌ prometheus.yml manquant" && exit 1)
+
+      - name: Valider la syntaxe prometheus.yml avec promtool
+        run: |
+          # Télécharger Prometheus pour avoir promtool
+          PROM_VERSION="2.51.2"
+          wget -q https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/prometheus-${PROM_VERSION}.linux-amd64.tar.gz
+          tar -xzf prometheus-${PROM_VERSION}.linux-amd64.tar.gz
+          ./prometheus-${PROM_VERSION}.linux-amd64/promtool check config monitoring/prometheus/prometheus.yml
+          echo "✅ prometheus.yml syntaxe valide"
+
+      - name: Vérifier les fichiers Grafana
+        run: |
+          test -f monitoring/grafana/provisioning/datasources/prometheus.yml && echo "✅ datasource Grafana trouvée" || (echo "❌ datasource Grafana manquante" && exit 1)
+          test -f monitoring/grafana/provisioning/dashboards/dashboard.yml   && echo "✅ provider dashboards trouvé"  || (echo "❌ provider dashboards manquant" && exit 1)
+          test -f monitoring/grafana/provisioning/dashboards/smartek-overview.json && echo "✅ dashboard JSON trouvé" || (echo "❌ dashboard JSON manquant" && exit 1)
+
+      - name: Valider le JSON du dashboard Grafana
+        run: |
+          python3 -c "
+          import json, sys
+          with open('monitoring/grafana/provisioning/dashboards/smartek-overview.json') as f:
+              json.load(f)
+          print('✅ Dashboard JSON valide')
+          "
+
+      - name: Vérifier que les services exposent /actuator/prometheus dans application.yml
+        run: |
+          SERVICES="auth-service course-service exam-service event-service planning-service training-service"
+          for svc in $SERVICES; do
+            FILE=$(find Backend/$svc/src/main/resources -name "application.yml" | head -1)
+            if grep -q "prometheus" "$FILE"; then
+              echo "✅ $svc : /actuator/prometheus configuré"
+            else
+              echo "❌ $svc : /actuator/prometheus MANQUANT dans $FILE"
+              exit 1
+            fi
+          done
+
+  # ─────────────────────────────────────────────────────────────
+  # CD — Deploy Monitoring (Prometheus + Grafana)
+  # ─────────────────────────────────────────────────────────────
+  deploy-monitoring:
+    name: "CD - Deploy Prometheus + Grafana"
+    runs-on: ubuntu-latest
+    needs:
+      - docker-build
+      - monitoring-check
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Démarrer Prometheus + Grafana
+        run: |
+          docker compose up -d prometheus grafana
+          echo "⏳ Attente démarrage Prometheus et Grafana..."
+          sleep 20
+
+      - name: Vérifier que Prometheus est UP
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9090/-/healthy)
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ Prometheus UP (HTTP $STATUS)"
+          else
+            echo "❌ Prometheus DOWN (HTTP $STATUS)"
+            docker compose logs prometheus
+            exit 1
+          fi
+
+      - name: Vérifier que Grafana est UP
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health)
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ Grafana UP (HTTP $STATUS)"
+          else
+            echo "❌ Grafana DOWN (HTTP $STATUS)"
+            docker compose logs grafana
+            exit 1
+          fi
+
+      - name: Vérifier que la datasource Prometheus est chargée dans Grafana
+        run: |
+          RESULT=$(curl -s -u admin:smartek123 http://localhost:3000/api/datasources)
+          if echo "$RESULT" | grep -q "Prometheus"; then
+            echo "✅ Datasource Prometheus chargée dans Grafana"
+          else
+            echo "❌ Datasource Prometheus non trouvée"
+            echo "$RESULT"
+            exit 1
+          fi
+
+      - name: Afficher les logs en cas d'échec
+        if: failure()
+        run: |
+          echo "=== Logs Prometheus ==="
+          docker compose logs prometheus --tail=50
+          echo "=== Logs Grafana ==="
+          docker compose logs grafana --tail=50
+
+  # ─────────────────────────────────────────────────────────────
   # Résumé final
   # ─────────────────────────────────────────────────────────────
   pipeline-success:
@@ -270,9 +383,13 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - docker-build
+      - deploy-monitoring
     steps:
       - name: Summary
         run: |
           echo "✅ CI  : Tests + JaCoCo coverage OK (event / training / course / exam / planning / frontend)"
+          echo "✅ CI  : Config Prometheus & Grafana validée"
           echo "✅ CD  : Docker build OK (11 microservices)"
+          echo "✅ CD  : Prometheus UP sur :9090"
+          echo "✅ CD  : Grafana UP sur :3000"
           echo "📦 Artifacts : rapports JaCoCo disponibles dans les artifacts GitHub Actions"

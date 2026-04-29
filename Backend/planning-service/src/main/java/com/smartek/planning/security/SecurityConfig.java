@@ -39,7 +39,7 @@ public class SecurityConfig {
                         // Preflight OPTIONS — toujours permis
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Actuator
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus", "/actuator/metrics").permitAll()
                         // Health checks
                         .requestMatchers("/api/plannings/health").permitAll()
                         .requestMatchers("/api/plannings/business/health").permitAll()

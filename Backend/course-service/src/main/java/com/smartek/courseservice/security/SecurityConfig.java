@@ -36,7 +36,7 @@ public class SecurityConfig {
                         // Preflight OPTIONS — toujours permis
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Actuator & health
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus", "/actuator/metrics").permitAll()
                         .requestMatchers("/api/courses/health").permitAll()
                         // WebSocket signaling — pas d'auth HTTP possible lors du handshake WS
                         .requestMatchers("/ws/signaling", "/ws/signaling/**").permitAll()

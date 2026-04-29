@@ -49,6 +49,18 @@ logging:
   level:
     com.smartek.courseservice: DEBUG
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
 # JWT Configuration (même secret que l'auth-service)
 jwt:
   secret: smartek-secret-key-for-jwt-token-generation-2024-very-secure
