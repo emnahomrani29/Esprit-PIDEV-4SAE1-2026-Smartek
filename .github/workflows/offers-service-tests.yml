@@ -74,11 +74,14 @@ jobs:
         working-directory: ${{ env.SERVICE_DIR }}
 
       - name: Analyse de code — SonarQube
-        if: ${{ secrets.SONAR_TOKEN != '' }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
+          if [ -z "$SONAR_TOKEN" ]; then
+            echo "⚠️  SONAR_TOKEN non configuré — analyse SonarQube ignorée"
+            exit 0
+          fi
           mvn sonar:sonar \
             -Dsonar.projectKey=offers-service \
             -Dsonar.projectName="Offers Service" \
