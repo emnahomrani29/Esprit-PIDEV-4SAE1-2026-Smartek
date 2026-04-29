@@ -80,9 +80,13 @@ pipeline {
                     docker stop smartek-learning || true
                     docker rm   smartek-learning || true
                     docker run -d \
-                        --name ${SERVICE_NAME} \
+                        --name smartek-learning \
                         --network esprit-pi-4sae1-2026-smartek_smartek-network \
                         -p ${CONTAINER_PORT}:${CONTAINER_PORT} \
+                        -e 'SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/learning_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true' \
+                        -e SPRING_DATASOURCE_USERNAME=root \
+                        -e SPRING_DATASOURCE_PASSWORD=root \
+                        -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/ \
                         --restart unless-stopped \
                         ${IMAGE_NAME}:${IMAGE_TAG}
                 """
