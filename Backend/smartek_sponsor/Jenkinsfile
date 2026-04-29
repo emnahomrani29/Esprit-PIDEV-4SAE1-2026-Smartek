@@ -55,9 +55,9 @@ pipeline {
                 echo '🧪 ========================================='
                 dir('Backend/smartek_sponsor') {
                     sh '''
-                        echo "🧪 Running: mvn test"
-                        mvn test || true
-                        echo "✅ Tests executed"
+                        echo "🧪 Running: mvn test -Dspring.profiles.active=test"
+                        mvn test -Dspring.profiles.active=test
+                        echo "✅ Tests executed successfully"
                     '''
                 }
             }
@@ -84,24 +84,22 @@ pipeline {
                         '''
                         
                         try {
-                            sh """
-                                mvn sonar:sonar \
-                                  -Dsonar.projectKey=\${SONAR_PROJECT_KEY} \
-                                  -Dsonar.projectName='Smartek Sponsor' \
-                                  -Dsonar.host.url=\${SONAR_HOST_URL} \
-                                  -Dsonar.login=admin \
-                                  -Dsonar.password=admin123 \
-                                  -Dsonar.java.binaries=target/classes || true
-                            """
+                            withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                                sh """
+                                    mvn sonar:sonar \
+                                      -Dsonar.projectKey=\${SONAR_PROJECT_KEY} \
+                                      -Dsonar.projectName='Smartek Sponsor' \
+                                      -Dsonar.host.url=\${SONAR_HOST_URL} \
+                                      -Dsonar.token=\${SONAR_TOKEN} \
+                                      -Dsonar.java.binaries=target/classes
+                                """
+                            }
                             echo '✅ SonarQube analysis completed'
                             echo '✅ View results at: http://localhost:9000'
                         } catch (Exception e) {
-                            echo '⚠️  SonarQube server not available'
-                            echo '✅ Code quality metrics:'
-                            echo '   - Code Coverage: 85%'
-                            echo '   - Bugs: 0'
-                            echo '   - Vulnerabilities: 0'
-                            echo '   - Code Smells: 5'
+                            echo '⚠️  SonarQube credentials not configured'
+                            echo '⚠️  Run: scripts/configure-jenkins-credentials.ps1'
+                            echo '✅ Continuing pipeline...'
                         }
                     }
                 }
@@ -166,19 +164,23 @@ pipeline {
                         '''
                         
                         try {
-                            sh """
-                                mvn deploy:deploy-file \
-                                  -DgroupId=com.smartek \
-                                  -DartifactId=smartek-sponsor \
-                                  -Dversion=1.0.\${BUILD_NUMBER} \
-                                  -Dpackaging=jar \
-                                  -Dfile=target/smartek-sponsor-0.0.1-SNAPSHOT.jar \
-                                  -DrepositoryId=nexus \
-                                  -Durl=\${NEXUS_URL}/repository/maven-releases/ || true
-                            """
+                            withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                                sh """
+                                    mvn deploy:deploy-file \
+                                      -DgroupId=com.smartek \
+                                      -DartifactId=smartek-sponsor \
+                                      -Dversion=1.0.\${BUILD_NUMBER} \
+                                      -Dpackaging=jar \
+                                      -Dfile=target/smartek-sponsor-0.0.1-SNAPSHOT.jar \
+                                      -DrepositoryId=nexus \
+                                      -Durl=\${NEXUS_URL}/repository/maven-releases/ \
+                                      -DgeneratePom=true
+                                """
+                            }
                             echo '✅ Artifact uploaded to Nexus'
                         } catch (Exception e) {
-                            echo '⚠️  Nexus server not configured'
+                            echo '⚠️  Nexus credentials not configured'
+                            echo '⚠️  Run: scripts/configure-jenkins-credentials.ps1'
                             echo '✅ Artifact available locally and archived in Jenkins'
                         }
                     }
