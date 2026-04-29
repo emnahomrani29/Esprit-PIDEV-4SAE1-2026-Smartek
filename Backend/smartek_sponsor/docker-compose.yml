@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: smartek-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: smartek_sponsor
+      MYSQL_USER: smartek_user
+      MYSQL_PASSWORD: smartek_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - smartek-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Smartek Sponsor Application
+  smartek-sponsor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smartek-sponsor-app
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartek_sponsor?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: smartek_user
+      SPRING_DATASOURCE_PASSWORD: smartek_password
+    ports:
+      - "8080:8082"
+    networks:
+      - smartek-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: smartek-prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "9090:9090"
+    networks:
+      - smartek-network
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: smartek-grafana
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana-dashboard.json:/etc/grafana/provisioning/dashboards/smartek-sponsor.json
+    ports:
+      - "3000:3000"
+    networks:
+      - smartek-network
+
+  # SonarQube
+  sonarqube:
+    image: sonarqube:community
+    container_name: smartek-sonarqube
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    ports:
+      - "9000:9000"
+    volumes:
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-extensions:/opt/sonarqube/extensions
+      - sonarqube-logs:/opt/sonarqube/logs
+    networks:
+      - smartek-network
+
+  # Docker Registry
+  registry:
+    image: registry:2
+    container_name: smartek-registry
+    ports:
+      - "5000:5000"
+    environment:
+      REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /data
+    volumes:
+      - registry-data:/data
+    networks:
+      - smartek-network
+
+volumes:
+  mysql-data:
+  prometheus-data:
+  grafana-data:
+  sonarqube-data:
+  sonarqube-extensions:
+  sonarqube-logs:
+  registry-data:
+
+networks:
+  smartek-network:
+    driver: bridge

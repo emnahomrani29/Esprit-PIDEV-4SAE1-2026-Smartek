@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: smartek-sponsor-monitor
+  namespace: smartek-production
+  labels:
+    app: smartek-sponsor
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: smartek-sponsor
+  endpoints:
+  - port: http
+    path: /actuator/prometheus
+    interval: 30s
+    scrapeTimeout: 10s
+  namespaceSelector:
+    matchNames:
+    - smartek-production

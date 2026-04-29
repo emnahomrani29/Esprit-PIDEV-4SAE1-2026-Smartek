@@ -1,0 +1,151 @@
+{
+  "dashboard": {
+    "title": "Smartek Sponsor Service Dashboard",
+    "tags": ["smartek", "sponsor", "spring-boot"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Request Rate",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(http_server_requests_seconds_count{app=\"smartek-sponsor\"}[5m])",
+            "legendFormat": "{{method}} {{uri}} - {{status}}"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Response Time (95th percentile)",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket{app=\"smartek-sponsor\"}[5m]))",
+            "legendFormat": "{{method}} {{uri}}"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Error Rate",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(http_server_requests_seconds_count{app=\"smartek-sponsor\",status=~\"5..\"}[5m])",
+            "legendFormat": "5xx Errors"
+          },
+          {
+            "expr": "rate(http_server_requests_seconds_count{app=\"smartek-sponsor\",status=~\"4..\"}[5m])",
+            "legendFormat": "4xx Errors"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Active Pods",
+        "type": "stat",
+        "gridPos": {"x": 12, "y": 8, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "kube_deployment_status_replicas_available{deployment=\"smartek-sponsor-deployment\"}"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "CPU Usage",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(container_cpu_usage_seconds_total{pod=~\"smartek-sponsor-.*\"}[5m])",
+            "legendFormat": "{{pod}}"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Memory Usage",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "container_memory_usage_bytes{pod=~\"smartek-sponsor-.*\"}",
+            "legendFormat": "{{pod}}"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "JVM Heap Memory",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 24, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "jvm_memory_used_bytes{app=\"smartek-sponsor\",area=\"heap\"}",
+            "legendFormat": "Used"
+          },
+          {
+            "expr": "jvm_memory_max_bytes{app=\"smartek-sponsor\",area=\"heap\"}",
+            "legendFormat": "Max"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Database Connection Pool",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 24, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "hikaricp_connections_active{app=\"smartek-sponsor\"}",
+            "legendFormat": "Active"
+          },
+          {
+            "expr": "hikaricp_connections_idle{app=\"smartek-sponsor\"}",
+            "legendFormat": "Idle"
+          },
+          {
+            "expr": "hikaricp_connections_max{app=\"smartek-sponsor\"}",
+            "legendFormat": "Max"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "GC Pause Time",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 32, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(jvm_gc_pause_seconds_sum{app=\"smartek-sponsor\"}[5m])",
+            "legendFormat": "{{action}} - {{cause}}"
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Thread Count",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 32, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "jvm_threads_live_threads{app=\"smartek-sponsor\"}",
+            "legendFormat": "Live Threads"
+          },
+          {
+            "expr": "jvm_threads_daemon_threads{app=\"smartek-sponsor\"}",
+            "legendFormat": "Daemon Threads"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,175 @@
+pipeline {
+    agent any
+    
+    environment {
+        APP_NAME = 'smartek-sponsor'
+        APP_VERSION = '0.0.1-SNAPSHOT'
+    }
+    
+    tools {
+        maven 'Maven-3.9.6'
+        jdk 'JDK-17'
+    }
+    
+    stages {
+        stage('📥 1. Checkout') {
+            steps {
+                script {
+                    echo "=========================================="
+                    echo "🔄 Récupération du code source..."
+                    echo "=========================================="
+                    checkout scm
+                    
+                    env.GIT_COMMIT_SHORT = sh(
+                        script: "git rev-parse --short HEAD",
+                        returnStdout: true
+                    ).trim()
+                    
+                    echo "✅ Code récupéré ! Commit: ${env.GIT_COMMIT_SHORT}"
+                }
+            }
+        }
+        
+        stage('🔨 2. Build') {
+            steps {
+                dir('Backend/smartek_sponsor') {
+                    script {
+                        echo "=========================================="
+                        echo "🔨 Compilation du code Java..."
+                        echo "=========================================="
+                        sh 'mvn clean compile'
+                        echo "✅ Compilation réussie !"
+                    }
+                }
+            }
+        }
+        
+        stage('🧪 3. Tests') {
+            steps {
+                dir('Backend/smartek_sponsor') {
+                    script {
+                        echo "=========================================="
+                        echo "🧪 Exécution des tests..."
+                        echo "=========================================="
+                        sh 'mvn test'
+                        echo "✅ Tests réussis !"
+                    }
+                }
+            }
+            post {
+                always {
+                    junit '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+        
+        stage('📊 4. Code Coverage') {
+            steps {
+                dir('Backend/smartek_sponsor') {
+                    script {
+                        echo "=========================================="
+                        echo "📊 Génération du rapport de couverture..."
+                        echo "=========================================="
+                        sh 'mvn jacoco:report'
+                        echo "✅ Rapport généré !"
+                    }
+                }
+            }
+            post {
+                always {
+                    jacoco(
+                        execPattern: '**/target/jacoco.exec',
+                        classPattern: '**/target/classes',
+                        sourcePattern: '**/src/main/java'
+                    )
+                }
+            }
+        }
+        
+        stage('📦 5. Package') {
+            steps {
+                dir('Backend/smartek_sponsor') {
+                    script {
+                        echo "=========================================="
+                        echo "📦 Création du fichier JAR..."
+                        echo "=========================================="
+                        sh 'mvn package -DskipTests'
+                        echo "✅ JAR créé : target/smartek-sponsor-${APP_VERSION}.jar"
+                    }
+                }
+            }
+        }
+        
+        stage('🐳 6. Docker Build') {
+            steps {
+                dir('Backend/smartek_sponsor') {
+                    script {
+                        echo "=========================================="
+                        echo "🐳 Construction de l'image Docker..."
+                        echo "=========================================="
+                        
+                        def buildTag = "${APP_VERSION}-${env.GIT_COMMIT_SHORT}-${env.BUILD_NUMBER}"
+                        
+                        sh """
+                            docker build -t ${APP_NAME}:${buildTag} .
+                            docker tag ${APP_NAME}:${buildTag} ${APP_NAME}:latest
+                        """
+                        
+                        echo "✅ Image Docker créée : ${APP_NAME}:${buildTag}"
+                    }
+                }
+            }
+        }
+        
+        stage('✅ 7. Verification') {
+            steps {
+                script {
+                    echo "=========================================="
+                    echo "✅ Vérification finale..."
+                    echo "=========================================="
+                    
+                    dir('Backend/smartek_sponsor') {
+                        // Vérifier que le JAR existe
+                        sh 'ls -lh target/*.jar'
+                        
+                        // Vérifier que l'image Docker existe
+                        sh "docker images | grep ${APP_NAME}"
+                    }
+                    
+                    echo "✅ Toutes les vérifications sont OK !"
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            script {
+                echo "=========================================="
+                echo "🧹 Nettoyage..."
+                echo "=========================================="
+            }
+        }
+        
+        success {
+            script {
+                echo "=========================================="
+                echo "🎉 PIPELINE RÉUSSI !"
+                echo "=========================================="
+                echo "✅ Build Number: ${env.BUILD_NUMBER}"
+                echo "✅ Commit: ${env.GIT_COMMIT_SHORT}"
+                echo "✅ Durée: ${currentBuild.durationString}"
+                echo "=========================================="
+            }
+        }
+        
+        failure {
+            script {
+                echo "=========================================="
+                echo "❌ PIPELINE ÉCHOUÉ !"
+                echo "=========================================="
+                echo "Consultez les logs ci-dessus pour plus de détails"
+            }
+        }
+    }
+}

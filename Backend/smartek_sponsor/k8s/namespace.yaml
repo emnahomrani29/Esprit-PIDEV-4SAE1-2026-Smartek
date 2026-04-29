@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: smartek-production
+  labels:
+    name: smartek-production
+    environment: production
+    team: smartek

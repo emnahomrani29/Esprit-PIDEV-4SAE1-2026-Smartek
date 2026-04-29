@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+    
+    tools {
+        maven 'Maven-3.9.6'
+        jdk 'JDK-17'
+    }
+    
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building...'
+                dir('C:/Users/abdel/OneDrive/Desktop/smartek sponssor/Esprit-PI-4SAE1-2026-Smartek-sponsor/Backend/smartek_sponsor') {
+                    bat 'mvn clean compile'
+                }
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                echo 'Testing...'
+                dir('C:/Users/abdel/OneDrive/Desktop/smartek sponssor/Esprit-PI-4SAE1-2026-Smartek-sponsor/Backend/smartek_sponsor') {
+                    bat 'mvn test'
+                }
+            }
+        }
+        
+        stage('Package') {
+            steps {
+                echo 'Packaging...'
+                dir('C:/Users/abdel/OneDrive/Desktop/smartek sponssor/Esprit-PI-4SAE1-2026-Smartek-sponsor/Backend/smartek_sponsor') {
+                    bat 'mvn package -DskipTests'
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo 'Pipeline SUCCESS!'
+        }
+        failure {
+            echo 'Pipeline FAILED!'
+        }
+    }
+}

@@ -1,0 +1,137 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smartek-sponsor-deployment
+  namespace: smartek-production
+  labels:
+    app: smartek-sponsor
+    version: v1
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: smartek-sponsor
+  template:
+    metadata:
+      labels:
+        app: smartek-sponsor
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/actuator/prometheus"
+    spec:
+      # Security Context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      
+      # Init Container for database readiness
+      initContainers:
+      - name: wait-for-db
+        image: busybox:1.36
+        command: ['sh', '-c', 'until nc -z mysql-service 3306; do echo waiting for mysql; sleep 2; done;']
+      
+      containers:
+      - name: smartek-sponsor
+        image: your-nexus-registry:8083/smartek-sponsor:latest
+        imagePullPolicy: Always
+        
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        
+        # Environment Variables from ConfigMap
+        envFrom:
+        - configMapRef:
+            name: smartek-sponsor-config
+        - secretRef:
+            name: smartek-sponsor-secret
+        
+        # Resource Limits
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        
+        # Liveness Probe
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        # Readiness Probe
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        
+        # Startup Probe
+        startupProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 0
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 30
+        
+        # Security Context
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+        
+        # Volume Mounts
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: logs
+          mountPath: /app/logs
+      
+      # Volumes
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: logs
+        emptyDir: {}
+      
+      # Image Pull Secrets (if using private registry)
+      imagePullSecrets:
+      - name: nexus-registry-secret
+      
+      # Affinity Rules
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - smartek-sponsor
+              topologyKey: kubernetes.io/hostname

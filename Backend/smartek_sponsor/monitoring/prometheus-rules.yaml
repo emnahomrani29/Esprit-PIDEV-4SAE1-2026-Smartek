@@ -1,0 +1,114 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: smartek-sponsor-alerts
+  namespace: smartek-production
+  labels:
+    app: smartek-sponsor
+    prometheus: kube-prometheus
+spec:
+  groups:
+  - name: smartek-sponsor.rules
+    interval: 30s
+    rules:
+    
+    # High Error Rate Alert
+    - alert: HighErrorRate
+      expr: |
+        rate(http_server_requests_seconds_count{status=~"5..",app="smartek-sponsor"}[5m]) > 0.05
+      for: 5m
+      labels:
+        severity: critical
+        service: smartek-sponsor
+      annotations:
+        summary: "High error rate detected in smartek-sponsor"
+        description: "Error rate is {{ $value | humanizePercentage }} for smartek-sponsor service"
+    
+    # High Response Time Alert
+    - alert: HighResponseTime
+      expr: |
+        histogram_quantile(0.95, 
+          rate(http_server_requests_seconds_bucket{app="smartek-sponsor"}[5m])
+        ) > 2
+      for: 5m
+      labels:
+        severity: warning
+        service: smartek-sponsor
+      annotations:
+        summary: "High response time in smartek-sponsor"
+        description: "95th percentile response time is {{ $value }}s"
+    
+    # Pod Down Alert
+    - alert: PodDown
+      expr: |
+        kube_deployment_status_replicas_available{deployment="smartek-sponsor-deployment"} < 2
+      for: 2m
+      labels:
+        severity: critical
+        service: smartek-sponsor
+      annotations:
+        summary: "Smartek-sponsor pods are down"
+        description: "Only {{ $value }} pods are available (minimum 2 required)"
+    
+    # High Memory Usage Alert
+    - alert: HighMemoryUsage
+      expr: |
+        container_memory_usage_bytes{pod=~"smartek-sponsor-.*"} / 
+        container_spec_memory_limit_bytes{pod=~"smartek-sponsor-.*"} > 0.9
+      for: 5m
+      labels:
+        severity: warning
+        service: smartek-sponsor
+      annotations:
+        summary: "High memory usage in smartek-sponsor"
+        description: "Memory usage is {{ $value | humanizePercentage }} of limit"
+    
+    # High CPU Usage Alert
+    - alert: HighCPUUsage
+      expr: |
+        rate(container_cpu_usage_seconds_total{pod=~"smartek-sponsor-.*"}[5m]) > 0.8
+      for: 5m
+      labels:
+        severity: warning
+        service: smartek-sponsor
+      annotations:
+        summary: "High CPU usage in smartek-sponsor"
+        description: "CPU usage is {{ $value | humanizePercentage }}"
+    
+    # Database Connection Pool Alert
+    - alert: DatabaseConnectionPoolExhausted
+      expr: |
+        hikaricp_connections_active{app="smartek-sponsor"} / 
+        hikaricp_connections_max{app="smartek-sponsor"} > 0.9
+      for: 3m
+      labels:
+        severity: warning
+        service: smartek-sponsor
+      annotations:
+        summary: "Database connection pool nearly exhausted"
+        description: "Connection pool usage is {{ $value | humanizePercentage }}"
+    
+    # JVM Memory Alert
+    - alert: HighJVMMemoryUsage
+      expr: |
+        jvm_memory_used_bytes{app="smartek-sponsor",area="heap"} / 
+        jvm_memory_max_bytes{app="smartek-sponsor",area="heap"} > 0.85
+      for: 5m
+      labels:
+        severity: warning
+        service: smartek-sponsor
+      annotations:
+        summary: "High JVM heap memory usage"
+        description: "JVM heap usage is {{ $value | humanizePercentage }}"
+    
+    # Restart Alert
+    - alert: FrequentRestarts
+      expr: |
+        rate(kube_pod_container_status_restarts_total{pod=~"smartek-sponsor-.*"}[15m]) > 0
+      for: 5m
+      labels:
+        severity: warning
+        service: smartek-sponsor
+      annotations:
+        summary: "Frequent pod restarts detected"
+        description: "Pod {{ $labels.pod }} has restarted {{ $value }} times in the last 15 minutes"

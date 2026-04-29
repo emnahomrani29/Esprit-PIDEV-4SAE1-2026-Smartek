@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: smartek-production
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+  - hpa.yaml
+  - servicemonitor.yaml
+
+commonLabels:
+  app: smartek-sponsor
+  managed-by: kustomize
+
+images:
+  - name: smartek-sponsor
+    newName: your-nexus-registry:8083/smartek-sponsor
+    newTag: latest
