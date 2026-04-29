@@ -14,6 +14,23 @@ pipeline {
     }
 
     stages {
+        stage('Detect Changes') {
+            steps {
+                script {
+                    def changedFiles = sh(script: "git diff --name-only HEAD~1 HEAD || git diff --name-only HEAD", returnStdout: true).trim()
+                    echo "Fichiers modifiés :\n${changedFiles}"
+                    def serviceChanged = changedFiles.split('\n').any { f -> f.startsWith('Backend/skiil-evidence-service/') }
+                    if (!serviceChanged && env.GIT_BRANCH != 'main' && env.GIT_BRANCH != 'develop') {
+                        echo "⏭️  Aucun changement dans skill-evidence-service — pipeline ignoré."
+                        currentBuild.result = 'NOT_BUILT'
+                        error("Skipping: no changes in skill-evidence-service")
+                    } else {
+                        echo "✅ Changements détectés dans skill-evidence-service — pipeline lancé."
+                    }
+                }
+            }
+        }
+
         stage('Build') {
             steps {
                 dir('Backend/skiil-evidence-service') {
