@@ -108,6 +108,20 @@ services:
     networks:
       - smartek-network
 
+  # Nexus Repository Manager
+  nexus:
+    image: sonatype/nexus3:latest
+    container_name: smartek-nexus
+    ports:
+      - "8081:8081"
+      - "8082:8082"
+    environment:
+      - INSTALL4J_ADD_VM_PARAMS=-Xms512m -Xmx512m -XX:MaxDirectMemorySize=273m
+    volumes:
+      - nexus-data:/nexus-data
+    networks:
+      - smartek-network
+
 volumes:
   mysql-data:
   prometheus-data:
@@ -116,6 +130,7 @@ volumes:
   sonarqube-extensions:
   sonarqube-logs:
   registry-data:
+  nexus-data:
 
 networks:
   smartek-network:
