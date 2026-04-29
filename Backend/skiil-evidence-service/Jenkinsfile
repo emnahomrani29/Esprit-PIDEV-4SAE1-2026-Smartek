@@ -107,6 +107,21 @@ pipeline {
                 """
             }
         }
+
+        stage('Verify Prometheus') {
+            steps {
+                sh """
+                    echo 'Attente du démarrage du service...'
+                    sleep 20
+                    STATUS=\$(curl -s -o /dev/null -w '%{http_code}' http://smartek-prometheus:9090/api/v1/query?query=up{job='skill-evidence-service'})
+                    if [ "\$STATUS" = "200" ]; then
+                        echo 'Prometheus scrape OK pour skill-evidence-service'
+                    else
+                        echo 'Avertissement: Prometheus ne répond pas correctement (status: '\$STATUS')'
+                    fi
+                """
+            }
+        }
     }
 
     post {
