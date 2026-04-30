@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         SERVICE_NAME   = 'learning'
-        IMAGE_NAME     = "smartek/${SERVICE_NAME}"
+        IMAGE_NAME     = "wafachabbi/${SERVICE_NAME}"
         IMAGE_TAG      = "${BUILD_NUMBER}"
         CONTAINER_PORT = '8092'
         SONAR_URL      = 'http://smartek-sonarqube:9000'
@@ -11,6 +11,7 @@ pipeline {
         SONAR_PROJECT  = 'learning-service'
         NEXUS_URL      = 'http://smartek-nexus:8081'
         NEXUS_REPO     = 'maven-snapshots'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
     }
 
     stages {
@@ -90,6 +91,17 @@ pipeline {
                 dir('Backend/learning') {
                     sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:latest ."
                 }
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                sh """
+                    echo \$DOCKERHUB_CREDENTIALS_PSW | docker login -u \$DOCKERHUB_CREDENTIALS_USR --password-stdin
+                    docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                    docker push ${IMAGE_NAME}:latest
+                    docker logout
+                """
             }
         }
 
