@@ -9,7 +9,7 @@ pipeline {
         SONAR_URL      = 'http://192.168.100.138:9000'
         SONAR_TOKEN    = 'squ_c9036cd8db019186d870601f11f32229205d13a2'
         SONAR_PROJECT  = 'learning-service'
-        NEXUS_URL      = 'http://localhost:8089'
+        NEXUS_URL      = 'http://192.168.100.138:8089'
         NEXUS_REPO     = 'maven-snapshots'
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
     }
@@ -78,8 +78,8 @@ pipeline {
                 dir('Backend/learning') {
                     sh """
                         mvn deploy -DskipTests \
-                            -s /var/jenkins_home/maven-settings.xml \
-                            -DaltDeploymentRepository=nexus::http://smartek-nexus:8081/repository/maven-snapshots/ \
+                            -s /home/wafa/.jenkins/maven-settings.xml \
+                            -DaltDeploymentRepository=nexus::http://192.168.100.138:8089/repository/maven-snapshots/ \
                             --no-transfer-progress
                     """
                 }
