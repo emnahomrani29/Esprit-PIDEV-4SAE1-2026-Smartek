@@ -20,7 +20,7 @@ pipeline {
                 script {
                     def changedFiles = sh(script: "git diff --name-only HEAD~1 HEAD 2>/dev/null || echo 'ALL'", returnStdout: true).trim()
                     echo "Fichiers modifiés :\n${changedFiles}"
-                    if (changedFiles == 'ALL') {
+if (changedFiles == 'ALL' || changedFiles.isEmpty()) {
                         echo "✅ Pas de repo Git détecté — pipeline lancé complet."
                     } else {
                         def serviceChanged = changedFiles.split('\n').any { f -> f.startsWith('Backend/learning/') }
