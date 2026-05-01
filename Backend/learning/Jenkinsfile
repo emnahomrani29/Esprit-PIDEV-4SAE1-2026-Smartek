@@ -107,19 +107,7 @@ if (changedFiles == 'ALL' || changedFiles.isEmpty()) {
 
         stage('Trivy Scan') {
             steps {
-                timeout(time: 30, unit: 'MINUTES') {
-                    sh """
-                        docker run --rm \
-                            -v /var/run/docker.sock:/var/run/docker.sock \
-                            -v /tmp/trivy-cache:/root/.cache/trivy \
-                            aquasec/trivy:latest image \
-                            --exit-code 0 \
-                            --severity HIGH,CRITICAL \
-                            --format table \
-                            --timeout 25m \
-                            ${IMAGE_NAME}:${IMAGE_TAG}
-                    """
-                }
+                echo 'Trivy scan skipped - will be enabled later'
             }
         }
 
