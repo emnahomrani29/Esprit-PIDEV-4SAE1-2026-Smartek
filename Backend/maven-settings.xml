@@ -8,12 +8,12 @@
     <server>
       <id>nexus</id>
       <username>admin</username>
-      <password>WAFAch12#</password>
+      <password>WAFAchabbi#</password>
     </server>
     <server>
       <id>nexus-releases</id>
       <username>admin</username>
-      <password>WAFAch12#</password>
+      <password>WAFAchabbi#</password>
     </server>
   </servers>
 
@@ -21,7 +21,7 @@
     <mirror>
       <id>nexus</id>
       <mirrorOf>*</mirrorOf>
-      <url>http://smartek-nexus:8081/repository/maven-public/</url>
+      <url>http://192.168.100.138:8089/repository/maven-public/</url>
     </mirror>
   </mirrors>
 
