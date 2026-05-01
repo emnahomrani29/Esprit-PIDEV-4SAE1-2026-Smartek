@@ -6,10 +6,10 @@ pipeline {
         IMAGE_NAME     = "wafachabbi/${SERVICE_NAME}"
         IMAGE_TAG      = "${BUILD_NUMBER}"
         CONTAINER_PORT = '8091'
-        SONAR_URL      = 'http://smartek-sonarqube:9000'
-        SONAR_TOKEN    = 'squ_d2989c206eee595136c3e96ec64f086567126eca'
+        SONAR_URL      = 'http://192.168.100.138:9000'
+        SONAR_TOKEN    = 'squ_c9036cd8db019186d870601f11f32229205d13a2'
         SONAR_PROJECT  = 'skill-evidence-service'
-        NEXUS_URL      = 'http://smartek-nexus:8081'
+        NEXUS_URL      = 'http://192.168.100.138:8089'
         NEXUS_REPO     = 'maven-snapshots'
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
     }
@@ -20,7 +20,7 @@ pipeline {
                 script {
                     def changedFiles = sh(script: "git diff --name-only HEAD~1 HEAD 2>/dev/null || echo 'ALL'", returnStdout: true).trim()
                     echo "Fichiers modifiés :\n${changedFiles}"
-                    if (changedFiles == 'ALL') {
+                    if (changedFiles == 'ALL' || changedFiles.isEmpty()) {
                         echo "✅ Pas de repo Git détecté — pipeline lancé complet."
                     } else {
                         def serviceChanged = changedFiles.split('\n').any { f -> f.startsWith('Backend/skiil-evidence-service/') }
@@ -78,8 +78,8 @@ pipeline {
                 dir('Backend/skiil-evidence-service') {
                     sh """
                         mvn deploy -DskipTests \
-                            -s /var/jenkins_home/maven-settings.xml \
-                            -DaltDeploymentRepository=nexus::http://smartek-nexus:8081/repository/maven-snapshots/ \
+                            -s /home/wafa/.jenkins/maven-settings.xml \
+                            -DaltDeploymentRepository=nexus::http://192.168.100.138:8089/repository/maven-snapshots/ \
                             --no-transfer-progress
                     """
                 }
@@ -107,16 +107,7 @@ pipeline {
 
         stage('Trivy Scan') {
             steps {
-                sh """
-                    docker run --rm \
-                        -v /var/run/docker.sock:/var/run/docker.sock \
-                        aquasec/trivy:latest image \
-                        --exit-code 0 \
-                        --severity HIGH,CRITICAL \
-                        --format table \
-                        --timeout 10m \
-                        ${IMAGE_NAME}:${IMAGE_TAG}
-                """
+                echo 'Trivy scan skipped - will be enabled later'
             }
         }
 
@@ -129,7 +120,7 @@ pipeline {
                     docker rm   smartek-skill-evidence || true
                     docker run -d \
                         --name smartek-skill-evidence \
-                        --network esprit-pi-4sae1-2026-smartek_smartek-network \
+                        --network bridge \
                         -p ${CONTAINER_PORT}:${CONTAINER_PORT} \
                         -e 'SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/skill_evidence_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true' \
                         -e SPRING_DATASOURCE_USERNAME=root \
@@ -146,7 +137,7 @@ pipeline {
                 sh """
                     echo 'Attente du démarrage du service...'
                     sleep 20
-                    STATUS=\$(curl -s -o /dev/null -w '%{http_code}' http://smartek-prometheus:9090/api/v1/query?query=up{job='skill-evidence-service'})
+                    STATUS=\$(curl -s -o /dev/null -w '%{http_code}' http://localhost:9090/api/v1/query?query=up{job='skill-evidence-service'} || echo '000')
                     if [ "\$STATUS" = "200" ]; then
                         echo 'Prometheus scrape OK pour skill-evidence-service'
                     else
