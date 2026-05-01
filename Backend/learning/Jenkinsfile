@@ -6,10 +6,10 @@ pipeline {
         IMAGE_NAME     = "wafachabbi/${SERVICE_NAME}"
         IMAGE_TAG      = "${BUILD_NUMBER}"
         CONTAINER_PORT = '8092'
-        SONAR_URL      = 'http://smartek-sonarqube:9000'
-        SONAR_TOKEN    = 'squ_d2989c206eee595136c3e96ec64f086567126eca'
+        SONAR_URL      = 'http://192.168.100.138:9000'
+        SONAR_TOKEN    = 'squ_c9036cd8db019186d870601f11f32229205d13a2'
         SONAR_PROJECT  = 'learning-service'
-        NEXUS_URL      = 'http://smartek-nexus:8081'
+        NEXUS_URL      = 'http://localhost:8089'
         NEXUS_REPO     = 'maven-snapshots'
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
     }
