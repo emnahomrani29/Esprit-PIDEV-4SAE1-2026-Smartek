@@ -120,7 +120,7 @@ if (changedFiles == 'ALL' || changedFiles.isEmpty()) {
                     docker rm   smartek-learning || true
                     docker run -d \
                         --name smartek-learning \
-                        --network esprit-pi-4sae1-2026-smartek_smartek-network \
+                        --network bridge \
                         -p ${CONTAINER_PORT}:${CONTAINER_PORT} \
                         -e 'SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/learning_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true' \
                         -e SPRING_DATASOURCE_USERNAME=root \
