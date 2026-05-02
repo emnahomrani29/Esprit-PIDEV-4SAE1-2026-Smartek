@@ -28,7 +28,7 @@ spec:
             - containerPort: 8091
           env:
             - name: JAVA_TOOL_OPTIONS
-              value: "-Xms128m -Xmx256m"
+              value: "-Xms256m -Xmx512m"
             - name: SPRING_DATASOURCE_URL
               value: "jdbc:mysql://mysql-service:3306/skill-db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
             - name: SPRING_DATASOURCE_USERNAME
@@ -63,10 +63,10 @@ spec:
             periodSeconds: 10
           resources:
             requests:
-              memory: "256Mi"
+              memory: "512Mi"
               cpu: "200m"
             limits:
-              memory: "512Mi"
+              memory: "768Mi"
               cpu: "500m"
 ---
 apiVersion: v1
