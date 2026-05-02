@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 public class PlanningService {
 
     private final PlanningRepository planningRepository;
+    private final PlanningNotificationService notificationService;
 
     public PlanningResponse createPlanning(PlanningRequest request) {
         validateTimes(request.getStartTime(), request.getEndTime());
@@ -32,6 +33,7 @@ public class PlanningService {
         planning.setEventType(request.getEventType());
         planning.setLocation(request.getLocation());
         planning.setColor(request.getColor());
+        planning.setStatus("DRAFT");
         
         Planning savedPlanning = planningRepository.save(planning);
         return mapToResponse(savedPlanning);
@@ -105,6 +107,31 @@ public class PlanningService {
         planningRepository.deleteById(id);
     }
 
+    public PlanningResponse publishPlanning(Long id) {
+        Planning planning = planningRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Planning not found with id: " + id));
+        planning.setStatus("PUBLISHED");
+        Planning saved = planningRepository.save(planning);
+
+        // Notifier les learners inscrits par SMS
+        notificationService.notifyLearnersForPublishedPlanning(saved);
+
+        return mapToResponse(saved);
+    }
+
+    public PlanningResponse unpublishPlanning(Long id) {
+        Planning planning = planningRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Planning not found with id: " + id));
+        planning.setStatus("DRAFT");
+        return mapToResponse(planningRepository.save(planning));
+    }
+
+    public List<PlanningResponse> getPublishedPlannings() {
+        return planningRepository.findPublishedPlannings().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     private void validateTimes(java.time.LocalTime startTime, java.time.LocalTime endTime) {
         if (endTime.isBefore(startTime) || endTime.equals(startTime)) {
             throw new RuntimeException("End time must be after start time");
@@ -135,7 +162,8 @@ public class PlanningService {
                 planning.getDescription(),
                 planning.getEventType(),
                 planning.getLocation(),
-                planning.getColor()
+                planning.getColor(),
+                planning.getStatus()
         );
     }
 }

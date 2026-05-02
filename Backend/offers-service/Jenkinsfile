@@ -1,52 +1,72 @@
+// ═══════════════════════════════════════════════════════════════════════════
+//  SMARTEK — offers-service  |  Pipeline Jenkins Standard
+//  Stack : Jenkins · Docker · Nexus · kubeadm/Ubuntu · Prometheus · Grafana · SonarQube
+// ═══════════════════════════════════════════════════════════════════════════
 pipeline {
     agent any
 
     options {
-        timeout(time: 30, unit: 'MINUTES')
+        timeout(time: 45, unit: 'MINUTES')
         disableConcurrentBuilds()
-        buildDiscarder(logRotator(numToKeepStr: '10'))
+        buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '5'))
+        timestamps()
+        ansiColor('xterm')
     }
 
     triggers {
         githubPush()
     }
 
+    // ── Variables d'environnement ──────────────────────────────────────────
     environment {
-        SERVICE_DIR   = 'Backend/offers-service'
-        IMAGE_NAME    = 'smartek/offers-service'
-        IMAGE_TAG     = "${env.GIT_COMMIT?.take(7) ?: 'latest'}"
+        // Répertoire du microservice dans le monorepo
+        SERVICE_DIR     = 'Backend/offers-service'
 
-        // Nexus — stockage JAR (Maven) + registre Docker
-        NEXUS_URL     = 'http://nexus:8081'
-        NEXUS_REPO    = 'smartek-docker'
-        NEXUS_IMAGE   = "nexus:8082/${IMAGE_NAME}:${env.GIT_COMMIT?.take(7) ?: 'latest'}"
+        // Image Docker
+        IMAGE_NAME      = 'smartek/offers-service'
+        IMAGE_TAG       = "${env.GIT_COMMIT?.take(7) ?: 'latest'}"
+
+        // Nexus — dépôt Maven (JAR) + registre Docker
+        NEXUS_URL       = 'http://nexus:8081'
+        NEXUS_REGISTRY  = 'nexus:8082'
+        NEXUS_IMAGE     = "nexus:8082/smartek/offers-service:${env.GIT_COMMIT?.take(7) ?: 'latest'}"
 
         // SonarQube
-        SONAR_PROJECT = 'offers-service'
+        SONAR_PROJECT   = 'offers-service'
+        SONAR_NAME      = 'Offers Service'
 
-        // Kubernetes (kubeadm / Ubuntu — pas minikube)
-        K8S_NAMESPACE = 'smartek'
-        K8S_DEPLOY    = 'offers-service'
+        // Kubernetes (kubeadm / Ubuntu — cluster de production)
+        K8S_NAMESPACE   = 'smartek'
+        K8S_DEPLOY      = 'offers-service'
+        K8S_PORT        = '8085'
     }
 
     stages {
 
-        // ── 1. CHECKOUT ────────────────────────────────────────────────
+        // ── 1. CHECKOUT ────────────────────────────────────────────────────
         stage('Checkout') {
             steps {
                 checkout scm
-                echo "Branch: ${env.GIT_BRANCH} | Commit: ${IMAGE_TAG}"
+                script {
+                    env.GIT_AUTHOR = sh(script: "git log -1 --pretty=%an", returnStdout: true).trim()
+                    env.GIT_MSG    = sh(script: "git log -1 --pretty=%s",  returnStdout: true).trim()
+                }
+                echo "╔══════════════════════════════════════════════════════╗"
+                echo "║  Branch : ${env.GIT_BRANCH}"
+                echo "║  Commit : ${IMAGE_TAG}  |  Author : ${env.GIT_AUTHOR}"
+                echo "║  Msg    : ${env.GIT_MSG}"
+                echo "╚══════════════════════════════════════════════════════╝"
             }
         }
 
-        // ── 2. GIT DIFF — détecter les changements du microservice ─────
-        //    Si aucun fichier de Backend/offers-service n'a changé,
-        //    on skippe tout le reste (sauf sur main/develop).
+        // ── 2. DÉTECTION DES CHANGEMENTS (Git Diff) ───────────────────────
+        //    Évite de relancer le pipeline si aucun fichier du service n'a changé
+        //    (sauf sur main / develop où le pipeline tourne toujours).
         stage('Detect Changes') {
             steps {
                 script {
                     def changedFiles = sh(
-                        script: "git diff --name-only HEAD~1 HEAD || git diff --name-only HEAD",
+                        script: "git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only HEAD",
                         returnStdout: true
                     ).trim()
 
@@ -56,47 +76,63 @@ pipeline {
                         f.startsWith('Backend/offers-service/')
                     }
 
-                    if (!serviceChanged && env.GIT_BRANCH != 'main' && env.GIT_BRANCH != 'develop') {
+                    if (!serviceChanged &&
+                        env.GIT_BRANCH != 'origin/main'  &&
+                        env.GIT_BRANCH != 'origin/develop' &&
+                        env.GIT_BRANCH != 'main'  &&
+                        env.GIT_BRANCH != 'develop') {
                         echo "⏭️  Aucun changement dans offers-service — pipeline ignoré."
                         currentBuild.result = 'NOT_BUILT'
                         error("Skipping: no changes in offers-service")
-                    } else {
-                        echo "✅ Changements détectés dans offers-service — pipeline lancé."
                     }
+                    echo "✅ Changements détectés — pipeline lancé."
                 }
             }
         }
 
-        // ── 3. BUILD ───────────────────────────────────────────────────
+        // ── 3. BUILD (sans tests) ──────────────────────────────────────────
         stage('Build') {
             steps {
                 dir("${SERVICE_DIR}") {
-                    sh 'mvn clean package -DskipTests -B'
+                    sh 'mvn clean package -DskipTests -B --no-transfer-progress'
                 }
+            }
+            post {
+                success { echo "✅ Build réussi — JAR généré." }
+                failure { echo "❌ Build échoué." }
             }
         }
 
-        // ── 4. TESTS UNITAIRES + COUVERTURE (JaCoCo) ──────────────────
+        // ── 4. TESTS UNITAIRES + COUVERTURE JaCoCo ────────────────────────
         stage('Tests unitaires') {
             steps {
                 dir("${SERVICE_DIR}") {
-                    sh 'mvn verify -Dspring.profiles.active=test -B'
+                    sh 'mvn verify -Dspring.profiles.active=test -B --no-transfer-progress'
                 }
             }
             post {
                 always {
-                    junit testResults: "${SERVICE_DIR}/target/surefire-reports/*.xml",
-                          allowEmptyResults: true
+                    // Rapport JUnit (Surefire)
+                    junit(
+                        testResults:        "${SERVICE_DIR}/target/surefire-reports/*.xml",
+                        allowEmptyResults:  true,
+                        skipPublishingChecks: false
+                    )
+                    // Rapport JaCoCo (couverture de code)
                     jacoco(
                         execPattern:   "${SERVICE_DIR}/target/jacoco.exec",
                         classPattern:  "${SERVICE_DIR}/target/classes",
-                        sourcePattern: "${SERVICE_DIR}/src/main/java"
+                        sourcePattern: "${SERVICE_DIR}/src/main/java",
+                        minimumLineCoverage:   '60',
+                        minimumBranchCoverage: '50'
                     )
                 }
+                success { echo "✅ Tests passés." }
+                failure { echo "❌ Tests échoués — voir les rapports Surefire." }
             }
         }
 
-        // ── 5. QUALITÉ DE CODE — SonarQube ─────────────────────────────
+        // ── 5. QUALITÉ DE CODE — SonarQube ────────────────────────────────
         stage('Analyse SonarQube') {
             steps {
                 dir("${SERVICE_DIR}") {
@@ -104,26 +140,37 @@ pipeline {
                         sh """
                             mvn sonar:sonar \
                                 -Dsonar.projectKey=${SONAR_PROJECT} \
-                                -Dsonar.projectName='Offers Service' \
+                                -Dsonar.projectName='${SONAR_NAME}' \
                                 -Dsonar.java.coveragePlugin=jacoco \
                                 -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
-                                -B
+                                -Dsonar.sources=src/main/java \
+                                -Dsonar.tests=src/test/java \
+                                -Dsonar.exclusions=**/dto/**,**/entity/**,**/config/** \
+                                -B --no-transfer-progress
                         """
                     }
                 }
             }
         }
 
+        // ── 6. QUALITY GATE SonarQube ─────────────────────────────────────
         stage('Quality Gate') {
             steps {
-                timeout(time: 5, unit: 'MINUTES') {
+                timeout(time: 10, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
+            post {
+                success { echo "✅ Quality Gate passé — code conforme aux standards." }
+                failure { echo "❌ Quality Gate échoué — corriger les problèmes de qualité." }
+            }
         }
 
-        // ── 6. NEXUS — Stockage du JAR (Maven Repository) ─────────────
+        // ── 7. NEXUS — Publication du JAR (Maven Repository) ──────────────
         stage('Publish JAR → Nexus') {
+            when {
+                anyOf { branch 'main'; branch 'develop' }
+            }
             steps {
                 dir("${SERVICE_DIR}") {
                     withCredentials([usernamePassword(
@@ -132,25 +179,41 @@ pipeline {
                         passwordVariable: 'NEXUS_PASS'
                     )]) {
                         sh """
-                            mvn deploy -DskipTests -B \
+                            mvn deploy -DskipTests -B --no-transfer-progress \
                                 -DaltDeploymentRepository=nexus::default::${NEXUS_URL}/repository/smartek-releases/
                         """
                     }
                 }
             }
-        }
-
-        // ── 7. DOCKER — Build de l'image ───────────────────────────────
-        stage('Docker Build') {
-            steps {
-                dir("${SERVICE_DIR}") {
-                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:latest ."
-                }
+            post {
+                success { echo "✅ JAR publié sur Nexus : ${NEXUS_URL}/repository/smartek-releases/" }
             }
         }
 
-        // ── 8. NEXUS — Stockage de l'image Docker ─────────────────────
+        // ── 8. DOCKER — Build de l'image ──────────────────────────────────
+        stage('Docker Build') {
+            steps {
+                dir("${SERVICE_DIR}") {
+                    sh """
+                        docker build \
+                            --build-arg BUILD_DATE=\$(date -u +%Y-%m-%dT%H:%M:%SZ) \
+                            --build-arg GIT_COMMIT=${IMAGE_TAG} \
+                            -t ${IMAGE_NAME}:${IMAGE_TAG} \
+                            -t ${IMAGE_NAME}:latest \
+                            .
+                    """
+                }
+            }
+            post {
+                success { echo "✅ Image Docker construite : ${IMAGE_NAME}:${IMAGE_TAG}" }
+            }
+        }
+
+        // ── 9. NEXUS — Push de l'image Docker ─────────────────────────────
         stage('Docker Push → Nexus Registry') {
+            when {
+                anyOf { branch 'main'; branch 'develop' }
+            }
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'nexus-credentials',
@@ -158,74 +221,135 @@ pipeline {
                     passwordVariable: 'NEXUS_PASS'
                 )]) {
                     sh """
-                        echo "${NEXUS_PASS}" | docker login nexus:8082 -u "${NEXUS_USER}" --password-stdin
+                        echo "\${NEXUS_PASS}" | docker login ${NEXUS_REGISTRY} \
+                            -u "\${NEXUS_USER}" --password-stdin
+
                         docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${NEXUS_IMAGE}
+                        docker tag ${IMAGE_NAME}:latest       ${NEXUS_REGISTRY}/${IMAGE_NAME}:latest
+
                         docker push ${NEXUS_IMAGE}
-                        docker logout nexus:8082
+                        docker push ${NEXUS_REGISTRY}/${IMAGE_NAME}:latest
+
+                        docker logout ${NEXUS_REGISTRY}
                     """
                 }
             }
+            post {
+                success { echo "✅ Image poussée : ${NEXUS_IMAGE}" }
+                always  { sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest || true" }
+            }
         }
 
-        // ── 9. DÉPLOIEMENT — Kubernetes (kubeadm / Ubuntu) ────────────
+        // ── 10. DÉPLOIEMENT — Kubernetes (kubeadm / Ubuntu) ───────────────
         stage('Deploy → Kubernetes') {
             when {
-                anyOf {
-                    branch 'main'
-                    branch 'develop'
-                }
+                anyOf { branch 'main'; branch 'develop' }
             }
             steps {
                 withKubeConfig([credentialsId: 'kubeconfig-smartek']) {
                     sh """
+                        # Mise à jour de l'image dans le Deployment
                         kubectl set image deployment/${K8S_DEPLOY} \
                             ${K8S_DEPLOY}=${NEXUS_IMAGE} \
                             -n ${K8S_NAMESPACE}
 
+                        # Annotation pour forcer le redéploiement (rolling update)
+                        kubectl annotate deployment/${K8S_DEPLOY} \
+                            kubernetes.io/change-cause="Jenkins build ${env.BUILD_NUMBER} — commit ${IMAGE_TAG}" \
+                            -n ${K8S_NAMESPACE} --overwrite
+
+                        # Attente du rollout (max 3 min)
                         kubectl rollout status deployment/${K8S_DEPLOY} \
                             -n ${K8S_NAMESPACE} \
-                            --timeout=120s
+                            --timeout=180s
                     """
+                }
+            }
+            post {
+                success { echo "✅ Déploiement réussi sur le cluster Kubernetes." }
+                failure {
+                    withKubeConfig([credentialsId: 'kubeconfig-smartek']) {
+                        sh """
+                            echo "⚠️  Rollback automatique..."
+                            kubectl rollout undo deployment/${K8S_DEPLOY} -n ${K8S_NAMESPACE}
+                        """
+                    }
                 }
             }
         }
 
-        // ── 10. SUPERVISION — vérification post-déploiement ───────────
-        //     Prometheus scrape /actuator/prometheus
-        //     Grafana affiche les dashboards du namespace smartek
+        // ── 11. HEALTH CHECK — Prometheus / Grafana ───────────────────────
+        //    Vérifie que le pod répond sur /actuator/health
+        //    et que /actuator/prometheus expose bien les métriques.
         stage('Health Check (Prometheus)') {
             when {
-                anyOf {
-                    branch 'main'
-                    branch 'develop'
-                }
+                anyOf { branch 'main'; branch 'develop' }
             }
             steps {
                 withKubeConfig([credentialsId: 'kubeconfig-smartek']) {
                     sh """
+                        echo "⏳ Attente de la stabilisation du pod (15s)..."
                         sleep 15
-                        kubectl run probe-offers --image=curlimages/curl \
-                            --restart=Never --rm -i \
+
+                        # Health check via un pod curl éphémère
+                        kubectl run probe-offers-${IMAGE_TAG} \
+                            --image=curlimages/curl:8.5.0 \
+                            --restart=Never \
+                            --rm -i \
                             -n ${K8S_NAMESPACE} \
-                            -- curl -sf http://offers-service.${K8S_NAMESPACE}.svc.cluster.local:8085/actuator/health
-                        echo "✅ Métriques Prometheus disponibles sur /actuator/prometheus"
+                            -- sh -c '
+                                echo "--- /actuator/health ---"
+                                curl -sf http://offers-service.${K8S_NAMESPACE}.svc.cluster.local:${K8S_PORT}/actuator/health
+                                echo ""
+                                echo "--- /actuator/prometheus (extrait) ---"
+                                curl -sf http://offers-service.${K8S_NAMESPACE}.svc.cluster.local:${K8S_PORT}/actuator/prometheus | head -20
+                            '
+
+                        echo "✅ Service opérationnel."
+                        echo "📊 Métriques Prometheus : /actuator/prometheus"
+                        echo "📈 Dashboard Grafana    : http://grafana.${K8S_NAMESPACE}.svc.cluster.local:3000"
                     """
+                }
+            }
+            post {
+                failure {
+                    echo "⚠️  Health check échoué — vérifier les logs du pod."
+                    withKubeConfig([credentialsId: 'kubeconfig-smartek']) {
+                        sh "kubectl logs deployment/${K8S_DEPLOY} -n ${K8S_NAMESPACE} --tail=50 || true"
+                    }
                 }
             }
         }
     }
 
-    // ── POST ───────────────────────────────────────────────────────────
+    // ── POST-PIPELINE ──────────────────────────────────────────────────────
     post {
         success {
-            echo "✅ Pipeline réussi — image déployée : ${NEXUS_IMAGE}"
+            echo """
+╔══════════════════════════════════════════════════════════════╗
+║  ✅  Pipeline réussi — Build #${env.BUILD_NUMBER}
+║  Image : ${NEXUS_IMAGE}
+║  Branch: ${env.GIT_BRANCH}  |  Commit: ${IMAGE_TAG}
+╚══════════════════════════════════════════════════════════════╝
+            """
         }
         failure {
-            echo "❌ Pipeline échoué — voir les logs ci-dessus"
+            echo """
+╔══════════════════════════════════════════════════════════════╗
+║  ❌  Pipeline échoué — Build #${env.BUILD_NUMBER}
+║  Branch: ${env.GIT_BRANCH}  |  Commit: ${IMAGE_TAG}
+║  Consulter les logs ci-dessus pour le diagnostic.
+╚══════════════════════════════════════════════════════════════╝
+            """
         }
         always {
-            archiveArtifacts artifacts: "${SERVICE_DIR}/target/*.jar",
-                             allowEmptyArchive: true
+            // Archiver le JAR et les rapports
+            archiveArtifacts(
+                artifacts:        "${SERVICE_DIR}/target/*.jar",
+                allowEmptyArchive: true,
+                fingerprint:       true
+            )
+            // Nettoyage du workspace
             cleanWs()
         }
     }

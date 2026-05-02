@@ -1,5 +1,5 @@
 server:
-  port: 8090
+  port: 8080
 
 spring:
   application:
@@ -17,82 +17,20 @@ spring:
           uri: lb://auth-service
           predicates:
             - Path=/api/auth/**
-        - id: learning-style-service
-          uri: lb://learning
-          predicates:
-            - Path=/api/learning-style-preferences/**
-        - id: learning-service
-          uri: lb://learning
-          predicates:
-            - Path=/api/learning-paths/**
-        - id: skill-evidence-service
-          uri: lb://skill-evidence-service
-          predicates:
-            - Path=/api/skill-evidence/**
-        - id: notifications-service
-          uri: lb://skill-evidence-service
-          predicates:
-            - Path=/api/notifications/**
-        - id: offers-service
-          uri: lb://offers-service
-          predicates:
-            - Path=/api/offers/**
-        - id: applications-service
-          uri: lb://offers-service
-          predicates:
-            - Path=/api/applications/**
-        - id: interviews-service
-          uri: lb://offers-service
-          predicates:
-            - Path=/api/interviews/**
-        - id: interview-feedbacks-service
-          uri: lb://offers-service
-          predicates:
-            - Path=/api/interview-feedbacks/**
-        - id: course-service
-          uri: lb://course-service
-          predicates:
-            - Path=/api/courses/**
-        - id: training-service
-          uri: lb://training-service
-          predicates:
-            - Path=/api/trainings/**,/api/training/**
-        - id: exam-service
-          uri: lb://exam-service
-          predicates:
-            - Path=/api/exams/**
-        - id: exam-enrollments
-          uri: lb://exam-service
-          predicates:
-            - Path=/api/exam-enrollments/**
-        - id: exam-results
-          uri: lb://exam-service
-          predicates:
-            - Path=/api/exam-results/**
-        - id: exam-drafts
-          uri: lb://exam-service
-          predicates:
-            - Path=/api/exam-drafts/**
-        - id: analytics
-          uri: lb://exam-service
-          predicates:
-            - Path=/api/analytics/trainer/*/exams
-        - id: analytics-training
-          uri: lb://training-service
-          predicates:
-            - Path=/api/analytics/trainer/*/training**,/api/analytics/trainer/*/trainings
-        - id: training-enrollments
-          uri: lb://training-service
-          predicates:
-            - Path=/api/training-enrollments/**
-        - id: performance-service
-          uri: lb://training-service
-          predicates:
-            - Path=/api/performance/**
-        - id: pi-service
-          uri: lb://pi-service
-          predicates:
-            - Path=/api/pi/**
+          filters:
+            - StripPrefix=1
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins: "http://localhost:4200"
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowed-headers: "*"
+            allow-credentials: true
 
 eureka:
   client:
@@ -108,6 +46,3 @@ management:
     web:
       exposure:
         include: health,info,gateway
-
-jwt:
-  secret: smartek-secret-key-for-jwt-token-generation-2024-very-secure

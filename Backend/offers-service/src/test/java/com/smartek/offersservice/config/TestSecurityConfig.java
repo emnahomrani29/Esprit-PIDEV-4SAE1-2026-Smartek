@@ -1,7 +1,10 @@
 package com.smartek.offersservice.config;
 
+import com.smartek.offersservice.security.JwtService;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -11,24 +14,19 @@ import org.springframework.security.web.SecurityFilterChain;
 /**
  * Configuration de sécurité pour les tests WebMvc (@WebMvcTest).
  *
- * Simule des restrictions de rôles réalistes pour valider
- * le contrôle d'accès dans les tests de controller.
- *
- * Règles :
- *  - GET publics : offres, recherche, top-viewed, company, stats
- *  - POST /api/offers : TRAINER ou ADMIN uniquement
- *  - PUT/DELETE /api/offers : TRAINER ou ADMIN uniquement
- *  - POST /api/applications : LEARNER uniquement
- *  - PUT /api/applications/{id}/status : TRAINER ou ADMIN uniquement
- *  - PUT /api/applications/{id}/withdraw : LEARNER uniquement
- *  - /api/interviews/** : TRAINER ou ADMIN
- *  - /api/interview-feedbacks/** : TRAINER ou ADMIN
- *  - /api/saved-offers/** : LEARNER
+ * - Fournit un mock de JwtService pour satisfaire la dépendance de JwtAuthFilter
+ * - Définit une SecurityFilterChain sans filtre JWT (stateless, rôles simulés)
  */
 @TestConfiguration
 public class TestSecurityConfig {
 
+    // Fournit un mock de JwtService pour que JwtAuthFilter puisse être instancié
+    // sans lever UnsatisfiedDependencyException dans @WebMvcTest
+    @MockBean
+    public JwtService jwtService;
+
     @Bean
+    @Primary
     public SecurityFilterChain testSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)

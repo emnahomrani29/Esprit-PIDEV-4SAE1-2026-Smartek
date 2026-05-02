@@ -1,13 +1,10 @@
 package com.smartek.offersservice.exception;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartek.offersservice.config.TestSecurityConfig;
 import com.smartek.offersservice.controller.OfferController;
 import com.smartek.offersservice.dto.OfferRequest;
-import com.smartek.offersservice.security.JwtAuthFilter;
-import com.smartek.offersservice.security.JwtService;
-import com.smartek.offersservice.security.SecurityConfig;
 import com.smartek.offersservice.service.OfferService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Vérifie que chaque type d'exception produit le bon code HTTP et la bonne structure JSON.
  */
 @WebMvcTest(OfferController.class)
-@Import({GlobalExceptionHandler.class, SecurityConfig.class})
+@Import({GlobalExceptionHandler.class, TestSecurityConfig.class})
 @DisplayName("GlobalExceptionHandler — Tests")
 class GlobalExceptionHandlerTest {
 
@@ -36,17 +33,6 @@ class GlobalExceptionHandlerTest {
     @Autowired private ObjectMapper objectMapper;
 
     @MockBean private OfferService offerService;
-    @MockBean private JwtAuthFilter jwtAuthFilter;
-    @MockBean private JwtService jwtService;
-
-    @BeforeEach
-    void configureMockFilter() throws Exception {
-        doAnswer(inv -> {
-            jakarta.servlet.FilterChain chain = inv.getArgument(2);
-            chain.doFilter(inv.getArgument(0), inv.getArgument(1));
-            return null;
-        }).when(jwtAuthFilter).doFilter(any(), any(), any());
-    }
 
     @Test
     @DisplayName("ResourceNotFoundException → 404 avec message")

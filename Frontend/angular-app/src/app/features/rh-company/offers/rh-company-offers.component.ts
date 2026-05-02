@@ -115,14 +115,6 @@ export class RhCompanyOffersComponent implements OnInit {
   }
 
   saveOffer() {
-    // Validation des champs obligatoires
-    if (!this.offerForm.title?.trim()) { this.error = 'Le titre est obligatoire'; return; }
-    if (!this.offerForm.description?.trim()) { this.error = 'La description est obligatoire'; return; }
-    if (!this.offerForm.companyName?.trim()) { this.error = 'Le nom de l\'entreprise est obligatoire'; return; }
-    if (!this.offerForm.location?.trim()) { this.error = 'La localisation est obligatoire'; return; }
-    if (!this.offerForm.contractType?.trim()) { this.error = 'Le type de contrat est obligatoire'; return; }
-
-    this.error = '';
     const payload = {
       ...this.offerForm,
       companyId: this.companyId,
@@ -133,10 +125,7 @@ export class RhCompanyOffersComponent implements OnInit {
       : this.http.post<any>(`${environment.apiUrl}/offers`, payload);
     req.subscribe({
       next: () => { this.showOfferModal = false; this.loadOffers(); },
-      error: (err) => {
-        const msg = err?.error?.errors ? Object.values(err.error.errors).join(', ') : 'Erreur lors de la sauvegarde';
-        this.error = msg;
-      }
+      error: () => { this.error = 'Erreur lors de la sauvegarde'; }
     });
   }
 
@@ -170,40 +159,11 @@ export class RhCompanyOffersComponent implements OnInit {
 
   // ─── APPLICATIONS ─────────────────────────────────────────────────────────
 
-  matchAnalysis: { [appId: number]: any } = {};
-
   viewApplications(offer: any) {
     this.selectedOfferForApps = offer;
-    this.http.get<any[]>(`${environment.apiUrl}/applications/offer/${offer.id}/ranked`).subscribe({
-      next: data => { this.applications = data; this.showApplicationsModal = true; },
-      error: () => {
-        this.http.get<any[]>(`${environment.apiUrl}/applications/offer/${offer.id}`).subscribe({
-          next: data => { this.applications = data; this.showApplicationsModal = true; }
-        });
-      }
+    this.http.get<any[]>(`${environment.apiUrl}/applications/offer/${offer.id}`).subscribe({
+      next: data => { this.applications = data; this.showApplicationsModal = true; }
     });
-  }
-
-  loadMatchAnalysis(appId: number) {
-    if (this.matchAnalysis[appId]) return; // already loaded
-    this.http.get<any>(`${environment.apiUrl}/applications/${appId}/match-analysis`).subscribe({
-      next: data => { this.matchAnalysis[appId] = data; },
-      error: () => {}
-    });
-  }
-
-  scoreColor(score: number): string {
-    if (score >= 75) return 'text-green-600 bg-green-50';
-    if (score >= 50) return 'text-yellow-600 bg-yellow-50';
-    if (score >= 25) return 'text-orange-500 bg-orange-50';
-    return 'text-red-500 bg-red-50';
-  }
-
-  scoreLabel(score: number): string {
-    if (score >= 75) return 'Excellent';
-    if (score >= 50) return 'Bon';
-    if (score >= 25) return 'Moyen';
-    return 'Faible';
   }
 
   updateAppStatus(appId: number, status: string) {
@@ -294,25 +254,14 @@ export class RhCompanyOffersComponent implements OnInit {
   }
 
   saveFeedback() {
-    const interviewId = this.feedbackForm.interviewId;
-    const submitFeedback = () => {
-      this.http.post<any>(`${environment.apiUrl}/interviews/feedback`, this.feedbackForm).subscribe({
-        next: () => {
-          this.showFeedbackModal = false;
-          this.loadCompanyInterviews();
-        },
-        error: (err) => {
-          this.showFeedbackModal = false;
-          const msg = err?.error?.message || err?.error?.error || 'Erreur lors de la soumission du feedback';
-          this.error = msg;
-        }
-      });
-    };
-
-    // Auto-complete l'entretien avant de soumettre le feedback
-    this.http.put<any>(`${environment.apiUrl}/interviews/${interviewId}/status?status=COMPLETED`, {}).subscribe({
-      next: () => submitFeedback(),
-      error: () => submitFeedback()
+    this.http.post<any>(`${environment.apiUrl}/interview-feedbacks`, this.feedbackForm).subscribe({
+      next: () => {
+        this.showFeedbackModal = false;
+        this.loadCompanyInterviews();
+        // Marquer l'entretien comme terminé automatiquement
+        this.updateInterviewStatus(this.feedbackForm.interviewId, 'COMPLETED');
+      },
+      error: () => { this.error = 'Erreur lors de la soumission du feedback'; }
     });
   }
 

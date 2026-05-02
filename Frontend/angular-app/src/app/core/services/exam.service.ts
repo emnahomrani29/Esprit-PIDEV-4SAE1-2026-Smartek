@@ -85,16 +85,16 @@ export class ExamService {
   }
 
   getResultsByUser(userId: number): Observable<ExamResult[]> {
-    return this.http.get<ExamResult[]>(`${this.apiUrl}/results/user/${userId}`);
+    return this.http.get<ExamResult[]>(`${environment.apiUrl}/exam-results/user/${userId}`);
   }
 
   getResultById(resultId: number): Observable<ExamResult> {
-    return this.http.get<ExamResult>(`${this.apiUrl}/results/${resultId}`);
+    return this.http.get<ExamResult>(`${environment.apiUrl}/exam-results/${resultId}`);
   }
 
   // Correction (for TRAINER)
   getPendingCorrections(): Observable<ExamResult[]> {
-    return this.http.get<ExamResult[]>(`${this.apiUrl}/results/pending`);
+    return this.http.get<ExamResult[]>(`${environment.apiUrl}/exam-results/pending`);
   }
 
   correctExercise(answerId: number, marks: number, feedback: string): Observable<ExerciseAnswer> {
@@ -105,7 +105,7 @@ export class ExamService {
   }
 
   finalizeCorrection(resultId: number): Observable<ExamResult> {
-    return this.http.put<ExamResult>(`${this.apiUrl}/results/${resultId}/finalize`, {});
+    return this.http.put<ExamResult>(`${environment.apiUrl}/exam-results/${resultId}/finalize`, {});
   }
 
   // Exam Enrollments

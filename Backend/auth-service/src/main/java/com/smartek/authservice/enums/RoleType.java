@@ -9,5 +9,6 @@ public enum RoleType {
     TRAINER,        // Formateur
     RH_COMPANY,     // RH Entreprise
     RH_SMARTEK,     // RH SMARTEK
-    PARTNER         // Partenaire
+    PARTNER,        // Partenaire
+    SPONSOR         // Sponsor
 }

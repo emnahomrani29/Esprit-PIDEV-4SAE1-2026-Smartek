@@ -232,6 +232,7 @@ public class ExamEnrollmentService {
         examEnrollmentRepository.save(enrollment);
     }
     
+    @Transactional(readOnly = true)
     public boolean canStartExam(Long userId, Long examId) {
         log.info("Vérification si l'utilisateur {} peut commencer l'examen {}", userId, examId);
         
@@ -394,18 +395,25 @@ public class ExamEnrollmentService {
             log.error("Erreur lors de la récupération du nom du cours/formation: {}", e.getMessage());
         }
         
-        // Vérifier dynamiquement si l'examen doit être déverrouillé
+        // NOUVELLE LOGIQUE : Si l'examen est actif (isActive = true), il est automatiquement déverrouillé
         boolean shouldBeUnlocked = false;
         
-        try {
-            if ("QUIZ".equals(exam.getExamType()) && exam.getCourseId() != null) {
-                shouldBeUnlocked = courseClient.isCourseCompleted(exam.getCourseId(), userId);
-            } else if ("EXAM".equals(exam.getExamType()) && exam.getTrainingId() != null) {
-                shouldBeUnlocked = trainingClient.hasCompletedAllCourses(userId, exam.getTrainingId());
+        if (exam.getIsActive() != null && exam.getIsActive()) {
+            // Si l'examen est actif, il est déverrouillé pour tous
+            shouldBeUnlocked = true;
+            log.info("Examen {} est actif, déverrouillage automatique pour l'utilisateur {}", exam.getId(), userId);
+        } else {
+            // Sinon, vérifier la complétion du cours/formation
+            try {
+                if ("QUIZ".equals(exam.getExamType()) && exam.getCourseId() != null) {
+                    shouldBeUnlocked = courseClient.isCourseCompleted(exam.getCourseId(), userId);
+                } else if ("EXAM".equals(exam.getExamType()) && exam.getTrainingId() != null) {
+                    shouldBeUnlocked = trainingClient.hasCompletedAllCourses(userId, exam.getTrainingId());
+                }
+            } catch (Exception e) {
+                log.error("Erreur lors de la vérification du statut: {}", e.getMessage());
+                shouldBeUnlocked = enrollment.getIsUnlocked();
             }
-        } catch (Exception e) {
-            log.error("Erreur lors de la vérification du statut: {}", e.getMessage());
-            shouldBeUnlocked = enrollment.getIsUnlocked();
         }
         
         // Mettre à jour le statut dans la base de données si nécessaire
@@ -569,6 +577,7 @@ public class ExamEnrollmentService {
                 examId, userId, totalAttempts + 1);
     }
     
+    @Transactional(readOnly = true)
     public int getTimeRemaining(Long userId, Long examId) {
         log.info("Calcul du temps restant pour l'examen {} et l'utilisateur {}", examId, userId);
         

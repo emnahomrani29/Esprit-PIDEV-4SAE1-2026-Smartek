@@ -93,6 +93,7 @@ public class TrainingMapper {
                 .title(courseResponse.getTitle())
                 .content(courseResponse.getContent())
                 .duration(duration)
+                .deliveryMode(courseResponse.getDeliveryMode())
                 .chapters(chapters)
                 .build();
     }

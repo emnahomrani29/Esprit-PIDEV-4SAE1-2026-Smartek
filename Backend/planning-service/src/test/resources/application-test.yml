@@ -1,0 +1,39 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false
+  cloud:
+    config:
+      enabled: false
+
+eureka:
+  client:
+    enabled: false
+
+jwt:
+  secret: smartek-secret-key-for-jwt-token-generation-2024-very-secure
+
+twilio:
+  account-sid: test
+  auth-token: test
+  phone-number: "+1234567890"
+  enabled: false
+
+auth-service:
+  url: http://localhost:8081
+
+logging:
+  level:
+    org.springframework.security: WARN
+    com.smartek: DEBUG

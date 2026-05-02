@@ -152,12 +152,14 @@ public class ExamResultService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<ExamResultResponse> getResultsByExam(Long examId) {
         return examResultRepository.findByExamId(examId).stream()
                 .map(this::mapToResultResponse)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public ExamResultResponse getResultById(Long resultId) {
         ExamResult result = examResultRepository.findById(resultId)
                 .orElseThrow(() -> new RuntimeException("Result not found"));
@@ -296,6 +298,11 @@ public class ExamResultService {
         response.setTimeTaken(result.getTimeTaken());
         response.setIsCorrected(result.getIsCorrected());
         return response;
+    }
+
+    /** Alias public pour permettre l'accès depuis les controllers */
+    public ExamResultResponse mapToResultResponsePublic(ExamResult result) {
+        return mapToResultResponse(result);
     }
     
     public ExamStatsResponse getExamStatsByUserId(Long userId) {

@@ -5,10 +5,7 @@ import com.smartek.offersservice.dto.InterviewRequest;
 import com.smartek.offersservice.dto.InterviewResponse;
 import com.smartek.offersservice.config.TestSecurityConfig;
 import com.smartek.offersservice.exception.GlobalExceptionHandler;
-import com.smartek.offersservice.security.JwtAuthFilter;
-import com.smartek.offersservice.security.JwtService;
 import com.smartek.offersservice.service.InterviewService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -38,17 +35,6 @@ class InterviewControllerTest {
     @Autowired private ObjectMapper objectMapper;
 
     @MockBean private InterviewService interviewService;
-    @MockBean private JwtAuthFilter jwtAuthFilter;
-    @MockBean private JwtService jwtService;
-
-    @BeforeEach
-    void configureMockFilter() throws Exception {
-        doAnswer(inv -> {
-            jakarta.servlet.FilterChain chain = inv.getArgument(2);
-            chain.doFilter(inv.getArgument(0), inv.getArgument(1));
-            return null;
-        }).when(jwtAuthFilter).doFilter(any(), any(), any());
-    }
 
     private InterviewResponse buildResponse(Long id, String status) {
         return InterviewResponse.builder()
@@ -86,36 +72,36 @@ class InterviewControllerTest {
 
         @Test
         @WithMockUser(roles = "TRAINER")
-        @DisplayName("400 si candidature non ACCEPTED (RuntimeException)")
+        @DisplayName("422 si candidature non ACCEPTED (BusinessException)")
         void shouldReturn400_whenApplicationNotAccepted() throws Exception {
             InterviewRequest request = InterviewRequest.builder()
                     .applicationId(2L)
                     .interviewDate(LocalDateTime.now().plusDays(3))
                     .location("Salle A").createdBy(5L).build();
             when(interviewService.createInterview(any()))
-                    .thenThrow(new RuntimeException("La candidature doit être acceptée"));
+                    .thenThrow(new com.smartek.offersservice.exception.BusinessException("La candidature doit être acceptée"));
 
             mockMvc.perform(post("/api/interviews")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isUnprocessableEntity());
         }
 
         @Test
         @WithMockUser(roles = "TRAINER")
-        @DisplayName("400 si candidature introuvable")
+        @DisplayName("404 si candidature introuvable")
         void shouldReturn400_whenApplicationNotFound() throws Exception {
             InterviewRequest request = InterviewRequest.builder()
                     .applicationId(99L)
                     .interviewDate(LocalDateTime.now().plusDays(3))
                     .location("Salle A").createdBy(5L).build();
             when(interviewService.createInterview(any()))
-                    .thenThrow(new RuntimeException("Candidature non trouvée"));
+                    .thenThrow(new com.smartek.offersservice.exception.ResourceNotFoundException("Candidature non trouvée: 99"));
 
             mockMvc.perform(post("/api/interviews")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isNotFound());
         }
     }
 
@@ -180,7 +166,7 @@ class InterviewControllerTest {
     // ─── GET /api/interviews/application/{id} ────────────────────────────────
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "TRAINER")
     @DisplayName("GET /api/interviews/application/{id} → 200 avec entretiens de la candidature")
     void getInterviewsByApplication_shouldReturn200() throws Exception {
         when(interviewService.getInterviewsByApplication(1L))

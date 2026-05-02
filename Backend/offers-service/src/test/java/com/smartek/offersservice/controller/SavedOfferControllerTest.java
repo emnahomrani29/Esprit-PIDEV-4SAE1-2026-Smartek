@@ -5,10 +5,7 @@ import com.smartek.offersservice.dto.OfferResponse;
 import com.smartek.offersservice.exception.BusinessException;
 import com.smartek.offersservice.exception.GlobalExceptionHandler;
 import com.smartek.offersservice.exception.ResourceNotFoundException;
-import com.smartek.offersservice.security.JwtAuthFilter;
-import com.smartek.offersservice.security.JwtService;
 import com.smartek.offersservice.service.SavedOfferService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -34,17 +31,6 @@ class SavedOfferControllerTest {
     @Autowired private MockMvc mockMvc;
 
     @MockBean private SavedOfferService savedOfferService;
-    @MockBean private JwtAuthFilter jwtAuthFilter;
-    @MockBean private JwtService jwtService;
-
-    @BeforeEach
-    void configureMockFilter() throws Exception {
-        doAnswer(inv -> {
-            jakarta.servlet.FilterChain chain = inv.getArgument(2);
-            chain.doFilter(inv.getArgument(0), inv.getArgument(1));
-            return null;
-        }).when(jwtAuthFilter).doFilter(any(), any(), any());
-    }
 
     private OfferResponse buildOfferResponse() {
         return OfferResponse.builder()

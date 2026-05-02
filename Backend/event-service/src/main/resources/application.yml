@@ -25,10 +25,17 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
   instance:
-    prefer-ip-address: true
+    prefer-ip-address: false
+    hostname: localhost
+    instance-id: ${spring.application.name}:${server.port}
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info
+
+stripe:
+  secret-key: ${STRIPE_SECRET_KEY:sk_test_51TMbsyCjG1sQz26DGWWihfxkcRJ0OIVuBc4K2kvsgKohNLdWRkH4nH3nkNkwBaBPdWHLaL2vET80oSpKjsGajBz900dlw1CrcU}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_fbfc981fba0d95b395691b00d4b6869940a039a8e08a10f5b0abf7d3360c9b8a}
+  publishable-key: ${STRIPE_PUBLISHABLE_KEY:pk_test_51TMbsyCjG1sQz26DDcjxT5049h0snZozzF6Uj9yBMTMaF8IGTps0kBlSOfL5j4enSubXarobzOT9ExMhjB58VRVb006ILhoad5}

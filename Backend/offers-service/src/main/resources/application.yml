@@ -1,22 +1,28 @@
 spring:
   application:
     name: offers-service
-  
+
   datasource:
-    url: jdbc:mysql://localhost:3306/offers_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
-    username: root
-    password: 
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/offers_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    username: ${DB_USER:root}
+    password: ${DB_PASS:}
     driver-class-name: com.mysql.cj.jdbc.Driver
-  
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
-        format_sql: true
-  
+        format_sql: false
+
   cloud:
     config:
       enabled: false
@@ -28,7 +34,7 @@ spring:
             readTimeout: 5000
 
 server:
-  port: 8085
+  port: ${SERVER_PORT:8085}
 
 # JWT — même secret que auth-service
 jwt:
@@ -37,13 +43,40 @@ jwt:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
     fetch-registry: true
     register-with-eureka: true
   instance:
     prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
 
-# Logging
+# ── Actuator — Prometheus & Grafana ──────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,env,loggers
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true   # /actuator/health/liveness  /actuator/health/readiness
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+      environment: ${SPRING_PROFILES_ACTIVE:default}
+
+# ── Logging ───────────────────────────────────────────────────────────────
 logging:
   level:
-    com.smartek: DEBUG
+    com.smartek: ${LOG_LEVEL:INFO}
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

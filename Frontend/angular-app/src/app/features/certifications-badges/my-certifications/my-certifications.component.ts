@@ -1,4 +1,4 @@
-﻿import { Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { CertificationService, PageResponse } from '../../../core/services/certification.service';
@@ -87,7 +87,7 @@ export class MyCertificationsComponent implements OnInit {
   }
 
   viewCertificate(certificationId: number): void {
-    this.router.navigate(['/dashboard/certificate-viewer', certificationId]);
+    this.router.navigate(['/certificate-viewer', certificationId]);
   }
 
   shareOnLinkedIn(cert: EarnedCertification): void {

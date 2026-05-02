@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: offers-service-config
+  namespace: smartek
+  labels:
+    app: offers-service
+    app.kubernetes.io/name: offers-service
+    app.kubernetes.io/part-of: smartek-platform
+data:
+  # Variables d'environnement injectées dans le pod
+  SERVER_PORT:    "8085"
+  DB_HOST:        "mysql-service"
+  DB_PORT:        "3306"
+  EUREKA_URL:     "http://eureka-server:8761/eureka/"
+  LOG_LEVEL:      "INFO"
+  SPRING_PROFILES_ACTIVE: "prod"

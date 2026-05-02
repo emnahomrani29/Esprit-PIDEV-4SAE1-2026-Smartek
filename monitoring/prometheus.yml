@@ -1,0 +1,28 @@
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'smartek-monitor'
+
+scrape_configs:
+
+  # ── offers-service ────────────────────────────────────────────────────
+  - job_name: 'offers-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['smartek-offers:8085']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'offers-service'
+
+  # ── autres microservices (optionnel) ──────────────────────────────────
+  - job_name: 'eureka-server'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['smartek-eureka:8761']
+
+  # ── Prometheus lui-même ───────────────────────────────────────────────
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

@@ -1,0 +1,179 @@
+### ============================================
+### Exam Auto-Award System - Test Scenarios
+### ============================================
+### Use this file with REST Client extension in VS Code
+### or import into Postman/Insomnia
+
+@baseUrl = http://localhost:8083
+@contentType = application/json
+
+### ============================================
+### Health Check
+### ============================================
+GET {{baseUrl}}/api/certifications-badges/exam-integration/health
+
+### ============================================
+### Scenario 1: Score 45% - Nothing Awarded (Failed)
+### ============================================
+### Expected Result:
+### - passed: false
+### - certificationAwarded: false
+### - badgeAwarded: false
+### - message: "Did not pass (minimum 60% required)"
+
+POST {{baseUrl}}/api/certifications-badges/exam-integration/process-exam-result
+Content-Type: {{contentType}}
+
+{
+  "learnerId": 2,
+  "examId": 102,
+  "score": 45.0,
+  "maxScore": 100.0
+}
+
+### ============================================
+### Scenario 2: Score 75% - Certification + Silver Badge
+### ============================================
+### Expected Result:
+### - passed: true
+### - certificationAwarded: true
+### - badgeAwarded: true
+### - Badge: Silver (75% threshold)
+### - message: "Passed! Certification awarded. Badge awarded for high achievement!"
+
+POST {{baseUrl}}/api/certifications-badges/exam-integration/process-exam-result
+Content-Type: {{contentType}}
+
+{
+  "learnerId": 3,
+  "examId": 102,
+  "score": 75.0,
+  "maxScore": 100.0
+}
+
+### ============================================
+### Scenario 3: Score 92% - Certification + Gold Badge
+### ============================================
+### Expected Result:
+### - passed: true
+### - certificationAwarded: true
+### - badgeAwarded: true
+### - Badge: Gold (90% threshold)
+### - message: "Passed! Certification awarded. Badge awarded for high achievement!"
+
+POST {{baseUrl}}/api/certifications-badges/exam-integration/process-exam-result
+Content-Type: {{contentType}}
+
+{
+  "learnerId": 4,
+  "examId": 102,
+  "score": 92.0,
+  "maxScore": 100.0
+}
+
+### ============================================
+### Scenario 4: Exactly 60% - Certification + Bronze Badge
+### ============================================
+### Expected Result:
+### - passed: true (exactly at threshold)
+### - certificationAwarded: true
+### - badgeAwarded: true
+### - Badge: Bronze (60% threshold)
+
+POST {{baseUrl}}/api/certifications-badges/exam-integration/process-exam-result
+Content-Type: {{contentType}}
+
+{
+  "learnerId": 5,
+  "examId": 102,
+  "score": 60.0,
+  "maxScore": 100.0
+}
+
+### ============================================
+### Scenario 5: Duplicate Prevention Test
+### ============================================
+### Run this twice with the same learnerId
+### First call: Should award certification + badge
+### Second call: Should NOT award (duplicate prevention)
+
+POST {{baseUrl}}/api/certifications-badges/exam-integration/process-exam-result
+Content-Type: {{contentType}}
+
+{
+  "learnerId": 6,
+  "examId": 102,
+  "score": 85.0,
+  "maxScore": 100.0
+}
+
+### ============================================
+### Scenario 6: Different Score Format (Fractional)
+### ============================================
+### Test with non-round numbers
+
+POST {{baseUrl}}/api/certifications-badges/exam-integration/process-exam-result
+Content-Type: {{contentType}}
+
+{
+  "learnerId": 7,
+  "examId": 102,
+  "score": 87.5,
+  "maxScore": 100.0
+}
+
+### ============================================
+### Scenario 7: Different Max Score
+### ============================================
+### Test percentage calculation with different max score
+
+POST {{baseUrl}}/api/certifications-badges/exam-integration/process-exam-result
+Content-Type: {{contentType}}
+
+{
+  "learnerId": 8,
+  "examId": 102,
+  "score": 45.0,
+  "maxScore": 50.0
+}
+
+### ============================================
+### Query Earned Certifications for Learner
+### ============================================
+### Replace {learnerId} with actual learner ID
+
+GET {{baseUrl}}/api/certifications-badges/earned-certifications/learner/3
+
+### ============================================
+### Query Earned Badges for Learner
+### ============================================
+### Replace {learnerId} with actual learner ID
+
+GET {{baseUrl}}/api/certifications-badges/earned-badges/learner/3
+
+### ============================================
+### Validation Error Test: Missing Required Fields
+### ============================================
+### Expected: 400 Bad Request
+
+POST {{baseUrl}}/api/certifications-badges/exam-integration/process-exam-result
+Content-Type: {{contentType}}
+
+{
+  "learnerId": 2
+}
+
+### ============================================
+### Validation Error Test: Negative Score
+### ============================================
+### Expected: 400 Bad Request
+
+POST {{baseUrl}}/api/certifications-badges/exam-integration/process-exam-result
+Content-Type: {{contentType}}
+
+{
+  "learnerId": 2,
+  "examId": 102,
+  "score": -10.0,
+  "maxScore": 100.0
+}

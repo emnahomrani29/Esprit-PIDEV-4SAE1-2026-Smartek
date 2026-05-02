@@ -1,22 +1,156 @@
 <div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 py-12">
   <div class="container mx-auto max-w-7xl px-4">
+
     <!-- Header -->
-    <div class="mb-12 text-center animate-fade-in-up">
-      <h1 class="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">
+    <div class="mb-8 text-center">
+      <h1 class="text-5xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3">
         Mon Planning
       </h1>
-      <p class="text-gray-600 text-xl">Consultez votre emploi du temps et vos sessions</p>
-    </div>
+      <p class="text-gray-600 text-lg">Consultez les sessions publiées par vos formateurs</p>
 
-    <!-- Content -->
-    <div class="bg-white rounded-3xl shadow-2xl p-12">
-      <div class="text-center py-12">
-        <svg class="w-32 h-32 mx-auto text-gray-300 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-        </svg>
-        <h3 class="text-3xl font-bold text-gray-800 mb-3">Planning</h3>
-        <p class="text-gray-600 text-lg">Fonctionnalité en cours de développement</p>
+      <!-- Stats -->
+      <div class="flex justify-center gap-4 mt-6 flex-wrap">
+        <div class="bg-white rounded-2xl shadow-md px-6 py-3 flex items-center gap-3">
+          <span class="text-2xl">📅</span>
+          <div class="text-left">
+            <div class="text-2xl font-bold text-indigo-600">{{ plannings.length }}</div>
+            <div class="text-xs text-gray-500">Sessions publiées</div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-md px-6 py-3 flex items-center gap-3">
+          <span class="text-2xl">🔜</span>
+          <div class="text-left">
+            <div class="text-2xl font-bold text-blue-600">{{ getUpcomingCount() }}</div>
+            <div class="text-xs text-gray-500">À venir</div>
+          </div>
+        </div>
       </div>
     </div>
+
+    <!-- Toolbar -->
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+      <!-- Navigation semaine -->
+      <div class="flex items-center gap-3">
+        <button (click)="prevWeek()"
+          class="p-2 rounded-xl border-2 border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 transition-all">
+          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <button (click)="goToToday()"
+          class="px-4 py-2 rounded-xl border-2 border-gray-200 hover:border-indigo-400 text-sm font-semibold text-gray-700 hover:bg-indigo-50 transition-all">
+          Aujourd'hui
+        </button>
+        <button (click)="nextWeek()"
+          class="p-2 rounded-xl border-2 border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 transition-all">
+          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </button>
+        <span class="text-lg font-bold text-gray-800 ml-2">{{ getWeekLabel() }}</span>
+      </div>
+
+      <!-- Filtre type -->
+      <select [(ngModel)]="filterType" (ngModelChange)="applyFilter()"
+        class="px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-indigo-500 bg-white font-medium text-sm">
+        <option value="ALL">Tous les types</option>
+        <option *ngFor="let t of eventTypes" [value]="t.value">{{ t.icon }} {{ t.label }}</option>
+      </select>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-20">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-200 border-t-indigo-600"></div>
+      <p class="mt-4 text-gray-600">Chargement...</p>
+    </div>
+
+    <!-- Aucune session -->
+    <div *ngIf="!loading && plannings.length === 0" class="text-center py-20 bg-white rounded-2xl shadow-lg">
+      <div class="text-8xl mb-6">📅</div>
+      <h3 class="text-2xl font-bold text-gray-800 mb-3">Aucune session publiée</h3>
+      <p class="text-gray-500">Vos formateurs n'ont pas encore publié de sessions.</p>
+    </div>
+
+    <!-- Calendrier semaine -->
+    <div *ngIf="!loading && plannings.length > 0" class="bg-white rounded-2xl shadow-lg overflow-hidden">
+
+      <!-- En-têtes jours -->
+      <div class="grid grid-cols-7 border-b border-gray-200">
+        <div *ngFor="let day of weekDays"
+          class="p-3 text-center border-r border-gray-100 last:border-r-0"
+          [class.bg-indigo-50]="isToday(day)">
+          <div class="text-xs font-semibold text-gray-500 uppercase">{{ getDayName(day) }}</div>
+          <div class="text-xl font-bold mt-1"
+            [class.text-indigo-600]="isToday(day)"
+            [class.text-gray-800]="!isToday(day)">
+            {{ day.getDate() }}
+          </div>
+          <div *ngIf="isToday(day)" class="w-2 h-2 bg-indigo-600 rounded-full mx-auto mt-1"></div>
+        </div>
+      </div>
+
+      <!-- Corps calendrier -->
+      <div class="grid grid-cols-7 min-h-64">
+        <div *ngFor="let day of weekDays"
+          class="border-r border-gray-100 last:border-r-0 p-2 min-h-32"
+          [class.bg-blue-50]="isToday(day)">
+
+          <div class="space-y-1">
+            <div *ngFor="let planning of getPlanningsForDay(day)"
+              class="rounded-lg px-2 py-1.5 text-white text-xs"
+              [style.background-color]="planning.color">
+              <div class="font-semibold truncate">{{ planning.title }}</div>
+              <div class="opacity-80">{{ formatTime(planning.startTime) }} – {{ formatTime(planning.endTime) }}</div>
+              <div *ngIf="planning.location" class="opacity-70 truncate">📍 {{ planning.location }}</div>
+            </div>
+            <div *ngIf="getPlanningsForDay(day).length === 0"
+              class="text-center text-gray-300 text-xs py-3">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Liste des sessions -->
+    <div *ngIf="!loading && filteredPlannings.length > 0" class="mt-8">
+      <h2 class="text-xl font-bold text-gray-800 mb-4">Toutes les sessions</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div *ngFor="let planning of filteredPlannings"
+          class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all">
+          <div class="h-1.5" [style.background-color]="planning.color"></div>
+          <div class="p-4">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-lg">{{ getEventTypeIcon(planning.eventType) }}</span>
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full text-white"
+                [style.background-color]="planning.color">
+                {{ getEventTypeLabel(planning.eventType) }}
+              </span>
+            </div>
+            <h3 class="font-bold text-gray-800 mb-1 line-clamp-1">{{ planning.title }}</h3>
+            <p *ngIf="planning.description" class="text-gray-500 text-xs mb-3 line-clamp-2">{{ planning.description }}</p>
+            <div class="space-y-1 text-xs text-gray-600">
+              <div class="flex items-center gap-1">
+                <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                {{ planning.date | date:'dd/MM/yyyy' }}
+              </div>
+              <div class="flex items-center gap-1">
+                <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                {{ formatTime(planning.startTime) }} – {{ formatTime(planning.endTime) }}
+              </div>
+              <div *ngIf="planning.location" class="flex items-center gap-1">
+                <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                </svg>
+                {{ planning.location }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>

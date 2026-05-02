@@ -1,0 +1,105 @@
+pipeline {
+    agent any
+
+    environment {
+        SERVICE_NAME   = 'learning'
+        IMAGE_NAME     = "smartek/${SERVICE_NAME}"
+        IMAGE_TAG      = "${BUILD_NUMBER}"
+        CONTAINER_PORT = '8092'
+        SONAR_URL      = 'http://smartek-sonarqube:9000'
+        SONAR_TOKEN    = 'squ_d2989c206eee595136c3e96ec64f086567126eca'
+        SONAR_PROJECT  = 'learning-service'
+        NEXUS_URL      = 'http://smartek-nexus:8081'
+        NEXUS_REPO     = 'maven-snapshots'
+    }
+
+    stages {
+        stage('Build') {
+            steps {
+                dir('Backend/learning') {
+                    sh 'mvn clean package -DskipTests --no-transfer-progress'
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                dir('Backend/learning') {
+                    sh 'mvn test --no-transfer-progress'
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true,
+                          testResults: 'Backend/learning/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                dir('Backend/learning') {
+                    sh """
+                        mvn sonar:sonar \
+                            -Dsonar.projectKey=${SONAR_PROJECT} \
+                            -Dsonar.projectName=${SONAR_PROJECT} \
+                            -Dsonar.host.url=${SONAR_URL} \
+                            -Dsonar.token=${SONAR_TOKEN} \
+                            --no-transfer-progress
+                    """
+                }
+            }
+        }
+
+        stage('Push to Nexus') {
+            steps {
+                dir('Backend/learning') {
+                    sh """
+                        mvn deploy -DskipTests \
+                            -s /var/jenkins_home/maven-settings.xml \
+                            -DaltDeploymentRepository=nexus::http://smartek-nexus:8081/repository/maven-snapshots/ \
+                            --no-transfer-progress
+                    """
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                dir('Backend/learning') {
+                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:latest ."
+                }
+            }
+        }
+
+        stage('Deploy Local') {
+            steps {
+                sh """
+                    docker stop ${SERVICE_NAME} || true
+                    docker rm   ${SERVICE_NAME} || true
+                    docker stop smartek-learning || true
+                    docker rm   smartek-learning || true
+                    docker run -d \
+                        --name smartek-learning \
+                        --network esprit-pi-4sae1-2026-smartek_smartek-network \
+                        -p ${CONTAINER_PORT}:${CONTAINER_PORT} \
+                        -e 'SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/learning_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true' \
+                        -e SPRING_DATASOURCE_USERNAME=root \
+                        -e SPRING_DATASOURCE_PASSWORD=root \
+                        -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/ \
+                        --restart unless-stopped \
+                        ${IMAGE_NAME}:${IMAGE_TAG}
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline ${SERVICE_NAME} terminé avec succès - image: ${IMAGE_NAME}:${IMAGE_TAG}"
+        }
+        failure {
+            echo "Pipeline ${SERVICE_NAME} échoué - vérifier les logs"
+        }
+    }
+}

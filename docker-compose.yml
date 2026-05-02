@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
   # ─────────────────────────────────────────
@@ -112,6 +110,35 @@ services:
       - smartek-network
 
   # ─────────────────────────────────────────
+  # CERTIFICATION & BADGE SERVICE
+  # ─────────────────────────────────────────
+  certification-badge-service:
+    build:
+      context: ./Backend/certification-badge-service
+      dockerfile: Dockerfile
+    container_name: smartek-certification
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartek_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      AUTH_SERVICE_BASE_URL: http://auth-service:8081
+      CERTIFICATE_VERIFICATION_BASE_URL: http://certification-badge-service:8083
+      PDF_VERIFICATION_BASE_URL: http://certification-badge-service:8083
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
   # PLANNING SERVICE
   # ─────────────────────────────────────────
   planning-service:
@@ -121,7 +148,7 @@ services:
     container_name: smartek-planning
     restart: unless-stopped
     ports:
-      - "8083:8083"
+      - "8094:8083"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartek_planning?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
@@ -184,6 +211,30 @@ services:
       - smartek-network
 
   # ─────────────────────────────────────────
+  # COURSE SERVICE
+  # ─────────────────────────────────────────
+  course-service:
+    build:
+      context: ./Backend/course-service
+      dockerfile: Dockerfile
+    container_name: smartek-course
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/course_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
   # EXAM SERVICE
   # ─────────────────────────────────────────
   exam-service:
@@ -208,18 +259,18 @@ services:
       - smartek-network
 
   # ─────────────────────────────────────────
-  # COURSE SERVICE
+  # SKILL EVIDENCE SERVICE
   # ─────────────────────────────────────────
-  course-service:
+  skill-evidence-service:
     build:
-      context: ./Backend/course-service
+      context: ./Backend/skiil-evidence-service
       dockerfile: Dockerfile
-    container_name: smartek-course
+    container_name: smartek-skill-evidence
     restart: unless-stopped
     ports:
-      - "8086:8086"
+      - "8091:8091"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/course_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/skill_evidence_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -228,6 +279,54 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # LEARNING SERVICE
+  # ─────────────────────────────────────────
+  learning:
+    build:
+      context: ./Backend/learning
+      dockerfile: Dockerfile
+    container_name: smartek-learning
+    restart: unless-stopped
+    ports:
+      - "8092:8092"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/learning_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # SPONSOR SERVICE
+  # ─────────────────────────────────────────
+  sponsor-service:
+    build:
+      context: ./Backend/smartek_sponsor
+      dockerfile: Dockerfile
+    container_name: smartek-sponsor
+    restart: unless-stopped
+    ports:
+      - "8093:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sponsor_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      AUTH_SERVICE_URL: http://auth-service:8081
+    depends_on:
+      mysql:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
     networks:
       - smartek-network
 
@@ -262,6 +361,14 @@ services:
         condition: service_started
       planning-service:
         condition: service_started
+      learning:
+        condition: service_started
+      skill-evidence-service:
+        condition: service_started
+      certification-badge-service:
+        condition: service_started
+      sponsor-service:
+        condition: service_started
     networks:
       - smartek-network
 
@@ -281,11 +388,104 @@ services:
     networks:
       - smartek-network
 
+  # ─────────────────────────────────────────
+  # PROMETHEUS
+  # ─────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: smartek-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # GRAFANA
+  # ─────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.0
+    platform: linux/amd64
+    container_name: smartek-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # SONARQUBE
+  # ─────────────────────────────────────────
+  sonarqube:
+    image: sonarqube:community
+    container_name: smartek-sonarqube
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # NEXUS
+  # ─────────────────────────────────────────
+  nexus:
+    image: sonatype/nexus3:latest
+    container_name: smartek-nexus
+    restart: unless-stopped
+    ports:
+      - "8089:8081"
+    volumes:
+      - nexus_data:/nexus-data
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # JENKINS
+  # ─────────────────────────────────────────
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: smartek-jenkins
+    restart: unless-stopped
+    ports:
+      - "9080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - smartek-network
+
 # ─────────────────────────────────────────
 # VOLUMES & NETWORKS
 # ─────────────────────────────────────────
 volumes:
   mysql_data:
+  prometheus_data:
+  grafana_data:
+  sonarqube_data:
+  sonarqube_logs:
+  sonarqube_extensions:
+  nexus_data:
+  jenkins_data:
 
 networks:
   smartek-network:

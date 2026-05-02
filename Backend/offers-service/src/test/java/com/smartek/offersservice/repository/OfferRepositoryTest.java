@@ -12,6 +12,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -24,6 +27,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class OfferRepositoryTest {
 
     @Autowired private OfferRepository offerRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private Offer activeOffer1;
     private Offer activeOffer2;
@@ -96,10 +102,12 @@ class OfferRepositoryTest {
     class FindByStatusTests {
 
         @Test
-        @DisplayName("Retourne les offres ACTIVE")
+        @DisplayName("Retourne les offres ACTIVE (y compris celles avec expiresAt passé)")
         void shouldReturnActiveOffers() {
+            // expiredOffer a status=ACTIVE même si expiresAt est passé
+            // (le scheduler change le status, pas la requête findByStatus)
             List<Offer> result = offerRepository.findByStatus("ACTIVE");
-            assertThat(result).hasSize(2); // activeOffer1 + expiredOffer (status=ACTIVE)
+            assertThat(result).hasSize(3); // activeOffer1 + activeOffer2 + expiredOffer
         }
 
         @Test
@@ -114,7 +122,7 @@ class OfferRepositoryTest {
         @DisplayName("Pagination fonctionne correctement")
         void shouldSupportPagination() {
             Page<Offer> page = offerRepository.findByStatus("ACTIVE", PageRequest.of(0, 1));
-            assertThat(page.getTotalElements()).isEqualTo(2);
+            assertThat(page.getTotalElements()).isEqualTo(3);
             assertThat(page.getContent()).hasSize(1);
         }
     }
@@ -129,7 +137,7 @@ class OfferRepositoryTest {
         @DisplayName("Compte correctement les offres ACTIVE d'une entreprise")
         void shouldCountActiveOffersForCompany() {
             long count = offerRepository.countByCompanyIdAndStatus(1L, "ACTIVE");
-            assertThat(count).isEqualTo(2); // activeOffer1 + expiredOffer
+            assertThat(count).isEqualTo(2); // activeOffer1 + expiredOffer (status=ACTIVE)
         }
 
         @Test
@@ -202,6 +210,9 @@ class OfferRepositoryTest {
         void shouldIncrementViewCount() {
             long initialCount = activeOffer1.getViewCount();
             offerRepository.incrementViewCount(activeOffer1.getId());
+            // Flush + clear nécessaires pour que @Modifying @Query soit visible
+            entityManager.flush();
+            entityManager.clear();
 
             Offer updated = offerRepository.findById(activeOffer1.getId()).orElseThrow();
             assertThat(updated.getViewCount()).isEqualTo(initialCount + 1);

@@ -1,0 +1,102 @@
+# PrometheusRule — Alertes métier pour offers-service
+# Prérequis : kube-prometheus-stack installé
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: offers-service-alerts
+  namespace: smartek
+  labels:
+    app: offers-service
+    app.kubernetes.io/part-of: smartek-platform
+    release: kube-prometheus-stack
+spec:
+  groups:
+
+    # ── Disponibilité du service ────────────────────────────────────────
+    - name: offers-service.availability
+      interval: 30s
+      rules:
+
+        - alert: OffersServiceDown
+          expr: up{job="offers-service"} == 0
+          for: 1m
+          labels:
+            severity: critical
+            service: offers-service
+          annotations:
+            summary: "offers-service est DOWN"
+            description: "Le pod offers-service ne répond plus depuis {{ $value }} secondes."
+
+        - alert: OffersServiceHighErrorRate
+          expr: |
+            rate(http_server_requests_seconds_count{
+              application="offers-service",
+              status=~"5.."
+            }[5m]) > 0.05
+          for: 2m
+          labels:
+            severity: warning
+            service: offers-service
+          annotations:
+            summary: "Taux d'erreurs HTTP 5xx élevé"
+            description: "Plus de 5% des requêtes retournent une erreur 5xx ({{ $value | humanizePercentage }})."
+
+        - alert: OffersServiceHighLatency
+          expr: |
+            histogram_quantile(0.95,
+              rate(http_server_requests_seconds_bucket{
+                application="offers-service"
+              }[5m])
+            ) > 2
+          for: 5m
+          labels:
+            severity: warning
+            service: offers-service
+          annotations:
+            summary: "Latence P95 élevée"
+            description: "Le 95e percentile de latence dépasse 2s ({{ $value | humanizeDuration }})."
+
+    # ── Ressources JVM ──────────────────────────────────────────────────
+    - name: offers-service.jvm
+      interval: 60s
+      rules:
+
+        - alert: OffersServiceHighHeapUsage
+          expr: |
+            (jvm_memory_used_bytes{application="offers-service", area="heap"}
+             / jvm_memory_max_bytes{application="offers-service", area="heap"}) > 0.85
+          for: 5m
+          labels:
+            severity: warning
+            service: offers-service
+          annotations:
+            summary: "Utilisation Heap JVM élevée"
+            description: "La mémoire heap est utilisée à {{ $value | humanizePercentage }}."
+
+        - alert: OffersServiceHighCpuUsage
+          expr: |
+            process_cpu_usage{application="offers-service"} > 0.80
+          for: 5m
+          labels:
+            severity: warning
+            service: offers-service
+          annotations:
+            summary: "CPU élevé"
+            description: "Le processus utilise {{ $value | humanizePercentage }} du CPU."
+
+    # ── Base de données ─────────────────────────────────────────────────
+    - name: offers-service.database
+      interval: 60s
+      rules:
+
+        - alert: OffersServiceDBPoolExhausted
+          expr: |
+            hikaricp_connections_active{application="offers-service"}
+            / hikaricp_connections_max{application="offers-service"} > 0.90
+          for: 2m
+          labels:
+            severity: critical
+            service: offers-service
+          annotations:
+            summary: "Pool de connexions DB saturé"
+            description: "Le pool HikariCP est utilisé à {{ $value | humanizePercentage }}."

@@ -50,7 +50,7 @@ spring:
             enable: true
 
 server:
-  port: 8089
+  port: 8083
 
 eureka:
   client:
@@ -87,6 +87,8 @@ management:
   health:
     db:
       enabled: true
+    mail:
+      enabled: false
 
 # JWT Configuration (align with Auth Service)
 jwt:
@@ -108,4 +110,14 @@ certificate:
     password: smartek123
     alias: smartek
   verification:
-    base-url: http://192.168.1.16:8089
+    base-url: http://localhost:8083
+
+pdf:
+  signing:
+    keystore-path: smartek-keystore.p12
+    keystore-password: smartek123
+    key-alias: smartek
+    password: smartek123
+    alias: smartek
+  verification:
+    base-url: http://192.168.1.16:8083

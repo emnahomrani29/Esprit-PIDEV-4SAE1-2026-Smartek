@@ -30,6 +30,7 @@ public class WeeklyPlanningService {
     private final PlanningRepository planningRepository;
     private final PlanningRegistrationRepository registrationRepository;
     private final RestTemplate restTemplate;
+    private final PlanningNotificationService notificationService;
 
     public WeeklyPlanningResponse getWeeklyPlanning(Long trainerId, LocalDate weekStartDate) {
         LocalDate weekEndDate = weekStartDate.plusDays(6);
@@ -94,7 +95,7 @@ public class WeeklyPlanningService {
     public List<Object> getAvailableEvents() {
         try {
             ResponseEntity<Object[]> response = restTemplate.getForEntity(
-                "http://localhost:8082/events", Object[].class);
+                "http://localhost:8082/api/events", Object[].class);
             return Arrays.asList(response.getBody());
         } catch (Exception e) {
             System.err.println("Erreur lors de la récupération des événements: " + e.getMessage());
@@ -133,6 +134,9 @@ public class WeeklyPlanningService {
         
         plannings.forEach(planning -> planning.setStatus("PUBLISHED"));
         plannings = planningRepository.saveAll(plannings);
+
+        // Notifier les learners inscrits par SMS pour chaque session publiée
+        notificationService.notifyLearnersForPublishedWeek(plannings);
         
         List<WeeklyPlanningResponse.WeeklyPlanningItem> items = plannings.stream()
             .map(this::mapToWeeklyPlanningItem)

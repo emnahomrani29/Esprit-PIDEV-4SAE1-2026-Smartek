@@ -4,11 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartek.offersservice.dto.InterviewFeedbackRequest;
 import com.smartek.offersservice.dto.InterviewFeedbackResponse;
 import com.smartek.offersservice.exception.BusinessException;
+import com.smartek.offersservice.config.TestSecurityConfig;
 import com.smartek.offersservice.exception.GlobalExceptionHandler;
 import com.smartek.offersservice.exception.ResourceNotFoundException;
-import com.smartek.offersservice.security.JwtAuthFilter;
-import com.smartek.offersservice.security.JwtService;
-import com.smartek.offersservice.security.SecurityConfig;
 import com.smartek.offersservice.service.InterviewFeedbackService;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Couvre les deux endpoints (primary + alternative) et les cas métier.
  */
 @WebMvcTest(InterviewFeedbackController.class)
-@Import({GlobalExceptionHandler.class, SecurityConfig.class})
+@Import({GlobalExceptionHandler.class, TestSecurityConfig.class})
 @DisplayName("InterviewFeedbackController — Tests WebMvc")
 class InterviewFeedbackControllerTest {
 
@@ -40,17 +38,6 @@ class InterviewFeedbackControllerTest {
     @Autowired private ObjectMapper objectMapper;
 
     @MockBean private InterviewFeedbackService feedbackService;
-    @MockBean private JwtAuthFilter jwtAuthFilter;
-    @MockBean private JwtService jwtService;
-
-    @BeforeEach
-    void configureMockFilter() throws Exception {
-        doAnswer(inv -> {
-            jakarta.servlet.FilterChain chain = inv.getArgument(2);
-            chain.doFilter(inv.getArgument(0), inv.getArgument(1));
-            return null;
-        }).when(jwtAuthFilter).doFilter(any(), any(), any());
-    }
 
     private InterviewFeedbackResponse buildResponse() {
         return InterviewFeedbackResponse.builder()
@@ -179,7 +166,7 @@ class InterviewFeedbackControllerTest {
     class GetFeedbackByInterviewTests {
 
         @Test
-        @WithMockUser
+        @WithMockUser(roles = "TRAINER")
         @DisplayName("200 avec le feedback trouvé")
         void getFeedbackByInterview_found_returns200() throws Exception {
             when(feedbackService.getFeedbackByInterview(10L)).thenReturn(buildResponse());
@@ -191,7 +178,7 @@ class InterviewFeedbackControllerTest {
         }
 
         @Test
-        @WithMockUser
+        @WithMockUser(roles = "TRAINER")
         @DisplayName("404 si feedback non trouvé")
         void getFeedbackByInterview_notFound_returns404() throws Exception {
             when(feedbackService.getFeedbackByInterview(99L))
@@ -205,7 +192,7 @@ class InterviewFeedbackControllerTest {
     // ─── GET /api/interview-feedbacks/application/{id} ────────────────────────
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "TRAINER")
     @DisplayName("GET /api/interview-feedbacks/application/{id} → 200 avec liste")
     void getFeedbacksByApplication_returns200() throws Exception {
         when(feedbackService.getFeedbacksByApplication(1L)).thenReturn(List.of(buildResponse()));

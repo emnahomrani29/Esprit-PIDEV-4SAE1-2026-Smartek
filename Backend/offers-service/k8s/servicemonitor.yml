@@ -1,0 +1,25 @@
+# ServiceMonitor — Prometheus Operator scrape automatique
+# Prérequis : kube-prometheus-stack installé dans le cluster
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: offers-service-monitor
+  namespace: smartek
+  labels:
+    app: offers-service
+    app.kubernetes.io/part-of: smartek-platform
+    # Ce label doit correspondre au selector du Prometheus Operator
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: offers-service
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 15s
+      scrapeTimeout: 10s
+      scheme: http
+  namespaceSelector:
+    matchNames:
+      - smartek

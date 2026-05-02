@@ -4,6 +4,7 @@ import com.smartek.authservice.dto.AuthResponse;
 import com.smartek.authservice.dto.LoginRequest;
 import com.smartek.authservice.dto.RegisterRequest;
 import com.smartek.authservice.entity.User;
+import com.smartek.authservice.enums.RoleType;
 import com.smartek.authservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -121,8 +124,23 @@ public class AuthService {
                 .role(user.getRole())
                 .imageBase64(convertBytesToBase64(user.getImage()))
                 .experience(user.getExperience())
+                .phone(user.getPhone())
                 .message("Données utilisateur récupérées")
                 .build();
+    }
+
+    public List<AuthResponse> getAllLearners() {
+        return userRepository.findByRole(RoleType.LEARNER)
+                .stream()
+                .map(user -> AuthResponse.builder()
+                        .userId(user.getUserId())
+                        .email(user.getEmail())
+                        .firstName(user.getFirstName())
+                        .role(user.getRole())
+                        .phone(user.getPhone())
+                        .experience(user.getExperience())
+                        .build())
+                .collect(Collectors.toList());
     }
     
     private byte[] convertBase64ToBytes(String base64String) {

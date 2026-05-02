@@ -1,119 +1,42 @@
-<!-- Welcome Section -->
-<div class="flex flex-wrap -mx-3 mb-6">
-  <div class="w-full px-3">
-    <div class="relative flex flex-col min-w-0 break-words bg-gradient-to-r from-primary to-accent shadow-soft-xl rounded-2xl bg-clip-border p-6">
+<!-- Cool & Comfortable Professional Welcome Section -->
+<div class="mb-8 animate-fade-in">
+  <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-600 to-sky-600 p-8 shadow-2xl">
+    <!-- Enhanced Background Elements -->
+    <div class="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
+    <div class="absolute bottom-0 left-0 w-72 h-72 bg-white/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4"></div>
+    <div class="absolute top-1/2 left-1/2 w-48 h-48 bg-white/5 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2"></div>
+    
+    <div class="relative z-10">
       <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-4">
-          <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center overflow-hidden shadow-lg">
-            <img *ngIf="getUserImage()" [src]="getUserImage()" alt="User avatar" class="w-full h-full object-cover">
-            <span *ngIf="!getUserImage()" class="text-primary font-bold text-2xl">{{ getUserInitial() }}</span>
-          </div>
-          <div class="text-white">
-            <h2 class="text-2xl font-bold mb-1">Welcome, {{ currentUser?.firstName || 'User' }}!</h2>
-            <p class="text-sm text-white/70 mt-1">Role: {{ formatRole(currentUser?.role) }}</p>
-          </div>
-        </div>
-        <div class="text-right text-white">
-          <p class="text-sm text-white/80">Experience</p>
-          <p class="text-3xl font-bold">{{ getExperience() }} years</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Statistics Cards -->
-<div class="flex flex-wrap -mx-3">
-  <!-- Card 1 -->
-  <div class="w-full max-w-full px-3 mb-6 sm:w-1/2 sm:flex-none xl:mb-0 xl:w-1/4">
-    <div class="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
-      <div class="flex-auto p-4">
-        <div class="flex flex-row -mx-3">
-          <div class="flex-none w-2/3 max-w-full px-3">
+        <div class="text-white">
+          <div class="flex items-center space-x-3 mb-3">
+            <div class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+              </svg>
+            </div>
             <div>
-              <p class="mb-0 font-sans text-sm font-semibold leading-normal">Today's Money</p>
-              <h5 class="mb-0 font-bold">
-                $53,000
-                <span class="text-sm leading-normal font-weight-bolder text-lime-500">+55%</span>
-              </h5>
-            </div>
-          </div>
-          <div class="px-3 text-right basis-1/3">
-            <div class="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-purple-700 to-pink-500">
-              <i class="ni leading-none ni-money-coins text-lg relative top-3.5 text-white"></i>
+              <h1 class="text-4xl font-bold mb-1">Admin Dashboard</h1>
+              <p class="text-white/80 text-lg">Smart Sponsorship Management & Analytics</p>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Card 2 -->
-  <div class="w-full max-w-full px-3 mb-6 sm:w-1/2 sm:flex-none xl:mb-0 xl:w-1/4">
-    <div class="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
-      <div class="flex-auto p-4">
-        <div class="flex flex-row -mx-3">
-          <div class="flex-none w-2/3 max-w-full px-3">
-            <div>
-              <p class="mb-0 font-sans text-sm font-semibold leading-normal">Today's Users</p>
-              <h5 class="mb-0 font-bold">
-                2,300
-                <span class="text-sm leading-normal font-weight-bolder text-lime-500">+3%</span>
-              </h5>
-            </div>
+        
+        <!-- Quick Stats Summary -->
+        <div class="hidden lg:flex items-center space-x-6 text-white">
+          <div class="text-center">
+            <p class="text-2xl font-bold">{{ platformStats.totalBudget | number:'1.0-0' }}</p>
+            <p class="text-white/80 text-sm">Total Budget (TND)</p>
           </div>
-          <div class="px-3 text-right basis-1/3">
-            <div class="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-blue-600 to-cyan-400">
-              <i class="ni leading-none ni-world text-lg relative top-3.5 text-white"></i>
-            </div>
+          <div class="w-px h-12 bg-white/20"></div>
+          <div class="text-center">
+            <p class="text-2xl font-bold">{{ platformStats.totalSponsors }}</p>
+            <p class="text-white/80 text-sm">Active Sponsors</p>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Card 3 -->
-  <div class="w-full max-w-full px-3 mb-6 sm:w-1/2 sm:flex-none xl:mb-0 xl:w-1/4">
-    <div class="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
-      <div class="flex-auto p-4">
-        <div class="flex flex-row -mx-3">
-          <div class="flex-none w-2/3 max-w-full px-3">
-            <div>
-              <p class="mb-0 font-sans text-sm font-semibold leading-normal">New Clients</p>
-              <h5 class="mb-0 font-bold">
-                +3,462
-                <span class="text-sm leading-normal text-red-600 font-weight-bolder">-2%</span>
-              </h5>
-            </div>
-          </div>
-          <div class="px-3 text-right basis-1/3">
-            <div class="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-green-600 to-lime-400">
-              <i class="ni leading-none ni-paper-diploma text-lg relative top-3.5 text-white"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Card 4 -->
-  <div class="w-full max-w-full px-3 sm:w-1/2 sm:flex-none xl:w-1/4">
-    <div class="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
-      <div class="flex-auto p-4">
-        <div class="flex flex-row -mx-3">
-          <div class="flex-none w-2/3 max-w-full px-3">
-            <div>
-              <p class="mb-0 font-sans text-sm font-semibold leading-normal">Sales</p>
-              <h5 class="mb-0 font-bold">
-                $103,430
-                <span class="text-sm leading-normal font-weight-bolder text-lime-500">+5%</span>
-              </h5>
-            </div>
-          </div>
-          <div class="px-3 text-right basis-1/3">
-            <div class="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-red-600 to-rose-400">
-              <i class="ni leading-none ni-cart text-lg relative top-3.5 text-white"></i>
-            </div>
+          <div class="w-px h-12 bg-white/20"></div>
+          <div class="text-center">
+            <p class="text-2xl font-bold text-yellow-300">{{ platformStats.pendingApprovals }}</p>
+            <p class="text-white/80 text-sm">Pending Reviews</p>
           </div>
         </div>
       </div>
@@ -121,105 +44,341 @@
   </div>
 </div>
 
-<!-- Projects Table -->
-<div class="flex flex-wrap mt-6 -mx-3">
-  <div class="w-full max-w-full px-3 mt-0 lg:w-7/12 lg:flex-none">
-    <div class="border-black/12.5 shadow-soft-xl relative z-20 flex min-w-0 flex-col break-words rounded-2xl border-0 border-solid bg-white bg-clip-border">
-      <div class="border-black/12.5 mb-0 rounded-t-2xl border-b-0 border-solid bg-white p-6 pb-0">
-        <h6>Projects</h6>
-        <p class="text-sm leading-normal">
-          <i class="fa fa-check text-cyan-500"></i>
-          <span class="ml-1 font-semibold">30 done</span> this month
-        </p>
-      </div>
-      <div class="flex-auto p-4">
-        <div class="p-0 overflow-x-auto">
-          <table class="items-center w-full mb-0 align-top border-gray-200 text-slate-500">
-            <thead class="align-bottom">
-              <tr>
-                <th class="px-6 py-3 font-bold text-left uppercase align-middle bg-transparent border-b border-gray-200 shadow-none text-xxs border-b-solid tracking-none whitespace-nowrap text-slate-400 opacity-70">Companies</th>
-                <th class="px-6 py-3 pl-2 font-bold text-left uppercase align-middle bg-transparent border-b border-gray-200 shadow-none text-xxs border-b-solid tracking-none whitespace-nowrap text-slate-400 opacity-70">Members</th>
-                <th class="px-6 py-3 font-bold text-center uppercase align-middle bg-transparent border-b border-gray-200 shadow-none text-xxs border-b-solid tracking-none whitespace-nowrap text-slate-400 opacity-70">Budget</th>
-                <th class="px-6 py-3 font-bold text-center uppercase align-middle bg-transparent border-b border-gray-200 shadow-none text-xxs border-b-solid tracking-none whitespace-nowrap text-slate-400 opacity-70">Completion</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="p-2 align-middle bg-transparent border-b whitespace-nowrap shadow-transparent">
-                  <div class="flex px-2 py-1">
-                    <div>
-                      <img src="/dashboard-assets/img/small-logos/logo-xd.svg" class="inline-flex items-center justify-center mr-4 text-sm text-white transition-all duration-200 ease-soft-in-out h-9 w-9 rounded-xl" alt="xd" />
-                    </div>
-                    <div class="flex flex-col justify-center">
-                      <h6 class="mb-0 text-sm leading-normal">Soft UI XD Version</h6>
-                    </div>
-                  </div>
-                </td>
-                <td class="p-2 align-middle bg-transparent border-b whitespace-nowrap shadow-transparent">
-                  <div class="mt-2 avatar-group">
-                    <a href="javascript:;" class="relative z-20 inline-flex items-center justify-center w-6 h-6 text-xs text-white transition-all duration-200 border-2 border-white border-solid rounded-circle ease-soft-in-out hover:z-30" data-target="tooltip_trigger" data-placement="bottom">
-                      <img src="/dashboard-assets/img/team-1.jpg" class="w-full rounded-circle" alt="team1" />
-                    </a>
-                    <a href="javascript:;" class="relative z-20 inline-flex items-center justify-center w-6 h-6 -ml-4 text-xs text-white transition-all duration-200 border-2 border-white border-solid rounded-circle ease-soft-in-out hover:z-30" data-target="tooltip_trigger" data-placement="bottom">
-                      <img src="/dashboard-assets/img/team-2.jpg" class="w-full rounded-circle" alt="team2" />
-                    </a>
-                  </div>
-                </td>
-                <td class="p-2 text-sm leading-normal text-center align-middle bg-transparent border-b whitespace-nowrap shadow-transparent">
-                  <span class="text-xs font-semibold leading-tight">$14,000</span>
-                </td>
-                <td class="p-2 align-middle bg-transparent border-b whitespace-nowrap shadow-transparent">
-                  <div class="w-3/4 mx-auto">
-                    <div>
-                      <div>
-                        <span class="text-xs font-semibold leading-tight">60%</span>
-                      </div>
-                    </div>
-                    <div class="text-xs h-0.75 flex overflow-visible rounded-lg bg-gray-200">
-                      <div class="duration-600 ease-soft bg-gradient-to-tl from-blue-600 to-cyan-400 -mt-0.38 -ml-px flex h-1.5 w-3/5 flex-col justify-center overflow-hidden whitespace-nowrap rounded bg-fuchsia-500 text-center text-white transition-all" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Orders Overview -->
-  <div class="w-full max-w-full px-3 mt-0 lg:w-5/12 lg:flex-none">
-    <div class="border-black/12.5 shadow-soft-xl relative flex min-w-0 flex-col break-words rounded-2xl border-0 border-solid bg-white bg-clip-border">
-      <div class="p-4 pb-0 mb-0 bg-white border-b-0 rounded-t-2xl">
-        <h6 class="mb-0">Orders overview</h6>
-        <p class="text-sm leading-normal">
-          <i class="fa fa-arrow-up text-lime-500"></i>
-          <span class="font-semibold">24%</span> this month
-        </p>
-      </div>
-      <div class="flex-auto p-4">
-        <div class="before:border-r-2 before:border-r-slate-100 before:absolute before:top-0 before:left-4 before:h-full relative before:content-['']">
-          <div class="relative mb-4 mt-0 after:clear-both after:table after:content-['']">
-            <span class="w-6.5 h-6.5 text-base absolute left-4 z-10 inline-flex -translate-x-1/2 items-center justify-center rounded-full bg-white text-center font-semibold">
-              <i class="ni leading-none ni-bell-55 relative z-10 text-transparent bg-gradient-to-tl from-green-600 to-lime-400 bg-clip-text fill-transparent"></i>
+  <!-- Statistics Cards with Original Colors -->
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+    <!-- Card 1: Total Budget -->
+    <div class="animate-fade-in card-3d" style="animation-delay: 100ms;">
+      <div class="relative overflow-hidden bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl p-6 shadow-xl">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        <div class="relative z-10">
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center icon-3d">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <span class="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold text-white">
+              {{ platformStats.budgetGrowth > 0 ? '+' : '' }}{{ platformStats.budgetGrowth }}%
             </span>
-            <div class="ml-11.252 pt-1.4 lg:max-w-120 relative -top-1.5 w-auto">
-              <h6 class="mb-0 text-sm font-semibold leading-normal text-slate-700">$2400, Design changes</h6>
-              <p class="mt-1 mb-0 text-xs font-semibold leading-tight text-slate-400">22 DEC 7:20 PM</p>
+          </div>
+          <p class="text-white/80 text-sm font-medium mb-1">Total Budget</p>
+          <h3 class="text-3xl font-bold text-white mb-2">{{ platformStats.totalBudget | number:'1.0-0' }} TND</h3>
+          <div class="flex items-center text-white/70 text-xs">
+            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/>
+            </svg>
+            <span>All active contracts</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Active Sponsors - Enhanced with better color -->
+    <div class="animate-fade-in card-3d" style="animation-delay: 200ms;">
+      <div class="relative overflow-hidden bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl p-6 shadow-xl">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        <div class="relative z-10">
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center icon-3d">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+            </div>
+            <span class="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold text-white">
+              {{ platformStats.sponsorGrowth > 0 ? '+' : '' }}{{ platformStats.sponsorGrowth }}%
+            </span>
+          </div>
+          <p class="text-white/80 text-sm font-medium mb-1">Active Sponsors</p>
+          <h3 class="text-3xl font-bold text-white mb-2">{{ platformStats.totalSponsors }}</h3>
+          <div class="flex items-center text-white/70 text-xs">
+            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/>
+            </svg>
+            <span>Registered companies</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: Pending Approvals - Only show if there are actual pending approvals -->
+    <div *ngIf="platformStats.pendingApprovals > 0" class="animate-fade-in card-3d" style="animation-delay: 300ms;">
+      <div class="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-6 shadow-xl">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        <div class="relative z-10">
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center icon-3d">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+              </svg>
+            </div>
+            <span class="px-3 py-1 bg-red-500/30 backdrop-blur-sm rounded-full text-xs font-bold text-white animate-pulse">URGENT</span>
+          </div>
+          <p class="text-white/80 text-sm font-medium mb-1">Pending Approvals</p>
+          <h3 class="text-3xl font-bold text-white mb-2">{{ platformStats.pendingApprovals }}</h3>
+          <div class="flex items-center text-white/70 text-xs">
+            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span>Awaiting review</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4: Total Sponsorships -->
+    <div class="animate-fade-in card-3d" style="animation-delay: 400ms;">
+      <div class="relative overflow-hidden bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 shadow-xl">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        <div class="relative z-10">
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center icon-3d">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+              </svg>
+            </div>
+            <span class="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold text-white">
+              {{ platformStats.sponsorshipGrowth > 0 ? '+' : '' }}{{ platformStats.sponsorshipGrowth }}%
+            </span>
+          </div>
+          <p class="text-white/80 text-sm font-medium mb-1">Total Sponsorships</p>
+          <h3 class="text-3xl font-bold text-white mb-2">{{ platformStats.totalSponsorships }}</h3>
+          <div class="flex items-center text-white/70 text-xs">
+            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/>
+            </svg>
+            <span>All time</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhanced Sponsorship Management Panel (Only for Admins and only if there are pending approvals) -->
+  <div *ngIf="isAdmin() && platformStats.pendingApprovals > 0" class="mb-8">
+    <div class="animate-fade-in card-3d" style="animation-delay: 500ms;">
+      <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        <!-- Enhanced Header with Real-time Notifications -->
+        <div class="bg-gradient-to-r from-teal-50 to-cyan-50 p-6 border-b border-gray-100 relative overflow-hidden">
+          <!-- Animated Background Elements -->
+          <div class="absolute top-0 right-0 w-32 h-32 bg-teal-200/30 rounded-full -translate-y-1/2 translate-x-1/4 animate-pulse"></div>
+          <div class="absolute bottom-0 left-0 w-24 h-24 bg-cyan-200/20 rounded-full translate-y-1/2 -translate-x-1/4 animate-bounce" style="animation-duration: 3s;"></div>
+          
+          <div class="relative z-10 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div class="relative">
+                <div class="w-16 h-16 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl flex items-center justify-center shadow-lg icon-3d">
+                  <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <!-- Notification Pulse -->
+                <div class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
+                  <span class="text-white text-xs font-bold">{{ platformStats.pendingApprovals }}</span>
+                </div>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center space-x-2">
+                  <span>Sponsorship Management Center</span>
+                  <span class="px-3 py-1 bg-teal-500 text-white text-sm font-bold rounded-full animate-bounce">
+                    {{ platformStats.pendingApprovals }} PENDING
+                  </span>
+                </h3>
+                <p class="text-sm text-gray-600">Complete sponsorship lifecycle management - approve, edit, and monitor</p>
+              </div>
+            </div>
+            
+            <!-- Quick Action Buttons -->
+            <div class="flex items-center space-x-3">
+              <button routerLink="/dashboard/sponsorships" 
+                      class="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center space-x-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                <span>Manage All</span>
+              </button>
+              <button routerLink="/dashboard/admin-approvals" 
+                      class="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center space-x-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span>Review Pending</span>
+              </button>
             </div>
           </div>
-          <div class="relative mb-4 after:clear-both after:table after:content-['']">
-            <span class="w-6.5 h-6.5 text-base absolute left-4 z-10 inline-flex -translate-x-1/2 items-center justify-center rounded-full bg-white text-center font-semibold">
-              <i class="ni leading-none ni-html5 relative z-10 text-transparent bg-gradient-to-tl from-red-600 to-rose-400 bg-clip-text fill-transparent"></i>
-            </span>
-            <div class="ml-11.252 pt-1.4 lg:max-w-120 relative -top-1.5 w-auto">
-              <h6 class="mb-0 text-sm font-semibold leading-normal text-slate-700">New order #1832412</h6>
-              <p class="mt-1 mb-0 text-xs font-semibold leading-tight text-slate-400">21 DEC 11 PM</p>
+        </div>
+        
+        <!-- Simple Pending Sponsors Overview (No approve/reject functionality) -->
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-lg font-semibold text-gray-800">Pending Sponsor Requests</h4>
+            <button routerLink="/dashboard/admin-approvals" 
+                    class="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-medium py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center space-x-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+              <span>Manage All</span>
+            </button>
+          </div>
+          
+          <div *ngIf="pendingSponsorships.length > 0; else noPendingSponsors" class="space-y-3">
+            <div *ngFor="let sponsorship of pendingSponsorships.slice(0, 3)" 
+                 class="flex items-center justify-between p-4 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl border border-teal-100 hover:shadow-md transition-all duration-200">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center">
+                  <span class="text-white text-sm font-bold">{{ sponsorship.sponsorName.charAt(0).toUpperCase() }}</span>
+                </div>
+                <div>
+                  <p class="font-semibold text-gray-800">{{ sponsorship.sponsorName }}</p>
+                  <p class="text-sm text-gray-600">{{ sponsorship.targetType }} • {{ sponsorship.amountAllocated | number:'1.0-0' }} TND</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <span class="px-3 py-1 bg-teal-500 text-white text-xs font-bold rounded-full">PENDING</span>
+                <p class="text-xs text-gray-500 mt-1">{{ getTimeAgo(sponsorship.createdAt) }}</p>
+              </div>
+            </div>
+            
+            <div *ngIf="pendingSponsorships.length > 3" class="text-center pt-2">
+              <button routerLink="/dashboard/admin-approvals" 
+                      class="text-teal-600 hover:text-teal-700 font-medium text-sm hover:underline">
+                View {{ pendingSponsorships.length - 3 }} more pending requests
+              </button>
+            </div>
+          </div>
+          
+          <ng-template #noPendingSponsors>
+            <div class="text-center py-8">
+              <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <p class="text-gray-500 font-medium">No pending sponsorship requests</p>
+              <p class="text-gray-400 text-sm">All sponsorships are up to date</p>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analytics & Rankings Section -->
+  <div *ngIf="isAdmin()" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Top Sponsors Ranking -->
+    <div class="animate-fade-in card-3d" style="animation-delay: 600ms;">
+      <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden h-full">
+        <div class="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 border-b border-gray-100">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-xl font-bold text-gray-800 mb-1 flex items-center space-x-2">
+                <svg class="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+                <span>Top Sponsors</span>
+              </h3>
+              <p class="text-sm text-gray-600">Ranked by total sponsorship amount</p>
+            </div>
+          </div>
+        </div>
+        <div class="p-6">
+          <div class="space-y-4">
+            <div *ngFor="let sponsor of topSponsors; let i = index" 
+                 class="flex items-center space-x-4 p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 transform hover:scale-[1.02]">
+              <!-- Rank Badge -->
+              <div class="flex-shrink-0">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-lg"
+                     [ngClass]="{
+                       'bg-gradient-to-br from-yellow-400 to-yellow-600': i === 0,
+                       'bg-gradient-to-br from-gray-400 to-gray-600': i === 1,
+                       'bg-gradient-to-br from-orange-400 to-orange-600': i === 2,
+                       'bg-gradient-to-br from-blue-400 to-blue-600': i > 2
+                     }">
+                  {{ i + 1 }}
+                </div>
+              </div>
+              
+              <!-- Sponsor Info -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center space-x-2 mb-1">
+                  <p class="font-semibold text-gray-800 truncate">{{ sponsor.name }}</p>
+                  <span *ngIf="i === 0" class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full">👑 TOP</span>
+                </div>
+                <p class="text-sm text-gray-500 truncate">{{ sponsor.companyName }}</p>
+                <div class="flex items-center space-x-3 mt-2">
+                  <span class="text-xs text-gray-400">{{ sponsor.sponsorshipCount }} sponsorships</span>
+                  <span class="text-xs text-green-600 font-semibold">{{ sponsor.totalAmount | number:'1.0-0' }} TND</span>
+                </div>
+              </div>
+              
+              <!-- Progress Bar -->
+              <div class="flex-shrink-0 w-20">
+                <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full transition-all duration-1000"
+                       [ngStyle]="{'width': (topSponsors[0]?.totalAmount ? (sponsor.totalAmount / topSponsors[0].totalAmount * 100) : 0) + '%'}"
+                       [ngClass]="{
+                         'bg-gradient-to-r from-yellow-400 to-yellow-600': i === 0,
+                         'bg-gradient-to-r from-gray-400 to-gray-600': i === 1,
+                         'bg-gradient-to-r from-orange-400 to-orange-600': i === 2,
+                         'bg-gradient-to-r from-blue-400 to-blue-600': i > 2
+                       }">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Platform Analytics -->
+    <div class="animate-fade-in card-3d" style="animation-delay: 700ms;">
+      <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden h-full">
+        <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 border-b border-gray-100">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-xl font-bold text-gray-800 mb-1">Platform Analytics</h3>
+              <p class="text-sm text-gray-600">Key performance indicators</p>
+            </div>
+          </div>
+        </div>
+        <div class="p-6 space-y-6">
+          <!-- Approval Rate -->
+          <div class="flex items-center justify-between p-4 bg-green-50 rounded-xl border border-green-100">
+            <div>
+              <p class="text-sm font-medium text-green-800">Approval Rate</p>
+              <p class="text-2xl font-bold text-green-600">{{ platformStats.approvalRate }}%</p>
+            </div>
+            <div class="w-16 h-16 bg-green-500 rounded-xl flex items-center justify-center shadow-lg">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Average Response Time -->
+          <div class="flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-100">
+            <div>
+              <p class="text-sm font-medium text-blue-800">Avg Response Time</p>
+              <p class="text-2xl font-bold text-blue-600">{{ platformStats.avgResponseTime }}h</p>
+            </div>
+            <div class="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Active Contracts -->
+          <div class="flex items-center justify-between p-4 bg-purple-50 rounded-xl border border-purple-100">
+            <div>
+              <p class="text-sm font-medium text-purple-800">Active Contracts</p>
+              <p class="text-2xl font-bold text-purple-600">{{ platformStats.activeContracts }}</p>
+            </div>
+            <div class="w-16 h-16 bg-purple-500 rounded-xl flex items-center justify-center shadow-lg">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>

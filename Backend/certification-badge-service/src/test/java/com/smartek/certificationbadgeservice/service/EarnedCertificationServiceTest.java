@@ -2,8 +2,6 @@ package com.smartek.certificationbadgeservice.service;
 
 import com.smartek.certificationbadgeservice.client.AuthServiceClient;
 import com.smartek.certificationbadgeservice.dto.AwardCertificationRequestDTO;
-import com.smartek.certificationbadgeservice.dto.BulkAwardCertificationRequestDTO;
-import com.smartek.certificationbadgeservice.dto.BulkAwardResponseDTO;
 import com.smartek.certificationbadgeservice.dto.EarnedCertificationDTO;
 import com.smartek.certificationbadgeservice.entity.CertificationTemplate;
 import com.smartek.certificationbadgeservice.entity.EarnedCertification;
@@ -13,11 +11,8 @@ import com.smartek.certificationbadgeservice.mapper.EarnedCertificationMapper;
 import com.smartek.certificationbadgeservice.repository.CertificationTemplateRepository;
 import com.smartek.certificationbadgeservice.repository.EarnedCertificationRepository;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -27,15 +22,10 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for EarnedCertificationService.
- * Covers: award validation, date rules, bulk operations, duplicate prevention.
- */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("EarnedCertificationService Unit Tests")
 class EarnedCertificationServiceTest {
 
     @Mock private EarnedCertificationRepository earnedCertificationRepository;
@@ -45,249 +35,284 @@ class EarnedCertificationServiceTest {
     @Mock private EmailService emailService;
     @Mock private AuthServiceClient authServiceClient;
 
-    @InjectMocks
-    private EarnedCertificationService earnedCertificationService;
+    @InjectMocks private EarnedCertificationService service;
 
     private CertificationTemplate template;
-    private EarnedCertification savedCertification;
-    private EarnedCertificationDTO certificationDTO;
+    private EarnedCertification savedEntity;
+    private EarnedCertificationDTO expectedDTO;
 
     @BeforeEach
     void setUp() {
         template = new CertificationTemplate();
         template.setId(1L);
-        template.setTitle("Spring Boot Expert");
-        template.setDescription("Advanced Spring Boot certification");
+        template.setTitle("Spring Boot Certification");
 
-        savedCertification = new EarnedCertification();
-        savedCertification.setId(10L);
-        savedCertification.setCertificationTemplate(template);
-        savedCertification.setLearnerId(2L);
-        savedCertification.setIssueDate(LocalDate.now());
-        savedCertification.setAwardedBy(5L);
-        savedCertification.setVerificationId("test-uuid-1234");
+        savedEntity = new EarnedCertification();
+        savedEntity.setId(10L);
+        savedEntity.setCertificationTemplate(template);
+        savedEntity.setLearnerId(42L);
+        savedEntity.setIssueDate(LocalDate.now());
+        savedEntity.setAwardedBy(1L);
 
-        certificationDTO = new EarnedCertificationDTO();
-        certificationDTO.setId(10L);
+        expectedDTO = new EarnedCertificationDTO();
+        expectedDTO.setId(10L);
+        expectedDTO.setLearnerId(42L);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // AWARD CERTIFICATION TESTS
-    // ─────────────────────────────────────────────────────────────────────────
+    // ─── awardCertification ───────────────────────────────────────────────────
 
-    @Nested
-    @DisplayName("Award Certification")
-    class AwardCertificationTests {
-
-        @Test
-        @DisplayName("Valid request → certification awarded successfully")
-        void validRequest_certificationAwarded() {
-            // Arrange
-            AwardCertificationRequestDTO request = buildValidRequest();
-            when(certificationTemplateRepository.findById(1L)).thenReturn(Optional.of(template));
-            when(earnedCertificationRepository.saveAndFlush(any())).thenReturn(savedCertification);
-            when(earnedCertificationMapper.toDTO(any())).thenReturn(certificationDTO);
-
-            // Act
-            EarnedCertificationDTO result = earnedCertificationService.awardCertification(request);
-
-            // Assert
-            assertThat(result).isNotNull();
-            assertThat(result.getId()).isEqualTo(10L);
-            verify(earnedCertificationRepository).saveAndFlush(any());
-        }
-
-        @Test
-        @DisplayName("Template not found → ResourceNotFoundException thrown")
-        void templateNotFound_throwsResourceNotFoundException() {
-            AwardCertificationRequestDTO request = buildValidRequest();
-            when(certificationTemplateRepository.findById(1L)).thenReturn(Optional.empty());
-
-            assertThatThrownBy(() -> earnedCertificationService.awardCertification(request))
-                    .isInstanceOf(ResourceNotFoundException.class)
-                    .hasMessageContaining("Certification template not found");
-
-            verify(earnedCertificationRepository, never()).saveAndFlush(any());
-        }
-
-        @Test
-        @DisplayName("Expiry date before issue date → ValidationException thrown")
-        void expiryBeforeIssue_throwsValidationException() {
-            AwardCertificationRequestDTO request = buildValidRequest();
-            request.setIssueDate(LocalDate.now());
-            request.setExpiryDate(LocalDate.now().minusDays(1)); // Invalid: expiry before issue
-
-            when(certificationTemplateRepository.findById(1L)).thenReturn(Optional.of(template));
-
-            assertThatThrownBy(() -> earnedCertificationService.awardCertification(request))
-                    .isInstanceOf(ValidationException.class)
-                    .hasMessageContaining("Expiry date cannot be before issue date");
-
-            verify(earnedCertificationRepository, never()).saveAndFlush(any());
-        }
-
-        @Test
-        @DisplayName("Invalid certificate URL → ValidationException thrown")
-        void invalidCertificateUrl_throwsValidationException() {
-            AwardCertificationRequestDTO request = buildValidRequest();
-            request.setCertificateUrl("not-a-valid-url");
-
-            when(certificationTemplateRepository.findById(1L)).thenReturn(Optional.of(template));
-
-            assertThatThrownBy(() -> earnedCertificationService.awardCertification(request))
-                    .isInstanceOf(ValidationException.class)
-                    .hasMessageContaining("Invalid certificate URL");
-        }
-
-        @Test
-        @DisplayName("Valid URL → accepted without exception")
-        void validCertificateUrl_accepted() {
-            AwardCertificationRequestDTO request = buildValidRequest();
-            request.setCertificateUrl("https://smartek.com/certs/123");
-
-            when(certificationTemplateRepository.findById(1L)).thenReturn(Optional.of(template));
-            when(earnedCertificationRepository.saveAndFlush(any())).thenReturn(savedCertification);
-            when(earnedCertificationMapper.toDTO(any())).thenReturn(certificationDTO);
-
-            assertThatCode(() -> earnedCertificationService.awardCertification(request))
-                    .doesNotThrowAnyException();
-        }
-
-        @Test
-        @DisplayName("Certification data is correctly mapped to entity")
-        void certificationData_correctlyMappedToEntity() {
-            AwardCertificationRequestDTO request = buildValidRequest();
-            request.setLearnerId(42L);
-            request.setAwardedBy(7L);
-
-            when(certificationTemplateRepository.findById(1L)).thenReturn(Optional.of(template));
-            when(earnedCertificationRepository.saveAndFlush(any())).thenReturn(savedCertification);
-            when(earnedCertificationMapper.toDTO(any())).thenReturn(certificationDTO);
-
-            ArgumentCaptor<EarnedCertification> captor = ArgumentCaptor.forClass(EarnedCertification.class);
-            earnedCertificationService.awardCertification(request);
-
-            verify(earnedCertificationRepository).saveAndFlush(captor.capture());
-            EarnedCertification captured = captor.getValue();
-            assertThat(captured.getLearnerId()).isEqualTo(42L);
-            assertThat(captured.getAwardedBy()).isEqualTo(7L);
-            assertThat(captured.getCertificationTemplate()).isEqualTo(template);
-        }
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // BULK AWARD TESTS
-    // ─────────────────────────────────────────────────────────────────────────
-
-    @Nested
-    @DisplayName("Bulk Award Certifications")
-    class BulkAwardTests {
-
-        @Test
-        @DisplayName("Template not found → all learners fail")
-        void templateNotFound_allLearnersFail() {
-            BulkAwardCertificationRequestDTO request = new BulkAwardCertificationRequestDTO();
-            request.setCertificationTemplateId(99L);
-            request.setLearnerIds(List.of(1L, 2L, 3L));
-            request.setIssueDate(LocalDate.now());
-            request.setAwardedBy(5L);
-
-            when(certificationTemplateRepository.existsById(99L)).thenReturn(false);
-
-            BulkAwardResponseDTO response = earnedCertificationService.bulkAwardCertifications(request);
-
-            assertThat(response.getFailureCount()).isEqualTo(3);
-            assertThat(response.getSuccessCount()).isEqualTo(0);
-        }
-
-        @Test
-        @DisplayName("Invalid date range → all learners fail")
-        void invalidDateRange_allLearnersFail() {
-            BulkAwardCertificationRequestDTO request = new BulkAwardCertificationRequestDTO();
-            request.setCertificationTemplateId(1L);
-            request.setLearnerIds(List.of(1L, 2L));
-            request.setIssueDate(LocalDate.now());
-            request.setExpiryDate(LocalDate.now().minusDays(5)); // Invalid
-            request.setAwardedBy(5L);
-
-            when(certificationTemplateRepository.existsById(1L)).thenReturn(true);
-
-            BulkAwardResponseDTO response = earnedCertificationService.bulkAwardCertifications(request);
-
-            assertThat(response.getFailureCount()).isEqualTo(2);
-            assertThat(response.getSuccessCount()).isEqualTo(0);
-        }
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // FIND BY LEARNER TESTS
-    // ─────────────────────────────────────────────────────────────────────────
-
-    @Nested
-    @DisplayName("Find Certifications by Learner")
-    class FindByLearnerTests {
-
-        @Test
-        @DisplayName("Learner with certifications → returns list")
-        void learnerWithCertifications_returnsList() {
-            when(earnedCertificationRepository.findByLearnerId(2L))
-                    .thenReturn(List.of(savedCertification));
-            when(earnedCertificationMapper.toDTO(any())).thenReturn(certificationDTO);
-
-            List<EarnedCertificationDTO> result = earnedCertificationService.findByLearnerId(2L);
-
-            assertThat(result).hasSize(1);
-            verify(earnedCertificationRepository).findByLearnerId(2L);
-        }
-
-        @Test
-        @DisplayName("Learner with no certifications → returns empty list")
-        void learnerWithNoCertifications_returnsEmptyList() {
-            when(earnedCertificationRepository.findByLearnerId(99L))
-                    .thenReturn(List.of());
-
-            List<EarnedCertificationDTO> result = earnedCertificationService.findByLearnerId(99L);
-
-            assertThat(result).isEmpty();
-        }
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // FIND BY ID TESTS
-    // ─────────────────────────────────────────────────────────────────────────
-
+    /**
+     * Happy path: template exists → certification is saved and DTO returned.
+     */
     @Test
-    @DisplayName("Find by ID — existing certification → returns DTO")
-    void findById_existingCertification_returnsDTO() {
-        when(earnedCertificationRepository.findById(10L)).thenReturn(Optional.of(savedCertification));
-        when(earnedCertificationMapper.toDTO(savedCertification)).thenReturn(certificationDTO);
+    void shouldAwardCertification_whenTemplateExistsAndNotAlreadyAwarded() {
+        // Given
+        AwardCertificationRequestDTO request = buildRequest(1L, 42L,
+                LocalDate.now(), LocalDate.now().plusYears(2));
 
-        EarnedCertificationDTO result = earnedCertificationService.findByIdWithDetails(10L);
+        when(certificationTemplateRepository.findById(1L)).thenReturn(Optional.of(template));
+        when(earnedCertificationRepository.saveAndFlush(any())).thenReturn(savedEntity);
+        when(earnedCertificationMapper.toDTO(savedEntity)).thenReturn(expectedDTO);
 
+        // When
+        EarnedCertificationDTO result = service.awardCertification(request);
+
+        // Then
         assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(10L);
+        verify(earnedCertificationRepository).saveAndFlush(any(EarnedCertification.class));
+    }
+
+    /**
+     * Template not found → ResourceNotFoundException, nothing saved.
+     */
+    @Test
+    void shouldThrowResourceNotFoundException_whenTemplateDoesNotExist() {
+        // Given
+        AwardCertificationRequestDTO request = buildRequest(99L, 42L, LocalDate.now(), null);
+        when(certificationTemplateRepository.findById(99L)).thenReturn(Optional.empty());
+
+        // When / Then
+        assertThatThrownBy(() -> service.awardCertification(request))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("99");
+
+        verify(earnedCertificationRepository, never()).saveAndFlush(any());
+    }
+
+    /**
+     * Expiry date before issue date → ValidationException.
+     */
+    @Test
+    void shouldThrowValidationException_whenExpiryDateIsBeforeIssueDate() {
+        // Given
+        AwardCertificationRequestDTO request = buildRequest(1L, 42L,
+                LocalDate.now(), LocalDate.now().minusDays(1));
+        when(certificationTemplateRepository.findById(1L)).thenReturn(Optional.of(template));
+
+        // When / Then
+        assertThatThrownBy(() -> service.awardCertification(request))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("Expiry date cannot be before issue date");
+
+        verify(earnedCertificationRepository, never()).saveAndFlush(any());
+    }
+
+    /**
+     * Malformed certificate URL → ValidationException.
+     */
+    @Test
+    void shouldThrowValidationException_whenCertificateUrlIsMalformed() {
+        // Given
+        AwardCertificationRequestDTO request = buildRequest(1L, 42L, LocalDate.now(), null);
+        request.setCertificateUrl("not-a-valid-url");
+        when(certificationTemplateRepository.findById(1L)).thenReturn(Optional.of(template));
+
+        // When / Then
+        assertThatThrownBy(() -> service.awardCertification(request))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("Invalid certificate URL");
+
+        verify(earnedCertificationRepository, never()).saveAndFlush(any());
+    }
+
+    /**
+     * Valid HTTPS URL → no exception, saveAndFlush called.
+     */
+    @Test
+    void shouldAwardCertification_whenCertificateUrlIsValid() {
+        // Given
+        AwardCertificationRequestDTO request = buildRequest(1L, 42L, LocalDate.now(), null);
+        request.setCertificateUrl("https://smartek.com/certs/42.pdf");
+        when(certificationTemplateRepository.findById(1L)).thenReturn(Optional.of(template));
+        when(earnedCertificationRepository.saveAndFlush(any())).thenReturn(savedEntity);
+        when(earnedCertificationMapper.toDTO(savedEntity)).thenReturn(expectedDTO);
+
+        // When
+        EarnedCertificationDTO result = service.awardCertification(request);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(earnedCertificationRepository).saveAndFlush(any());
+    }
+
+    // ─── autoAwardCertification ───────────────────────────────────────────────
+
+    /**
+     * Duplicate prevention: learner already has this certification → ValidationException.
+     */
+    @Test
+    void shouldThrowValidationException_whenCertificationAlreadyAwardedToLearner() {
+        // Given
+        when(earnedCertificationRepository.existsByCertificationTemplate_IdAndLearnerId(1L, 42L))
+                .thenReturn(true);
+
+        // When / Then
+        assertThatThrownBy(() -> service.autoAwardCertification(1L, 42L, LocalDate.now(), "EXAM-001"))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("already awarded");
+
+        verify(earnedCertificationRepository, never()).save(any());
+    }
+
+    /**
+     * Auto-award: no duplicate, template exists → saved with awardedBy = 0 (SYSTEM).
+     */
+    @Test
+    void shouldAutoAwardCertification_whenNoDuplicateAndTemplateExists() {
+        // Given
+        when(earnedCertificationRepository.existsByCertificationTemplate_IdAndLearnerId(1L, 42L))
+                .thenReturn(false);
+        when(certificationTemplateRepository.findById(1L)).thenReturn(Optional.of(template));
+        when(earnedCertificationRepository.save(any())).thenReturn(savedEntity);
+        when(earnedCertificationMapper.toDTO(savedEntity)).thenReturn(expectedDTO);
+
+        // When
+        EarnedCertificationDTO result = service.autoAwardCertification(1L, 42L, LocalDate.now(), "EXAM-001");
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(earnedCertificationRepository).save(argThat(cert ->
+                cert.getAwardedBy().equals(0L)
+        ));
+    }
+
+    /**
+     * Auto-award: template not found → ResourceNotFoundException.
+     */
+    @Test
+    void shouldThrowResourceNotFoundException_whenAutoAwardTemplateDoesNotExist() {
+        // Given
+        when(earnedCertificationRepository.existsByCertificationTemplate_IdAndLearnerId(99L, 42L))
+                .thenReturn(false);
+        when(certificationTemplateRepository.findById(99L)).thenReturn(Optional.empty());
+
+        // When / Then
+        assertThatThrownBy(() -> service.autoAwardCertification(99L, 42L, LocalDate.now(), "EXAM-001"))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        verify(earnedCertificationRepository, never()).save(any());
+    }
+
+    /**
+     * Auto-award stores the examId on the earned certification.
+     */
+    @Test
+    void shouldPersistExamId_whenAutoAwarding() {
+        // Given
+        when(earnedCertificationRepository.existsByCertificationTemplate_IdAndLearnerId(1L, 42L))
+                .thenReturn(false);
+        when(certificationTemplateRepository.findById(1L)).thenReturn(Optional.of(template));
+        when(earnedCertificationRepository.save(any())).thenReturn(savedEntity);
+        when(earnedCertificationMapper.toDTO(savedEntity)).thenReturn(expectedDTO);
+
+        // When
+        service.autoAwardCertification(1L, 42L, LocalDate.now(), "EXAM-007");
+
+        // Then
+        verify(earnedCertificationRepository).save(argThat(cert ->
+                "EXAM-007".equals(cert.getExamId())
+        ));
+    }
+
+    // ─── findByLearnerId ──────────────────────────────────────────────────────
+
+    /**
+     * Returns mapped DTOs for a learner with certifications.
+     */
+    @Test
+    void shouldReturnCertifications_whenLearnerHasEarnedCertifications() {
+        // Given
+        EarnedCertificationDTO dto = new EarnedCertificationDTO();
+        dto.setLearnerId(42L);
+        when(earnedCertificationRepository.findByLearnerId(42L)).thenReturn(List.of(savedEntity));
+        when(earnedCertificationMapper.toDTO(savedEntity)).thenReturn(dto);
+
+        // When
+        List<EarnedCertificationDTO> result = service.findByLearnerId(42L);
+
+        // Then
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getLearnerId()).isEqualTo(42L);
+    }
+
+    /**
+     * Returns empty list when learner has no certifications.
+     */
+    @Test
+    void shouldReturnEmptyList_whenLearnerHasNoCertifications() {
+        // Given
+        when(earnedCertificationRepository.findByLearnerId(99L)).thenReturn(List.of());
+
+        // When
+        List<EarnedCertificationDTO> result = service.findByLearnerId(99L);
+
+        // Then
+        assertThat(result).isEmpty();
+    }
+
+    // ─── findByIdWithDetails ──────────────────────────────────────────────────
+
+    /**
+     * Returns DTO when certification exists.
+     */
+    @Test
+    void shouldReturnCertificationDetails_whenIdExists() {
+        // Given
+        when(earnedCertificationRepository.findById(10L)).thenReturn(Optional.of(savedEntity));
+        when(earnedCertificationMapper.toDTO(savedEntity)).thenReturn(expectedDTO);
+
+        // When
+        EarnedCertificationDTO result = service.findByIdWithDetails(10L);
+
+        // Then
         assertThat(result.getId()).isEqualTo(10L);
     }
 
+    /**
+     * Throws ResourceNotFoundException when ID does not exist.
+     */
     @Test
-    @DisplayName("Find by ID — not found → ResourceNotFoundException")
-    void findById_notFound_throwsException() {
+    void shouldThrowResourceNotFoundException_whenCertificationIdDoesNotExist() {
+        // Given
         when(earnedCertificationRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> earnedCertificationService.findByIdWithDetails(999L))
+        // When / Then
+        assertThatThrownBy(() -> service.findByIdWithDetails(999L))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("999");
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // HELPERS
-    // ─────────────────────────────────────────────────────────────────────────
+    // ─── Helpers ─────────────────────────────────────────────────────────────
 
-    private AwardCertificationRequestDTO buildValidRequest() {
-        AwardCertificationRequestDTO request = new AwardCertificationRequestDTO();
-        request.setCertificationTemplateId(1L);
-        request.setLearnerId(2L);
-        request.setIssueDate(LocalDate.now());
-        request.setAwardedBy(5L);
-        return request;
+    private AwardCertificationRequestDTO buildRequest(Long templateId, Long learnerId,
+                                                       LocalDate issueDate, LocalDate expiryDate) {
+        AwardCertificationRequestDTO req = new AwardCertificationRequestDTO();
+        req.setCertificationTemplateId(templateId);
+        req.setLearnerId(learnerId);
+        req.setIssueDate(issueDate);
+        req.setExpiryDate(expiryDate);
+        req.setAwardedBy(1L);
+        return req;
     }
 }

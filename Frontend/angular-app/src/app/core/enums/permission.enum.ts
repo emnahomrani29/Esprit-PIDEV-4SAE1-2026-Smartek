@@ -114,6 +114,7 @@ export enum Permission {
   SPONSORS_EDIT = 'sponsors.edit',
   SPONSORS_DELETE = 'sponsors.delete',
   SPONSORS_MANAGE_ALL = 'sponsors.manage-all',
+  SPONSOR_DASHBOARD_VIEW = 'sponsor.dashboard-view',
 
   // Contacts
   CONTACTS_VIEW = 'contacts.view',

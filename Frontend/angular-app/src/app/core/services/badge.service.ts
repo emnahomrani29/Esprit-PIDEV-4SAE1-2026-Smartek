@@ -1,7 +1,8 @@
-﻿import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { BadgeTemplate, EarnedBadge, AwardBadgeRequest, BulkAwardBadgeRequest } from '../models/badge.model';
+import { environment } from '../../../environments/environment';
 
 export interface PageResponse<T> {
   content: T[];
@@ -15,8 +16,8 @@ export interface PageResponse<T> {
   providedIn: 'root'
 })
 export class BadgeService {
-  private apiUrl = 'http://localhost:8089/api/certifications-badges/badge-templates';
-  private earnedApiUrl = 'http://localhost:8089/api/certifications-badges/earned-badges';
+  private apiUrl = `${environment.apiBaseUrl}/api/certifications-badges/badge-templates`;
+  private earnedApiUrl = `${environment.apiBaseUrl}/api/certifications-badges/earned-badges`;
 
   constructor(private http: HttpClient) {}
 

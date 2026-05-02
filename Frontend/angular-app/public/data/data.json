@@ -9,12 +9,12 @@
             "href": "/#Courses"
         },
         {
-            "label": "Planning",
-            "href": "/#planning-section"
+            "label": "Mentors",
+            "href": "/#mentors-section"
         },
         {
-            "label": "Events",
-            "href": "/#events-section"
+            "label": "Testimonial",
+            "href": "/#testimonial-section"
         },
         {
             "label": "Join",
@@ -23,6 +23,10 @@
         {
             "label": "Contact Us",
             "href": "/#contact"
+        },
+        {
+            "label": "Docs",
+            "href": "/documentation"
         }
     ],
     "CourseData": [
@@ -274,12 +278,12 @@
                     "href": "/#Courses"
                 },
                 {
-                    "label": "Planning",
-                    "href": "/#planning-section"
+                    "label": "Mentors",
+                    "href": "/#mentors-section"
                 },
                 {
-                    "label": "Events",
-                    "href": "/#events-section"
+                    "label": "Testimonial",
+                    "href": "/#testimonial-section"
                 },
                 {
                     "label": "Join",

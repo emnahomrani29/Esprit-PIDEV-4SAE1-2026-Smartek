@@ -48,6 +48,30 @@ public class QuestionService {
     }
 
     @Transactional
+    public Question updateQuestion(Long questionId, QuestionRequest request) {
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new RuntimeException("Question not found: " + questionId));
+
+        question.setQuestionText(request.getQuestionText());
+        question.setQuestionType(request.getQuestionType());
+        question.setMarks(request.getMarks());
+        question.setCorrectAnswer(request.getCorrectAnswer());
+
+        if (request.getOptions() != null) {
+            question.getOptions().clear();
+            request.getOptions().forEach(optReq -> {
+                com.smartek.examservice.entity.QuestionOption option = new com.smartek.examservice.entity.QuestionOption();
+                option.setQuestion(question);
+                option.setOptionText(optReq.getOptionText());
+                option.setIsCorrect(optReq.getIsCorrect());
+                question.getOptions().add(option);
+            });
+        }
+
+        return questionRepository.save(question);
+    }
+
+    @Transactional
     public void deleteQuestion(Long id) {
         questionRepository.deleteById(id);
     }

@@ -4,6 +4,8 @@ import com.smartek.courseservice.dto.ChapterRequest;
 import com.smartek.courseservice.dto.ChapterResponse;
 import com.smartek.courseservice.entity.Chapter;
 import com.smartek.courseservice.entity.Course;
+import com.smartek.courseservice.entity.DeliveryMode;
+import com.smartek.courseservice.exception.BadRequestException;
 import com.smartek.courseservice.repository.ChapterRepository;
 import com.smartek.courseservice.repository.CourseRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,11 @@ public class ChapterService {
     public ChapterResponse createChapter(Long courseId, ChapterRequest request) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new RuntimeException("Cours non trouvé avec l'ID: " + courseId));
+        
+        // Vérifier que le cours n'est pas en mode EN_LIGNE
+        if (course.getDeliveryMode() == DeliveryMode.EN_LIGNE) {
+            throw new BadRequestException("Les chapitres ne peuvent pas être ajoutés aux cours en ligne. Les cours en ligne utilisent des sessions live.");
+        }
         
         Chapter chapter = Chapter.builder()
                 .title(request.getTitle())

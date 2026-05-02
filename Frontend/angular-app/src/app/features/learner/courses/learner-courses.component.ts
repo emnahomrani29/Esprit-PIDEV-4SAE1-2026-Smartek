@@ -7,8 +7,11 @@ import { TrainingService } from '../../../core/services/training.service';
 import { TrainingEnrollmentService, TrainingEnrollmentResponse } from '../../../core/services/training-enrollment.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { CourseService } from '../../../core/services/course.service';
+import { LiveSessionService } from '../../../core/services/live-session.service';
 import { Training, CourseInfo } from '../../../core/models/training.model';
+import { LiveSessionResponse, DeliveryMode } from '../../../core/models/live-session.model';
 import { SafePipe } from '../../../core/pipes/safe.pipe';
+import { environment } from '../../../../environments/environment';
 
 interface TrainingWithCourses {
   training: Training;
@@ -48,6 +51,13 @@ export class LearnerCoursesComponent implements OnInit {
   selectedTraining: TrainingWithCourses | null = null;
   pdfUrl: string | null = null;
 
+  // Live Sessions
+  showLiveSessionsModal = false;
+  currentCourseForSessions: CourseInfo | null = null;
+  liveSessions: LiveSessionResponse[] = [];
+  loadingLiveSessions = false;
+  DeliveryMode = DeliveryMode;
+
   // Recherche et tri
   searchTerm: string = '';
   sortBy: 'name' | 'progress' | 'date' = 'name';
@@ -59,7 +69,8 @@ export class LearnerCoursesComponent implements OnInit {
     private trainingService: TrainingService,
     private enrollmentService: TrainingEnrollmentService,
     private authService: AuthService,
-    private courseService: CourseService
+    private courseService: CourseService,
+    private liveSessionService: LiveSessionService
   ) {}
 
   ngOnInit(): void {
@@ -230,9 +241,32 @@ export class LearnerCoursesComponent implements OnInit {
     if (course.chapters && course.chapters.length > 0) {
       const firstChapterWithPdf = course.chapters.find(ch => ch.pdfFilePath);
       if (firstChapterWithPdf) {
-        this.pdfUrl = `http://localhost:8082/api/courses/${course.courseId}/chapters/${firstChapterWithPdf.chapterId}/pdf`;
         this.showPdfModal = true;
+        this.pdfUrl = null; // Reset pour afficher le loading
         document.body.style.overflow = 'hidden';
+        
+        // Télécharger le PDF avec authentification et créer un Blob URL
+        this.courseService.getPdfBlob(course.courseId!, firstChapterWithPdf.chapterId!).subscribe({
+          next: (blob) => {
+            // Créer une URL Blob pour afficher le PDF
+            this.pdfUrl = URL.createObjectURL(blob);
+          },
+          error: (error) => {
+            console.error('Erreur lors du chargement du PDF:', error);
+            let errorMessage = 'Erreur lors du chargement du PDF.';
+            
+            if (error.status === 401) {
+              errorMessage = 'Vous devez être connecté pour voir ce PDF.';
+            } else if (error.status === 404) {
+              errorMessage = 'Le fichier PDF n\'a pas été trouvé.';
+            } else if (error.status === 403) {
+              errorMessage = 'Vous n\'avez pas l\'autorisation d\'accéder à ce PDF.';
+            }
+            
+            alert(errorMessage);
+            this.closePdfModal();
+          }
+        });
       } else {
         alert('Aucun PDF disponible pour ce cours');
       }
@@ -242,6 +276,11 @@ export class LearnerCoursesComponent implements OnInit {
   }
 
   closePdfModal(): void {
+    // Libérer l'URL Blob pour éviter les fuites mémoire
+    if (this.pdfUrl && this.pdfUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(this.pdfUrl);
+    }
+    
     this.showPdfModal = false;
     this.pdfUrl = null;
     this.selectedCourse = null;
@@ -259,14 +298,19 @@ export class LearnerCoursesComponent implements OnInit {
     }
   }
 
+  // Handles both enrollment statuses and session statuses
   getStatusLabel(status: string): string {
-    switch (status) {
-      case 'ENROLLED': return 'Inscrit';
-      case 'IN_PROGRESS': return 'En cours';
-      case 'COMPLETED': return 'Terminé';
-      case 'CANCELLED': return 'Annulé';
-      default: return status;
-    }
+    const labels: Record<string, string> = {
+      // Enrollment statuses
+      'ENROLLED': 'Inscrit',
+      'IN_PROGRESS': 'En cours',
+      'COMPLETED': 'Terminé',
+      'CANCELLED': 'Annulé',
+      // Session statuses
+      'SCHEDULED': 'À venir',
+      'ONGOING': 'En direct',
+    };
+    return labels[status] || status;
   }
 
   toggleTrainingExpansion(trainingData: TrainingWithCourses): void {
@@ -330,5 +374,61 @@ export class LearnerCoursesComponent implements OnInit {
 
   get displayedTrainings(): TrainingWithCourses[] {
     return this.filteredTrainings.length > 0 || this.searchTerm ? this.filteredTrainings : this.trainingsWithCourses;
+  }
+
+  // Live Sessions Management
+  openLiveSessionsModal(course: CourseInfo): void {
+    this.currentCourseForSessions = course;
+    this.showLiveSessionsModal = true;
+    this.loadLiveSessionsForCourse(course.courseId!);
+  }
+
+  closeLiveSessionsModal(): void {
+    this.showLiveSessionsModal = false;
+    this.currentCourseForSessions = null;
+    this.liveSessions = [];
+  }
+
+  loadLiveSessionsForCourse(courseId: number): void {
+    this.loadingLiveSessions = true;
+    this.liveSessionService.getSessionsByCourseId(courseId).subscribe({
+      next: (sessions) => {
+        this.liveSessions = sessions;
+        this.loadingLiveSessions = false;
+      },
+      error: (error) => {
+        console.error('Error loading live sessions:', error);
+        this.liveSessions = [];
+        this.loadingLiveSessions = false;
+      }
+    });
+  }
+
+  joinSession(roomId: string): void {
+    this.router.navigate(['/video-conference', roomId]);
+  }
+
+  formatDateTime(dateTime: string): string {
+    if (!dateTime) return '';
+    const date = new Date(dateTime);
+    return date.toLocaleString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  getSessionDuration(startTime: string, endTime: string): string {
+    return this.liveSessionService.getSessionDuration(startTime, endTime);
+  }
+
+  isSessionOngoing(session: LiveSessionResponse): boolean {
+    return session.status === 'ONGOING';
+  }
+
+  isSessionUpcoming(session: LiveSessionResponse): boolean {
+    return session.status === 'SCHEDULED';
   }
 }

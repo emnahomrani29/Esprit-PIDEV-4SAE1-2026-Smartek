@@ -5,12 +5,9 @@ import com.smartek.offersservice.dto.ApplicationRequest;
 import com.smartek.offersservice.dto.ApplicationResponse;
 import com.smartek.offersservice.entity.Application;
 import com.smartek.offersservice.exception.BusinessException;
+import com.smartek.offersservice.config.TestSecurityConfig;
 import com.smartek.offersservice.exception.GlobalExceptionHandler;
-import com.smartek.offersservice.security.JwtAuthFilter;
-import com.smartek.offersservice.security.JwtService;
-import com.smartek.offersservice.security.SecurityConfig;
 import com.smartek.offersservice.service.ApplicationService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -35,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Tests du controller ApplicationController avec @WebMvcTest.
  */
 @WebMvcTest(ApplicationController.class)
-@Import({GlobalExceptionHandler.class, SecurityConfig.class})
+@Import({GlobalExceptionHandler.class, TestSecurityConfig.class})
 @DisplayName("ApplicationController — Tests WebMvc")
 class ApplicationControllerTest {
 
@@ -43,17 +40,6 @@ class ApplicationControllerTest {
     @Autowired private ObjectMapper objectMapper;
 
     @MockBean private ApplicationService applicationService;
-    @MockBean private JwtAuthFilter jwtAuthFilter;
-    @MockBean private JwtService jwtService;
-
-    @BeforeEach
-    void configureMockFilter() throws Exception {
-        doAnswer(inv -> {
-            jakarta.servlet.FilterChain chain = inv.getArgument(2);
-            chain.doFilter(inv.getArgument(0), inv.getArgument(1));
-            return null;
-        }).when(jwtAuthFilter).doFilter(any(), any(), any());
-    }
 
     private ApplicationResponse buildResponse(Long id, Application.ApplicationStatus status, int score) {
         return ApplicationResponse.builder()

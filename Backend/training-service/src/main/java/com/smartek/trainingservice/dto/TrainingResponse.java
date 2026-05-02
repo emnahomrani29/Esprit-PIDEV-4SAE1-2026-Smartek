@@ -35,6 +35,7 @@ public class TrainingResponse {
         private String title;
         private String content;
         private LocalDate duration;
+        private String deliveryMode;
         private List<ChapterInfo> chapters;
     }
     

@@ -37,17 +37,21 @@ export class SignInComponent {
     if (this.signInForm.valid && !this.isLoading) {
       this.isLoading = true;
       this.errorMessage = '';
-      
+
       const loginData = {
         email: this.signInForm.value.email,
         password: this.signInForm.value.password
       };
-      
+
       this.authService.login(loginData).subscribe({
         next: (response: AuthResponse) => {
           console.log('Login successful:', response);
           this.isLoading = false;
-          this.router.navigate(['/']);
+          if (response.role === 'SPONSOR') {
+            this.router.navigate(['/sponsor']);
+          } else {
+            this.router.navigate(['/dashboard']);
+          }
         },
         error: (error: any) => {
           console.error('Login error:', error);

@@ -2,6 +2,7 @@ package com.smartek.examservice.controller;
 
 import com.smartek.examservice.dto.*;
 import com.smartek.examservice.dto.LearnerExamResponse;
+import com.smartek.examservice.service.ExamResultService;
 import com.smartek.examservice.service.ExamService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ExamController {
     private final ExamService examService;
+    private final ExamResultService examResultService;
 
     @PostMapping
     public ResponseEntity<ExamResponse> createExam(@RequestBody ExamRequest request) {
@@ -69,5 +71,31 @@ public class ExamController {
     @GetMapping("/health")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("Exam Service is running");
+    }
+
+    // ── Endpoints proxy pour la soumission (chemins attendus par le frontend) ─
+
+    /**
+     * POST /api/exams/{examId}/submit-quiz
+     * Proxy vers /api/exam-results/submit — utilisé par submitQuiz() du frontend.
+     */
+    @PostMapping("/{examId}/submit-quiz")
+    public ResponseEntity<com.smartek.examservice.dto.ExamResultResponse> submitQuiz(
+            @PathVariable Long examId,
+            @RequestBody com.smartek.examservice.dto.ExamSubmissionDTO request) {
+        request.setExamId(examId);
+        return ResponseEntity.ok(examResultService.submitExam(request));
+    }
+
+    /**
+     * POST /api/exams/{examId}/submit-exam
+     * Proxy vers /api/exam-results/submit-old — utilisé par submitExamOld() du frontend.
+     */
+    @PostMapping("/{examId}/submit-exam")
+    public ResponseEntity<com.smartek.examservice.dto.ExamResultResponse> submitExamOld(
+            @PathVariable Long examId,
+            @RequestBody com.smartek.examservice.dto.ExamSubmissionRequest request) {
+        request.setExamId(examId);
+        return ResponseEntity.ok(examResultService.submitExamOld(request));
     }
 }

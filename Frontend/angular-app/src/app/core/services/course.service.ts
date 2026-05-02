@@ -43,4 +43,11 @@ export class CourseService {
   uncompleteCourse(courseId: number, userId: number): Observable<string> {
     return this.http.delete(`${this.apiUrl}/${courseId}/uncomplete?userId=${userId}`, { responseType: 'text' });
   }
+
+  // Télécharger le PDF avec authentification JWT
+  getPdfBlob(courseId: number, chapterId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${courseId}/chapters/${chapterId}/pdf`, {
+      responseType: 'blob'
+    });
+  }
 }

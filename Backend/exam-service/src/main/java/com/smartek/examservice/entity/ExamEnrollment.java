@@ -9,8 +9,13 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "exam_enrollments", 
-       uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "exam_id"}))
+@Table(name = "exam_enrollments",
+       uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "exam_id"}),
+       indexes = {
+           @Index(name = "idx_exam_enrollment_user_id", columnList = "user_id"),
+           @Index(name = "idx_exam_enrollment_exam_id", columnList = "exam_id"),
+           @Index(name = "idx_exam_enrollment_is_unlocked", columnList = "is_unlocked")
+       })
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

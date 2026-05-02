@@ -60,6 +60,7 @@ public class OfferService {
         return offerRepository.findAll(pageable).map(this::mapToResponse);
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public OfferResponse getOfferById(Long id) {
         Offer offer = offerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Offer not found with id: " + id));
@@ -69,6 +70,7 @@ public class OfferService {
         return mapToResponse(offer);
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public OfferResponse getOfferByIdWithCounts(Long id) {
         Offer offer = offerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Offer not found with id: " + id));

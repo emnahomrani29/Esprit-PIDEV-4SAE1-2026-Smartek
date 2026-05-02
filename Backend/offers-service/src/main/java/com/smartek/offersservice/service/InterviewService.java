@@ -6,6 +6,8 @@ import com.smartek.offersservice.entity.Application;
 import com.smartek.offersservice.entity.Interview;
 import com.smartek.offersservice.repository.ApplicationRepository;
 import com.smartek.offersservice.repository.InterviewRepository;
+import com.smartek.offersservice.exception.BusinessException;
+import com.smartek.offersservice.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,11 +30,11 @@ public class InterviewService {
         
         // Vérifier que la candidature existe
         Application application = applicationRepository.findById(request.getApplicationId())
-                .orElseThrow(() -> new RuntimeException("Candidature non trouvée"));
+                .orElseThrow(() -> new ResourceNotFoundException("Candidature non trouvée avec l'id: " + request.getApplicationId()));
         
         // Vérifier que la candidature est acceptée
         if (!"ACCEPTED".equals(application.getStatus())) {
-            throw new RuntimeException("La candidature doit être acceptée pour planifier un entretien");
+            throw new BusinessException("La candidature doit être acceptée pour planifier un entretien");
         }
         
         Interview interview = Interview.builder()
@@ -95,7 +97,7 @@ public class InterviewService {
         log.info("Updating interview ID: {} to status: {}", interviewId, status);
         
         Interview interview = interviewRepository.findById(interviewId)
-                .orElseThrow(() -> new RuntimeException("Entretien non trouvé"));
+                .orElseThrow(() -> new ResourceNotFoundException("Entretien non trouvé avec l'id: " + interviewId));
         
         interview.setStatus(Interview.InterviewStatus.valueOf(status));
         Interview updatedInterview = interviewRepository.save(interview);
@@ -109,7 +111,7 @@ public class InterviewService {
         log.info("Updating interview ID: {}", interviewId);
         
         Interview interview = interviewRepository.findById(interviewId)
-                .orElseThrow(() -> new RuntimeException("Entretien non trouvé"));
+                .orElseThrow(() -> new ResourceNotFoundException("Entretien non trouvé avec l'id: " + interviewId));
         
         interview.setInterviewDate(request.getInterviewDate());
         interview.setLocation(request.getLocation());

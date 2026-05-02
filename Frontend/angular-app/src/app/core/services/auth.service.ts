@@ -34,7 +34,7 @@ export interface AuthResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = `${environment.apiUrl}/auth`;
+  private apiUrl = environment.authApiUrl;
 
   constructor(
     private http: HttpClient,
@@ -80,7 +80,7 @@ export class AuthService {
   getUserInfo(): AuthResponse | null {
     const userInfo = localStorage.getItem('userInfo');
     if (!userInfo) return null;
-    
+
     try {
       const parsed = JSON.parse(userInfo);
       // S'assurer que experience existe, sinon mettre 0 par défaut
@@ -89,7 +89,6 @@ export class AuthService {
       }
       return parsed;
     } catch (e) {
-      console.error('Error parsing user info:', e);
       return null;
     }
   }

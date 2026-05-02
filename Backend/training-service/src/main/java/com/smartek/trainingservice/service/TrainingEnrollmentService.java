@@ -78,12 +78,14 @@ public class TrainingEnrollmentService {
         return mapToResponse(savedEnrollment);
     }
     
+    @Transactional(readOnly = true)
     public List<TrainingEnrollmentResponse> getUserEnrollments(Long userId) {
         return enrollmentRepository.findByUserId(userId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
-    
+
+    @Transactional(readOnly = true)
     public List<TrainingEnrollmentResponse> getTrainingEnrollments(Long trainingId) {
         return enrollmentRepository.findByTrainingTrainingId(trainingId).stream()
                 .map(this::mapToResponse)
@@ -156,6 +158,7 @@ public class TrainingEnrollmentService {
         return response;
     }
 
+    @Transactional(readOnly = true)
     public Boolean hasCompletedAllCourses(Long userId, Long trainingId) {
         TrainingEnrollment enrollment = enrollmentRepository.findByUserIdAndTrainingTrainingId(userId, trainingId)
                 .orElse(null);
@@ -168,6 +171,7 @@ public class TrainingEnrollmentService {
         return enrollment.getProgress() >= 100 || enrollment.getCompletedAt() != null;
     }
     
+    @Transactional(readOnly = true)
     public TrainingStatsResponse getTrainingStatsByUserId(Long userId) {
         log.info("Récupération des statistiques de formation pour l'utilisateur: {}", userId);
         
@@ -203,6 +207,7 @@ public class TrainingEnrollmentService {
                 .build();
     }
     
+    @Transactional(readOnly = true)
     public List<TrainingResponse> getUserTrainingsWithDetails(Long userId) {
         log.info("Récupération des formations complètes pour l'utilisateur: {}", userId);
         
@@ -265,6 +270,7 @@ public class TrainingEnrollmentService {
         return trainings;
     }
     
+    @Transactional(readOnly = true)
     public List<com.smartek.trainingservice.dto.TrainerTrainingAnalyticsResponse> getTrainerTrainingAnalytics(Long trainerId) {
         List<Training> trainerTrainings = trainingRepository.findByCreatedBy(trainerId);
         List<com.smartek.trainingservice.dto.TrainerTrainingAnalyticsResponse> analytics = new ArrayList<>();

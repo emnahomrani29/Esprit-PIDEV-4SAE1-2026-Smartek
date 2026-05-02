@@ -121,7 +121,7 @@ class InterviewIntegrationTest {
 
         @Test
         @WithMockUser(roles = "TRAINER")
-        @DisplayName("400 pour une candidature PENDING")
+        @DisplayName("422 pour une candidature PENDING (BusinessException)")
         void create_shouldReturn400_whenApplicationPending() throws Exception {
             Offer offer = saveOffer();
             Application app = saveApplication(offer, "PENDING");
@@ -138,12 +138,12 @@ class InterviewIntegrationTest {
             mockMvc.perform(post("/api/interviews")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isUnprocessableEntity());
         }
 
         @Test
         @WithMockUser(roles = "TRAINER")
-        @DisplayName("400 si candidature introuvable")
+        @DisplayName("404 si candidature introuvable (ResourceNotFoundException)")
         void create_shouldReturn400_whenApplicationNotFound() throws Exception {
             String body = """
                 {
@@ -157,7 +157,7 @@ class InterviewIntegrationTest {
             mockMvc.perform(post("/api/interviews")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isNotFound());
         }
     }
 

@@ -3,15 +3,21 @@ package com.smartek.courseservice.mapper;
 import com.smartek.courseservice.dto.ChapterResponse;
 import com.smartek.courseservice.dto.CourseRequest;
 import com.smartek.courseservice.dto.CourseResponse;
+import com.smartek.courseservice.dto.LiveSessionResponse;
 import com.smartek.courseservice.entity.Chapter;
 import com.smartek.courseservice.entity.Course;
+import com.smartek.courseservice.entity.DeliveryMode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class CourseMapper {
+    
+    private final LiveSessionMapper liveSessionMapper;
 
     public Course toEntity(CourseRequest request) {
         if (request == null) {
@@ -23,6 +29,7 @@ public class CourseMapper {
                 .content(request.getContent())
                 .duration(request.getDuration())
                 .trainerId(request.getTrainerId())
+                .deliveryMode(request.getDeliveryMode() != null ? request.getDeliveryMode() : DeliveryMode.PRESENTIEL)
                 .build();
     }
 
@@ -41,13 +48,21 @@ public class CourseMapper {
                     .collect(Collectors.toList())
                 : List.of();
         
+        List<LiveSessionResponse> liveSessions = course.getLiveSessions() != null
+                ? course.getLiveSessions().stream()
+                    .map(liveSessionMapper::toResponse)
+                    .collect(Collectors.toList())
+                : List.of();
+        
         return CourseResponse.builder()
                 .courseId(course.getCourseId())
                 .title(course.getTitle())
                 .content(course.getContent())
                 .duration(course.getDuration())
                 .trainerId(course.getTrainerId())
+                .deliveryMode(course.getDeliveryMode())
                 .chapters(chapters)
+                .liveSessions(liveSessions)
                 .createdAt(course.getCreatedAt())
                 .updatedAt(course.getUpdatedAt())
                 .message(message)
@@ -80,5 +95,8 @@ public class CourseMapper {
         course.setTitle(request.getTitle());
         course.setContent(request.getContent());
         course.setDuration(request.getDuration());
+        if (request.getDeliveryMode() != null) {
+            course.setDeliveryMode(request.getDeliveryMode());
+        }
     }
 }

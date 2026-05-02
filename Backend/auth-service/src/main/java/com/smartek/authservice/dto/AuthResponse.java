@@ -21,5 +21,6 @@ public class AuthResponse {
     private RoleType role;
     private String imageBase64; // Image en base64 pour le frontend
     private Integer experience;
+    private String phone;
     private String message;
 }

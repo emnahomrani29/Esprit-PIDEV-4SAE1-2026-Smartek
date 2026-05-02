@@ -88,8 +88,9 @@ public class CourseController {
             courseService.deleteCourse(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
-            log.error("Erreur lors de la suppression du cours: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
+            log.warn("Cours {} introuvable lors de la suppression (déjà supprimé?): {}", id, e.getMessage());
+            // Retourner 204 même si le cours n'existe pas (idempotent DELETE)
+            return ResponseEntity.noContent().build();
         }
     }
     

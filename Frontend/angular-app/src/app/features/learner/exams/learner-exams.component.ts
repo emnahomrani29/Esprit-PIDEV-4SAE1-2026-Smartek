@@ -79,9 +79,24 @@ export class LearnerExamsComponent implements OnInit {
 
   startExam(exam: Exam): void {
     if (exam.isLocked) {
-      const message = exam.examType === 'QUIZ' 
-        ? 'Vous devez terminer le cours associé avant de passer ce quiz.'
-        : 'Vous devez terminer la formation associée avant de passer cet examen.';
+      let message = '';
+      let courseName = exam.courseName || 'le cours associé';
+      let trainingName = exam.trainingName || 'la formation associée';
+      
+      if (exam.examType === 'QUIZ') {
+        message = `🔒 Ce quiz est actuellement verrouillé\n\n` +
+                  `Le trainer doit d'abord activer ce quiz OU vous devez terminer le cours "${courseName}".\n\n` +
+                  `📚 Pour débloquer :\n` +
+                  `1. Attendez que le trainer active le quiz (statut "Actif")\n` +
+                  `2. OU allez dans "Mes Cours", trouvez "${courseName}" et marquez-le comme terminé (✓)`;
+      } else {
+        message = `🔒 Cet examen est actuellement verrouillé\n\n` +
+                  `Le trainer doit d'abord activer cet examen OU vous devez terminer tous les cours de "${trainingName}".\n\n` +
+                  `📚 Pour débloquer :\n` +
+                  `1. Attendez que le trainer active l'examen (statut "Actif")\n` +
+                  `2. OU terminez tous les cours de la formation dans "Mes Cours"`;
+      }
+      
       alert(message);
       return;
     }

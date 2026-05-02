@@ -54,6 +54,6 @@ public class User {
     private Integer experience = 0;
     
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 30, columnDefinition = "VARCHAR(30)")
     private RoleType role;
 }

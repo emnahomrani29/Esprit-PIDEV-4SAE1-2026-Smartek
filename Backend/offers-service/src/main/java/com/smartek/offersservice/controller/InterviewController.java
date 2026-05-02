@@ -1,5 +1,7 @@
 package com.smartek.offersservice.controller;
 
+import com.smartek.offersservice.exception.BusinessException;
+import com.smartek.offersservice.exception.ResourceNotFoundException;
 import com.smartek.offersservice.dto.InterviewRequest;
 import com.smartek.offersservice.dto.InterviewResponse;
 import com.smartek.offersservice.service.InterviewService;
@@ -25,6 +27,9 @@ public class InterviewController {
         try {
             InterviewResponse response = interviewService.createInterview(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (BusinessException | ResourceNotFoundException e) {
+            // Laisser le GlobalExceptionHandler gérer ces exceptions (422 / 404)
+            throw e;
         } catch (RuntimeException e) {
             log.error("Error creating interview: {}", e.getMessage());
             return ResponseEntity.badRequest().build();

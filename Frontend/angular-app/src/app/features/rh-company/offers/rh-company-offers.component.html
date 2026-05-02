@@ -87,58 +87,22 @@
         </div>
         <div *ngIf="selectedOfferForApps?.id === offer.id && showApplicationsModal" class="border-t border-gray-100 p-4">
           <div *ngIf="applications.length===0" class="text-center py-6 text-gray-400">Aucune candidature</div>
-          <div *ngFor="let app of applications" class="flex flex-col gap-2 p-3 bg-gray-50 rounded-lg mb-2 hover:bg-gray-100">
-            <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm shrink-0">{{ app.learnerName?.charAt(0) }}</div>
-              <div class="flex-1 min-w-0">
-                <p class="font-medium text-sm text-gray-900">{{ app.learnerName }}</p>
-                <p class="text-xs text-gray-500">{{ app.learnerEmail }}</p>
-                <p class="text-xs text-gray-400">{{ app.appliedAt | date:'dd/MM/yyyy' }}</p>
-              </div>
-              <!-- Score badge -->
-              <div class="flex flex-col items-center shrink-0">
-                <span class="text-lg font-bold px-2 py-1 rounded-lg" [class]="scoreColor(app.score || 0)">
-                  {{ app.score || 0 }}/100
-                </span>
-                <span class="text-xs mt-0.5" [class]="scoreColor(app.score || 0)">{{ scoreLabel(app.score || 0) }}</span>
-              </div>
-              <span class="text-xs px-2 py-1 rounded-full" [class]="statusColor(app.status)">{{ app.status }}</span>
+          <div *ngFor="let app of applications" class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-2 hover:bg-gray-100">
+            <div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm shrink-0">{{ app.learnerName?.charAt(0) }}</div>
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-sm text-gray-900">{{ app.learnerName }}</p>
+              <p class="text-xs text-gray-500">{{ app.learnerEmail }}</p>
+              <p class="text-xs text-gray-400">{{ app.appliedAt | date:'dd/MM/yyyy' }}</p>
             </div>
-
-            <!-- Score bar -->
-            <div class="w-full bg-gray-200 rounded-full h-1.5">
-              <div class="h-1.5 rounded-full transition-all"
-                [style.width.%]="app.score || 0"
-                [class]="(app.score||0) >= 75 ? 'bg-green-500' : (app.score||0) >= 50 ? 'bg-yellow-400' : (app.score||0) >= 25 ? 'bg-orange-400' : 'bg-red-400'">
-              </div>
-            </div>
-
-            <!-- Match Analysis (lazy loaded) -->
-            <div *ngIf="matchAnalysis[app.id]" class="text-xs bg-white rounded-lg p-2 border border-gray-100">
-              <div class="flex gap-3 mb-1">
-                <span class="text-gray-500">🎯 Compétences: <strong>{{ matchAnalysis[app.id].skillScore }}/40</strong></span>
-                <span class="text-gray-500">📅 Expérience: <strong>{{ matchAnalysis[app.id].experienceScore }}/30</strong></span>
-                <span class="text-gray-500">📝 Lettre: <strong>{{ matchAnalysis[app.id].coverLetterScore }}/30</strong></span>
-              </div>
-              <div *ngIf="matchAnalysis[app.id].missingSkills?.length > 0" class="text-orange-600 mb-1">
-                ⚠️ Compétences manquantes: {{ matchAnalysis[app.id].missingSkills.join(', ') }}
-              </div>
-              <div *ngIf="matchAnalysis[app.id].matchedSkills?.length > 0" class="text-green-600 mb-1">
-                ✅ Compétences présentes: {{ matchAnalysis[app.id].matchedSkills.join(', ') }}
-              </div>
-              <div *ngFor="let s of matchAnalysis[app.id].suggestions" class="text-blue-600">💡 {{ s }}</div>
-            </div>
-
-            <div class="flex gap-1 flex-wrap">
-              <button *ngIf="app.cvBase64" (click)="downloadCV(app)" class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100">📄 CV</button>
-              <button (click)="loadMatchAnalysis(app.id)" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded hover:bg-indigo-100">🎯 Analyse</button>
+            <span class="text-xs px-2 py-1 rounded-full" [class]="statusColor(app.status)">{{ app.status }}</span>
+            <div class="flex gap-1">
+              <button *ngIf="app.cvBase64" (click)="downloadCV(app)" class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100">&#128196; CV</button>
               <select (change)="updateAppStatus(app.id, $any($event.target).value)" [value]="app.status" class="text-xs border border-gray-200 rounded px-1 py-1 bg-white">
                 <option value="PENDING">PENDING</option>
-                <option value="REVIEWED">REVIEWED</option>
                 <option value="ACCEPTED">ACCEPTED</option>
                 <option value="REJECTED">REJECTED</option>
               </select>
-              <button *ngIf="app.status==='ACCEPTED'" (click)="openScheduleInterview(app)" class="text-xs bg-green-50 text-green-600 px-2 py-1 rounded hover:bg-green-100">🎙️ Entretien</button>
+              <button *ngIf="app.status==='ACCEPTED'" (click)="openScheduleInterview(app)" class="text-xs bg-green-50 text-green-600 px-2 py-1 rounded hover:bg-green-100">&#127908; Entretien</button>
             </div>
           </div>
         </div>
@@ -181,10 +145,7 @@
             <option value="CANCELLED">CANCELLED</option>
             <option value="RESCHEDULED">RESCHEDULED</option>
           </select>
-          <button (click)="openFeedback(iv)" [disabled]="iv.status==='CANCELLED' || iv.hasFeedback" class="text-xs px-3 py-1 rounded-lg transition"
-            [class]="iv.hasFeedback ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100'">
-            {{ iv.hasFeedback ? '✅ Feedback soumis' : '📋 Feedback' }}
-          </button>
+          <button (click)="openFeedback(iv)" [disabled]="iv.status!=='COMPLETED'" class="text-xs bg-yellow-50 text-yellow-600 px-3 py-1 rounded-lg hover:bg-yellow-100 disabled:opacity-40 disabled:cursor-not-allowed">&#128203; Feedback</button>
           <button (click)="deleteInterview(iv.id)" class="text-xs bg-red-50 text-red-500 px-3 py-1 rounded-lg hover:bg-red-100">&#128465;️</button>
         </div>
       </div>

@@ -9,10 +9,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const token = authService.getToken();
 
-  // Exclure uniquement les endpoints publics (login/register)
-  const isPublic = req.url.includes('/api/auth/login') || req.url.includes('/api/auth/register');
-
-  if (token && !isPublic) {
+  // Ajouter le token JWT à toutes les requêtes
+  if (token) {
     req = req.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`
@@ -22,14 +20,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401) {
-        console.log('Token invalide ou expiré, déconnexion...');
+      // Si l'utilisateur n'existe plus ou le token est invalide (401 ou 403)
+      if (error.status === 401 || error.status === 403) {
         authService.logout();
-        router.navigate(['/login']);
       }
-
-      if (error.status === 404 && error.url?.includes('/api/auth/user/')) {
-        console.log('Utilisateur introuvable, déconnexion...');
+      
+      // Si l'utilisateur a été supprimé (404 sur les endpoints utilisateur)
+      if (error.status === 404 && error.url?.includes('/api/users/')) {
         authService.logout();
       }
 

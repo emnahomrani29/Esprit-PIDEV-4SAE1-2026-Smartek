@@ -1,0 +1,457 @@
+<!-- Sponsor Dashboard - Clean & Organized Layout -->
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
+  <div class="max-w-7xl mx-auto">
+    
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="flex items-center justify-center h-64">
+      <div class="relative">
+        <div class="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+        <div class="absolute top-0 left-0 w-16 h-16 border-4 border-transparent border-t-purple-600 rounded-full animate-spin" style="animation-duration: 1.5s;"></div>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="!isLoading && errorMessage" class="animate-fade-in">
+      <div class="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-3xl p-8 text-center card-3d">
+        <div class="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl icon-3d">
+          <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+          </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-yellow-800 mb-2">Account Not Yet Configured</h3>
+        <p class="text-yellow-600">Your sponsor profile hasn't been set up by the admin yet. Please contact the administrator.</p>
+      </div>
+    </div>
+
+    <!-- Main Dashboard Content -->
+    <div *ngIf="!isLoading && dashboard" class="space-y-8">
+      
+      <!-- Header Section -->
+      <div class="animate-fade-in">
+        <div class="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-3xl p-8 text-white overflow-hidden shadow-2xl card-3d">
+          <!-- Background Elements -->
+          <div class="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/4 animate-float"></div>
+          <div class="absolute bottom-0 left-0 w-72 h-72 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/4 animate-float" style="animation-delay: 1s;"></div>
+          
+          <div class="relative z-10 flex items-center justify-between">
+            <div>
+              <p class="text-white/70 text-sm mb-1 font-medium">Welcome back,</p>
+              <h1 class="text-4xl font-bold mb-2 drop-shadow-lg">{{ dashboard.sponsor.name || currentUser?.firstName }}</h1>
+              <div class="flex items-center space-x-2 mt-3">
+                <span class="px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-sm font-medium">{{ dashboard.sponsor.companyName || 'Sponsor' }}</span>
+                <span *ngIf="dashboard.sponsor.industry" class="px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-sm font-medium">{{ dashboard.sponsor.industry }}</span>
+              </div>
+            </div>
+            <div class="flex items-center space-x-4">
+              <button (click)="logout()" class="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-medium py-2 px-4 rounded-xl transition-all duration-300 flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                </svg>
+                <span>Logout</span>
+              </button>
+              <div class="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-2xl icon-3d">
+                <span class="text-4xl font-bold">{{ (dashboard.sponsor.name || 'S').charAt(0) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Budget Overview Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Total Budget Card -->
+        <div class="animate-fade-in card-3d" style="animation-delay: 100ms;">
+          <div class="relative overflow-hidden bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl p-6 shadow-xl">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+            <div class="relative z-10">
+              <div class="flex items-start justify-between mb-4">
+                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center icon-3d">
+                  <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <span class="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold text-white">Total Budget</span>
+              </div>
+              <p class="text-white/80 text-sm font-medium mb-1">Contract Budget</p>
+              <h3 class="text-3xl font-bold text-white mb-2">{{ dashboard.totalContractAmount | number:'1.2-2' }} <span class="text-lg">{{ getCurrency() }}</span></h3>
+              <p class="text-white/70 text-xs">From {{ dashboard.contracts.length }} contract(s)</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Amount Spent Card -->
+        <div class="animate-fade-in card-3d" style="animation-delay: 200ms;">
+          <div class="relative overflow-hidden bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-6 shadow-xl">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+            <div class="relative z-10">
+              <div class="flex items-start justify-between mb-4">
+                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center icon-3d">
+                  <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                  </svg>
+                </div>
+                <span class="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold text-white">Spent</span>
+              </div>
+              <p class="text-white/80 text-sm font-medium mb-1">Total Spent</p>
+              <h3 class="text-3xl font-bold text-white mb-2">{{ dashboard.totalSpent | number:'1.2-2' }} <span class="text-lg">{{ getCurrency() }}</span></h3>
+              <p class="text-white/70 text-xs">Across {{ dashboard.sponsorships.length }} sponsorship(s)</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Remaining Balance Card -->
+        <div class="animate-fade-in card-3d" style="animation-delay: 300ms;">
+          <div class="relative overflow-hidden rounded-2xl p-6 shadow-xl"
+               [ngClass]="dashboard.remainingBalance >= 0 ? 'bg-gradient-to-br from-green-500 to-emerald-600' : 'bg-gradient-to-br from-red-500 to-pink-600'">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+            <div class="relative z-10">
+              <div class="flex items-start justify-between mb-4">
+                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center icon-3d">
+                  <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <span class="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold text-white">
+                  {{ dashboard.remainingBalance > 0 ? 'Available' : 'Exceeded' }}
+                </span>
+              </div>
+              <p class="text-white/80 text-sm font-medium mb-1">Remaining Balance</p>
+              <h3 class="text-3xl font-bold text-white mb-2">
+                {{ dashboard.remainingBalance | number:'1.2-2' }} <span class="text-lg">{{ getCurrency() }}</span>
+              </h3>
+              <p class="text-white/70 text-xs">{{ dashboard.remainingBalance >= 0 ? 'Available to spend' : 'Over budget' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Budget Progress Section -->
+      <div class="animate-fade-in card-3d" style="animation-delay: 400ms;">
+        <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-gray-800">Budget Usage</h3>
+            <div class="flex items-center space-x-2">
+              <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg icon-3d">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-2xl font-bold" [ngClass]="{
+              'text-green-600': getSpentPercentage() < 60,
+              'text-orange-600': getSpentPercentage() >= 60 && getSpentPercentage() < 85,
+              'text-red-600': getSpentPercentage() >= 85
+            }">{{ getSpentPercentage() | number:'1.0-0' }}%</span>
+            <span class="text-sm text-gray-500">{{ dashboard.totalSpent | number:'1.2-2' }} / {{ dashboard.totalContractAmount | number:'1.2-2' }} {{ getCurrency() }}</span>
+          </div>
+          <div class="relative w-full h-6 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+            <div class="absolute inset-0 shimmer"></div>
+            <div class="h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden"
+                 [ngStyle]="{'width': getSpentPercentage() + '%'}"
+                 [ngClass]="{
+                   'bg-gradient-to-r from-green-400 to-emerald-500': getSpentPercentage() < 60,
+                   'bg-gradient-to-r from-yellow-400 to-orange-500': getSpentPercentage() >= 60 && getSpentPercentage() < 85,
+                   'bg-gradient-to-r from-red-400 to-pink-600': getSpentPercentage() >= 85
+                 }">
+              <div class="absolute inset-0 bg-white/20 animate-pulse-slow"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create Sponsorship Action -->
+      <div class="animate-fade-in card-3d" style="animation-delay: 450ms;">
+        <div class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl p-6 shadow-xl text-white">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-xl font-bold mb-2">Ready to Create a Sponsorship?</h3>
+              <p class="text-white/80">Use your available budget to sponsor courses, events, or certifications</p>
+              <div class="mt-3 flex items-center space-x-4">
+                <span class="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm font-medium">
+                  Available: {{ dashboard.remainingBalance | number:'1.2-2' }} {{ getCurrency() }}
+                </span>
+                <span class="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm font-medium">
+                  {{ dashboard.contracts.length }} Active Contract(s)
+                </span>
+              </div>
+            </div>
+            <button (click)="showCreateSponsorshipModal = true"
+                    [disabled]="dashboard.remainingBalance <= 0 || dashboard.contracts.length === 0"
+                    class="bg-white text-indigo-600 font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center space-x-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              <span>Create Sponsorship</span>
+            </button>
+            <!-- Debug Info -->
+            <div class="mt-2 text-xs text-white/70">
+              Debug: Balance={{ dashboard.remainingBalance }}, Contracts={{ dashboard.contracts.length }}
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Data Tables Section -->
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        
+        <!-- Sponsorships Table -->
+        <div class="animate-fade-in card-3d" style="animation-delay: 500ms;">
+          <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-purple-50 to-pink-50 p-6 border-b border-gray-100">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-xl font-bold text-gray-800 mb-1">My Sponsorships</h3>
+                  <p class="text-sm text-gray-600">All sponsorships linked to your contracts</p>
+                </div>
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg icon-3d">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="dashboard.sponsorships.length === 0" class="p-12 text-center">
+              <div class="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4 icon-3d">
+                <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                </svg>
+              </div>
+              <p class="text-gray-600 font-semibold text-lg">No sponsorships yet</p>
+              <p class="text-gray-400 text-sm mt-2">Create your first sponsorship to get started.</p>
+            </div>
+
+            <div *ngIf="dashboard.sponsorships.length > 0" class="overflow-x-auto max-h-96">
+              <table class="w-full">
+                <thead class="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                  <tr>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">#</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Type</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Amount</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  <tr *ngFor="let sp of dashboard.sponsorships; let i = index" class="hover:bg-gradient-to-r hover:from-purple-50/50 hover:to-pink-50/50 transition-all">
+                    <td class="px-6 py-4">
+                      <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-md">
+                        {{ i + 1 }}
+                      </div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <span class="px-3 py-1.5 text-xs font-bold rounded-xl shadow-sm"
+                            [ngClass]="{
+                              'bg-gradient-to-r from-blue-500 to-cyan-500 text-white': sp.sponsorshipType === 'COURSE',
+                              'bg-gradient-to-r from-purple-500 to-pink-500 text-white': sp.sponsorshipType === 'EVENT',
+                              'bg-gradient-to-r from-green-500 to-emerald-500 text-white': sp.sponsorshipType === 'CERTIFICATION',
+                              'bg-gradient-to-r from-orange-500 to-red-500 text-white': sp.sponsorshipType === 'OFFER'
+                            }">
+                        {{ sp.sponsorshipType }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm font-bold text-gray-800">{{ sp.amountAllocated | number:'1.2-2' }} <span class="text-gray-500">{{ getCurrency() }}</span></td>
+                    <td class="px-6 py-4">
+                      <span class="px-3 py-1.5 text-xs font-bold rounded-xl shadow-sm"
+                            [ngClass]="{
+                              'bg-yellow-100 text-yellow-800': sp.status === 'PENDING',
+                              'bg-green-100 text-green-800': sp.status === 'APPROVED',
+                              'bg-red-100 text-red-800': sp.status === 'REJECTED',
+                              'bg-blue-100 text-blue-800': sp.status === 'COMPLETED'
+                            }">
+                        {{ sp.status }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <!-- Contracts Table -->
+        <div class="animate-fade-in card-3d" style="animation-delay: 600ms;">
+          <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-gray-100">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-xl font-bold text-gray-800 mb-1">My Contracts</h3>
+                  <p class="text-sm text-gray-600">Active and past contracts</p>
+                </div>
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg icon-3d">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="dashboard.contracts.length === 0" class="p-12 text-center">
+              <div class="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4 icon-3d">
+                <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+              </div>
+              <p class="text-gray-600 font-semibold text-lg">No contracts found</p>
+            </div>
+
+            <div *ngIf="dashboard.contracts.length > 0" class="overflow-x-auto max-h-96">
+              <table class="w-full">
+                <thead class="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
+                  <tr>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Contract #</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Type</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Amount</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  <tr *ngFor="let c of dashboard.contracts" class="hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all">
+                    <td class="px-6 py-4 text-sm font-bold text-gray-800">{{ c.contractNumber }}</td>
+                    <td class="px-6 py-4">
+                      <span class="px-3 py-1.5 text-xs font-bold rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-sm">{{ c.type }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-sm font-bold text-gray-800">{{ c.amount | number:'1.2-2' }} <span class="text-gray-500">{{ c.currency || getCurrency() }}</span></td>
+                    <td class="px-6 py-4">
+                      <span class="px-3 py-1.5 text-xs font-bold rounded-xl shadow-sm"
+                            [ngClass]="{
+                              'bg-gradient-to-r from-green-400 to-emerald-500 text-white': c.status === 'ACTIVE',
+                              'bg-gradient-to-r from-yellow-400 to-orange-500 text-white': c.status === 'DRAFT' || c.status === 'EXPIRING_SOON',
+                              'bg-gradient-to-r from-red-400 to-pink-600 text-white': c.status === 'EXPIRED'
+                            }">
+                        {{ c.status }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<!-- Create Sponsorship Modal -->
+<div *ngIf="showCreateSponsorshipModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-fade-in">
+    <div class="p-6 border-b border-gray-100">
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-gray-800">Create New Sponsorship</h2>
+        <button (click)="showCreateSponsorshipModal = false" class="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center transition-colors">
+          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    
+    <form [formGroup]="sponsorshipForm" (ngSubmit)="onCreateSponsorship()" class="p-6 space-y-6">
+      <!-- Contract Selection -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-2">Select Contract</label>
+        <select formControlName="contractId" (change)="onContractChange()" 
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+          <option value="">Choose a contract</option>
+          <option *ngFor="let contract of dashboard?.contracts" [value]="contract.id">
+            {{ contract.contractNumber }} - {{ contract.amount | currency:'EUR' }} ({{ contract.type }})
+          </option>
+        </select>
+      </div>
+
+      <!-- Sponsorship Type -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-2">Sponsorship Type</label>
+        <select formControlName="sponsorshipType" 
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+          <option value="">Select type</option>
+          <option value="COURSE">Course</option>
+          <option value="EVENT">Event</option>
+          <option value="CERTIFICATION">Certification</option>
+          <option value="OFFER">Offer</option>
+        </select>
+      </div>
+
+      <!-- Target Type -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-2">Target Type</label>
+        <select formControlName="targetType" 
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+          <option value="">Select target type</option>
+          <option value="COURSE">Course</option>
+          <option value="EVENT">Event</option>
+          <option value="CERTIFICATION">Certification</option>
+          <option value="OFFER">Offer</option>
+          <option value="USER">User</option>
+          <option value="PROGRAM">Program</option>
+        </select>
+      </div>
+
+      <!-- Target ID -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-2">Target ID</label>
+        <input type="number" formControlName="targetId" 
+               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+               placeholder="Enter target ID">
+      </div>
+
+      <!-- Amount -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-2">Amount (EUR)</label>
+        <input type="number" formControlName="amountAllocated" (input)="onAmountChange()"
+               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+               placeholder="Enter amount">
+        <p *ngIf="suggestedTier" class="mt-2 text-sm text-indigo-600 font-medium">
+          💡 Suggested visibility: {{ suggestedTier }}
+        </p>
+        <p *ngIf="remainingBudget !== 0 && selectedContract" class="mt-1 text-sm text-gray-600">
+          Remaining budget: {{ remainingBudget | currency:'EUR' }}
+        </p>
+      </div>
+
+      <!-- Visibility Level -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-2">Visibility Level</label>
+        <select formControlName="visibilityLevel" 
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+          <option value="">Select visibility</option>
+          <option value="LOGO">Logo (Min: 500 EUR)</option>
+          <option value="FEATURED">Featured (Min: 1500 EUR)</option>
+          <option value="TITLE">Title (Min: 3000 EUR)</option>
+        </select>
+      </div>
+
+      <!-- Date Range -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-2">Start Date</label>
+          <input type="date" formControlName="startDate" 
+                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-2">End Date</label>
+          <input type="date" formControlName="endDate" 
+                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+        </div>
+      </div>
+
+      <!-- Error/Success Messages -->
+      <div *ngIf="createErrorMessage" class="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl">
+        {{ createErrorMessage }}
+      </div>
+      <div *ngIf="createSuccessMessage" class="p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl">
+        {{ createSuccessMessage }}
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex gap-4 pt-4">
+        <button type="submit" [disabled]="!sponsorshipForm.valid || createLoading"
+                class="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+          {{ createLoading ? 'Creating...' : 'Create Sponsorship' }}
+        </button>
+        <button type="button" (click)="showCreateSponsorshipModal = false"
+                class="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

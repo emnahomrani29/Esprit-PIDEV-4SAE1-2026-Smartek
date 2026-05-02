@@ -16,7 +16,6 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot) =>
   // Si des rôles sont spécifiés, vérifier d'abord les rôles
   if (requiredRoles && requiredRoles.length > 0) {
     if (!permissionService.hasAnyRole(requiredRoles)) {
-      console.warn('Access denied: User does not have required role');
       router.navigate(['/dashboard']);
       return false;
     }
@@ -29,7 +28,6 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot) =>
       : permissionService.hasAnyPermission(requiredPermissions);
 
     if (!hasAccess) {
-      console.warn('Access denied: User does not have required permissions');
       router.navigate(['/dashboard']);
       return false;
     }

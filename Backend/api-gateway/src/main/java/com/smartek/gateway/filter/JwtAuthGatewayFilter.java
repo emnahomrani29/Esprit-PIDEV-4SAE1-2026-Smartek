@@ -43,7 +43,8 @@ public class JwtAuthGatewayFilter implements GlobalFilter, Ordered {
         "/api/offers/top-viewed",
         "/api/offers/search",
         "/api/skill-evidence/analytics",
-        "/actuator"
+        "/actuator",
+        "/ws/signaling"   // WebSocket signaling — pas de header Authorization possible
     );
 
     @Override

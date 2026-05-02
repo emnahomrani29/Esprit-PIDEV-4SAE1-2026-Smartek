@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/events/business")
+@RequestMapping("/api/events/business")
 @RequiredArgsConstructor
 public class EventBusinessController {
 

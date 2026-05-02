@@ -9,5 +9,6 @@ public class CourseResponse {
     private String title;
     private String content;
     private String duration;
+    private String deliveryMode;
     private List<ChapterResponse> chapters;
 }

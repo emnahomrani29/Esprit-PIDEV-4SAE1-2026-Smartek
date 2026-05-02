@@ -14,11 +14,11 @@ import { AuthService, AuthResponse } from '../../../core/services/auth.service';
 export class SignUpComponent {
   currentStep = 1;
   totalSteps = 3;
-  
+
   step1Form: FormGroup;
   step2Form: FormGroup;
   step3Form: FormGroup;
-  
+
   showPassword = false;
   showConfirmPassword = false;
   selectedFile: File | null = null;
@@ -80,7 +80,7 @@ export class SignUpComponent {
     if (this.step3Form.valid && !this.isLoading) {
       this.isLoading = true;
       this.errorMessage = '';
-      
+
       const formData = {
         firstName: this.step1Form.value.firstName,
         email: this.step1Form.value.email,
@@ -90,13 +90,12 @@ export class SignUpComponent {
         experience: this.step3Form.value.experience || 0,
         role: this.step3Form.value.role
       };
-      
+
       this.authService.register(formData).subscribe({
         next: (response: AuthResponse) => {
           console.log('Registration successful:', response);
           this.isLoading = false;
-          // Rediriger vers la page d'accueil
-          this.router.navigate(['/']);
+          this.router.navigate(['/dashboard']);
         },
         error: (error: any) => {
           console.error('Registration error:', error);
@@ -147,21 +146,21 @@ export class SignUpComponent {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
       const file = input.files[0];
-      
+
       // Vérifier le type de fichier
       if (!file.type.startsWith('image/')) {
         alert('Please select an image file');
         return;
       }
-      
+
       // Vérifier la taille (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         alert('Image size should not exceed 5MB');
         return;
       }
-      
+
       this.selectedFile = file;
-      
+
       // Créer un aperçu de l'image et convertir en byte array
       const reader = new FileReader();
       reader.onload = (e: ProgressEvent<FileReader>) => {

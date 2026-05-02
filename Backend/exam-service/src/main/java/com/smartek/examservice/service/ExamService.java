@@ -8,6 +8,7 @@ import com.smartek.examservice.dto.*;
 import com.smartek.examservice.entity.*;
 import com.smartek.examservice.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CachePut;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ExamService {
     private final ExamRepository examRepository;
     private final QuestionRepository questionRepository;
@@ -27,8 +29,6 @@ public class ExamService {
     private final ExamEnrollmentRepository examEnrollmentRepository;
     private final CourseClient courseClient;
     private final TrainingClient trainingClient;
-
-    @Transactional
     @CacheEvict(value = {"exams", "examsByCourse"}, allEntries = true)
     public ExamResponse createExam(ExamRequest request) {
         // Calculer totalMarks automatiquement si des questions sont fournies
@@ -86,9 +86,32 @@ public class ExamService {
     }
 
     @Cacheable(value = "exams", unless = "#result.isEmpty()")
+    @Transactional(readOnly = true)
     public List<ExamResponse> getAllExams() {
+        // Utiliser EntityGraph pour charger questions en une seule requête JOIN
+        // et éviter LazyInitializationException hors session
         return examRepository.findAll().stream()
-                .map(this::mapToResponse)
+                .map(exam -> {
+                    ExamResponse response = new ExamResponse();
+                    response.setId(exam.getId());
+                    response.setCourseId(exam.getCourseId());
+                    response.setTrainingId(exam.getTrainingId());
+                    response.setExamType(exam.getExamType());
+                    response.setTitle(exam.getTitle());
+                    response.setDescription(exam.getDescription());
+                    response.setDuration(exam.getDuration());
+                    response.setPassingScore(exam.getPassingScore());
+                    response.setTotalMarks(exam.getTotalMarks());
+                    response.setStartDate(exam.getStartDate());
+                    response.setEndDate(exam.getEndDate());
+                    response.setIsActive(exam.getIsActive());
+                    // Accès aux collections dans la session — pas de LazyInitializationException
+                    response.setQuestionCount(exam.getQuestions() != null ? exam.getQuestions().size() : 0);
+                    response.setExerciseCount(exam.getExercises() != null ? exam.getExercises().size() : 0);
+                    response.setCreatedAt(exam.getCreatedAt());
+                    response.setUpdatedAt(exam.getUpdatedAt());
+                    return response;
+                })
                 .collect(Collectors.toList());
     }
     
@@ -107,26 +130,10 @@ public class ExamService {
     @Cacheable(value = "exam", key = "#id")
     @Transactional(readOnly = true)
     public ExamResponse getExamById(Long id) {
-        Exam exam = examRepository.findById(id)
+        // Use EntityGraph query to fetch questions and options in one JOIN — no lazy loading needed
+        Exam exam = examRepository.findByIdWithQuestions(id)
                 .orElseThrow(() -> new RuntimeException("Exam not found with id: " + id));
-        
-        try {
-            // Charger les questions et leurs options de manière explicite
-            if (exam.getQuestions() != null) {
-                exam.getQuestions().size(); // Force lazy loading
-                exam.getQuestions().forEach(q -> {
-                    if (q.getOptions() != null) {
-                        q.getOptions().size(); // Force lazy loading of options
-                    }
-                });
-            }
-            return mapToResponseWithQuestions(exam);
-        } catch (Exception e) {
-            // Si erreur lors du mapping avec questions, essayer sans questions
-            System.err.println("Error mapping exam with questions: " + e.getMessage());
-            e.printStackTrace();
-            return mapToResponse(exam);
-        }
+        return mapToResponseWithQuestions(exam);
     }
 
     @Transactional
@@ -201,7 +208,27 @@ public class ExamService {
     @Transactional
     @CacheEvict(value = {"exam", "exams", "examsByCourse"}, allEntries = true)
     public void deleteExam(Long id) {
+        log.info("Suppression de l'examen avec l'ID: {}", id);
+        
+        // Vérifier si l'examen existe
+        Exam exam = examRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Examen non trouvé avec l'ID: " + id));
+        
+        // Supprimer d'abord les résultats d'examen
+        examResultRepository.deleteByExamId(id);
+        log.info("Résultats d'examen supprimés pour l'examen {}", id);
+        
+        // Supprimer les enrollments
+        examEnrollmentRepository.deleteByExamId(id);
+        log.info("Enrollments supprimés pour l'examen {}", id);
+        
+        // Supprimer les questions associées
+        questionRepository.deleteByExamId(id);
+        log.info("Questions supprimées pour l'examen {}", id);
+        
+        // Enfin, supprimer l'examen
         examRepository.deleteById(id);
+        log.info("Examen {} supprimé avec succès", id);
     }
     
     @Transactional
@@ -291,23 +318,58 @@ public class ExamService {
     }
 
     public List<LearnerExamResponse> getLearnerExams(Long userId) {
-        List<Exam> allExams = examRepository.findAll();
-        List<LearnerExamResponse> learnerExams = new ArrayList<>();
+        // Fetch only active exams to reduce data volume
+        List<Exam> allExams = examRepository.findByIsActive(true);
+        if (allExams.isEmpty()) return Collections.emptyList();
 
+        // Collect all unique courseIds and trainingIds in one pass — avoid N+1
+        Set<Long> courseIds = allExams.stream()
+                .filter(e -> e.getCourseId() != null)
+                .map(Exam::getCourseId)
+                .collect(Collectors.toSet());
+
+        // Batch-fetch course info (one call per unique courseId)
+        Map<Long, CourseResponse> courseMap = new HashMap<>();
+        for (Long courseId : courseIds) {
+            try {
+                courseMap.put(courseId, courseClient.getCourse(courseId));
+            } catch (Exception e) {
+                log.warn("Could not fetch course {}: {}", courseId, e.getMessage());
+            }
+        }
+
+        // Collect unique trainingIds from fetched courses
+        Set<Long> trainingIds = courseMap.values().stream()
+                .filter(c -> c.getTrainingId() != null)
+                .map(CourseResponse::getTrainingId)
+                .collect(Collectors.toSet());
+
+        Map<Long, TrainingResponse> trainingMap = new HashMap<>();
+        for (Long trainingId : trainingIds) {
+            try {
+                trainingMap.put(trainingId, trainingClient.getTraining(trainingId));
+            } catch (Exception e) {
+                log.warn("Could not fetch training {}: {}", trainingId, e.getMessage());
+            }
+        }
+
+        // Fetch all exam results for this user in one query
+        List<ExamResult> userResults = examResultRepository.findByUserId(userId);
+        Map<Long, List<ExamResult>> resultsByExamId = userResults.stream()
+                .collect(Collectors.groupingBy(r -> r.getExam().getId()));
+
+        List<LearnerExamResponse> learnerExams = new ArrayList<>();
         for (Exam exam : allExams) {
             try {
-                // Récupérer les informations du cours
-                CourseResponse course = courseClient.getCourse(exam.getCourseId());
-                
-                // Récupérer les informations de la formation
-                TrainingResponse training = trainingClient.getTraining(course.getTrainingId());
-                
-                // Vérifier si le learner a complété tous les cours de la formation
+                CourseResponse course = courseMap.get(exam.getCourseId());
+                if (course == null) continue;
+
+                TrainingResponse training = trainingMap.get(course.getTrainingId());
+                if (training == null) continue;
+
                 Boolean hasCompleted = trainingClient.hasCompletedAllCourses(userId, training.getId());
-                
-                // Récupérer les résultats de l'examen pour ce learner
-                List<ExamResult> results = examResultRepository.findByExamIdAndUserId(exam.getId(), userId);
-                
+                List<ExamResult> results = resultsByExamId.getOrDefault(exam.getId(), Collections.emptyList());
+
                 LearnerExamResponse response = new LearnerExamResponse();
                 response.setId(exam.getId());
                 response.setCourseId(exam.getCourseId());
@@ -323,28 +385,19 @@ public class ExamService {
                 response.setStartDate(exam.getStartDate());
                 response.setEndDate(exam.getEndDate());
                 response.setIsActive(exam.getIsActive());
-                response.setIsLocked(!hasCompleted); // Bloqué si pas complété
+                response.setIsLocked(!Boolean.TRUE.equals(hasCompleted));
                 response.setHasAttempted(!results.isEmpty());
                 response.setAttemptsCount(results.size());
-                
-                // Calculer le meilleur score
-                if (!results.isEmpty()) {
-                    Integer bestScore = results.stream()
-                            .map(ExamResult::getObtainedMarks)
-                            .max(Integer::compareTo)
-                            .orElse(0);
-                    response.setBestScore(bestScore);
-                } else {
-                    response.setBestScore(null);
-                }
-                
+                response.setBestScore(results.stream()
+                        .map(ExamResult::getObtainedMarks)
+                        .max(Integer::compareTo)
+                        .orElse(null));
+
                 learnerExams.add(response);
             } catch (Exception e) {
-                // Si erreur (cours ou formation non trouvé), on ignore cet examen
-                System.err.println("Error processing exam " + exam.getId() + ": " + e.getMessage());
+                log.warn("Error processing exam {}: {}", exam.getId(), e.getMessage());
             }
         }
-
         return learnerExams;
     }
 }

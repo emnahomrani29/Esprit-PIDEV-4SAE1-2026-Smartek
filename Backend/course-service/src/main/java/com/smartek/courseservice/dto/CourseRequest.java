@@ -1,5 +1,6 @@
 package com.smartek.courseservice.dto;
 
+import com.smartek.courseservice.entity.DeliveryMode;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -25,4 +26,8 @@ public class CourseRequest {
     
     @NotNull(message = "Le trainer ID est obligatoire")
     private Long trainerId;
+    
+    @NotNull(message = "Le mode de livraison est obligatoire")
+    @Builder.Default
+    private DeliveryMode deliveryMode = DeliveryMode.PRESENTIEL;
 }
