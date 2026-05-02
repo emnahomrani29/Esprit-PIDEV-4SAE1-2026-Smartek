@@ -31,8 +31,8 @@ spec:
     spec:
       containers:
       - name: api-gateway
-        image: your-docker-registry/smartek/api-gateway:latest
-        imagePullPolicy: IfNotPresent
+        image: wafachabbi/api-gateway:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8090
         env:
@@ -41,10 +41,7 @@ spec:
         - name: SPRING_APPLICATION_NAME
           value: "api-gateway"
         - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-          valueFrom:
-            configMapKeyRef:
-              name: smartek-config
-              key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          value: "http://eureka-server:8761/eureka/"
         - name: SPRING_CLOUD_GATEWAY_GLOBALCORS_CORSCONFIGURATIONS_[/**]_ALLOWEDORIGINS
           value: "*"
         - name: SPRING_CLOUD_GATEWAY_GLOBALCORS_CORSCONFIGURATIONS_[/**]_ALLOWEDMETHODS
@@ -103,8 +100,8 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: your-docker-registry/smartek/frontend:latest
-        imagePullPolicy: IfNotPresent
+        image: wafachabbi/frontend:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
         resources:

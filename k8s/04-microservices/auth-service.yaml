@@ -29,8 +29,8 @@ spec:
     spec:
       containers:
       - name: auth-service
-        image: your-docker-registry/smartek/auth-service:latest
-        imagePullPolicy: IfNotPresent
+        image: wafachabbi/auth-service:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8081
         env:
@@ -39,27 +39,21 @@ spec:
         - name: SPRING_APPLICATION_NAME
           value: "auth-service"
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:mysql://mysql-service.smartek.svc.cluster.local:3306/smartek_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+          value: "jdbc:mysql://mysql-service:3306/smartek_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
         - name: SPRING_DATASOURCE_USERNAME
           valueFrom:
             secretKeyRef:
-              name: smartek-db-credentials
-              key: SPRING_DATASOURCE_USERNAME
+              name: mysql-secret
+              key: username
         - name: SPRING_DATASOURCE_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: smartek-db-credentials
-              key: SPRING_DATASOURCE_PASSWORD
+              name: mysql-secret
+              key: password
         - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-          valueFrom:
-            configMapKeyRef:
-              name: smartek-config
-              key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          value: "http://eureka-server:8761/eureka/"
         - name: EUREKA_INSTANCE_PREFERIPADDRESS
-          valueFrom:
-            configMapKeyRef:
-              name: smartek-config
-              key: EUREKA_INSTANCE_PREFERIPADDRESS
+          value: "true"
         resources:
           requests:
             memory: "512Mi"
@@ -67,15 +61,16 @@ spec:
           limits:
             memory: "1Gi"
             cpu: "500m"
-        livenessProbe:
+        startupProbe:
           httpGet:
             path: /actuator/health
             port: 8081
-          initialDelaySeconds: 40
+          failureThreshold: 60
           periodSeconds: 10
         readinessProbe:
           httpGet:
             path: /actuator/health
             port: 8081
-          initialDelaySeconds: 20
-          periodSeconds: 5
+          initialDelaySeconds: 180
+          periodSeconds: 15
+          failureThreshold: 5
