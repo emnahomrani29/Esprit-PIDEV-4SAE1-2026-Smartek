@@ -68,7 +68,12 @@ if (changedFiles == 'ALL' || changedFiles.isEmpty()) {
                             -Dsonar.host.url=${SONAR_URL} \
                             -Dsonar.token=${SONAR_TOKEN} \
                             --no-transfer-progress
-                    """
+                    """ 
+                }
+            }
+            post {
+                failure {
+                    echo 'SonarQube analysis failed or server unreachable - continuing pipeline'
                 }
             }
         }

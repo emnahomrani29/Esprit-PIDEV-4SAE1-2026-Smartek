@@ -71,6 +71,11 @@ pipeline {
                     """
                 }
             }
+            post {
+                failure {
+                    echo 'SonarQube analysis failed or server unreachable - continuing pipeline'
+                }
+            }
         }
 
         stage('Push to Nexus') {
