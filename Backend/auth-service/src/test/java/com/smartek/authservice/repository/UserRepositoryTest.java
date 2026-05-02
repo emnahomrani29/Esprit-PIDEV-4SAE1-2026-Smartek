@@ -91,10 +91,13 @@ class UserRepositoryTest {
         }
 
         @Test
-        @DisplayName("Recherche insensible à la casse — email exact requis")
+        @DisplayName("Recherche insensible à la casse — MySQL collation ci retourne l'utilisateur")
         void exactEmailRequired() {
+            // MySQL default collation (utf8mb4_0900_ai_ci) is case-insensitive,
+            // so uppercase email still finds the user
             Optional<User> result = userRepository.findByEmail("ALICE@SMARTEK.COM");
-            assertThat(result).isEmpty(); // JPA findByEmail est case-sensitive par défaut
+            assertThat(result).isPresent();
+            assertThat(result.get().getEmail()).isEqualTo("alice@smartek.com");
         }
     }
 
