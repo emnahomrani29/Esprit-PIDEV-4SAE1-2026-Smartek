@@ -34,6 +34,7 @@ export class RhCompanyOffersComponent implements OnInit {
   applications: any[] = [];
   selectedOfferForApps: any = null;
   showApplicationsModal = false;
+  matchAnalysis: { [key: number]: any } = {};
 
   // Interviews
   interviews: any[] = [];
@@ -298,5 +299,36 @@ export class RhCompanyOffersComponent implements OnInit {
       completed: this.interviews.filter(i => i.status === 'COMPLETED').length,
       cancelled: this.interviews.filter(i => i.status === 'CANCELLED').length,
     };
+  }
+
+  // ─── MATCH ANALYSIS ───────────────────────────────────────────────────────
+
+  loadMatchAnalysis(applicationId: number): void {
+    if (this.matchAnalysis[applicationId]) {
+      return; // Already loaded
+    }
+    
+    this.http.get<any>(`${environment.apiUrl}/applications/${applicationId}/match-analysis`).subscribe({
+      next: (analysis) => {
+        this.matchAnalysis[applicationId] = analysis;
+      },
+      error: () => {
+        // Silently fail - analysis not available
+      }
+    });
+  }
+
+  scoreColor(score: number): string {
+    if (score >= 75) return 'text-green-600';
+    if (score >= 50) return 'text-yellow-600';
+    if (score >= 25) return 'text-orange-600';
+    return 'text-red-600';
+  }
+
+  scoreLabel(score: number): string {
+    if (score >= 75) return 'Excellent';
+    if (score >= 50) return 'Bon';
+    if (score >= 25) return 'Moyen';
+    return 'Faible';
   }
 }
