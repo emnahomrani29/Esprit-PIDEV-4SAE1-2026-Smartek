@@ -2,9 +2,8 @@ name: Quality Gates
 
 on:
   pull_request:
-    branches: [main, develop]
   push:
-    branches: [main, develop]
+  workflow_dispatch:
 
 env:
   JAVA_VERSION: '17'

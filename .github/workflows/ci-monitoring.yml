@@ -2,14 +2,13 @@ name: CI Monitoring
 
 on:
   push:
-    branches: [main, develop]
     paths:
       - 'monitoring/**'
       - 'docker-compose*.yml'
   pull_request:
-    branches: [main, develop]
     paths:
       - 'monitoring/**'
+  workflow_dispatch:
 
 jobs:
   test-monitoring-stack:

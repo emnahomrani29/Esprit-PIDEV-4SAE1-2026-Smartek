@@ -2,11 +2,10 @@ name: CI Backend
 
 on:
   push:
-    branches: [main, develop]
     paths: ['Backend/**']
   pull_request:
-    branches: [main, develop]
     paths: ['Backend/**']
+  workflow_dispatch:
 
 env:
   JAVA_VERSION: '17'
