@@ -1,0 +1,27 @@
+﻿name: Test All Branches
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  quick-check:
+    name: Quick Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Display branch info
+        run: |
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Event: ${{ github.event_name }}"
+          echo "Repository: ${{ github.repository }}"
+          
+      - name: Check workflow files
+        run: |
+          echo "Workflow files present:"
+          ls -la .github/workflows/
+          
+      - name: Success
+        run: echo "✅ Workflow executed successfully!"
