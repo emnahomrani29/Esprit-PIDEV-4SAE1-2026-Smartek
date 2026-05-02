@@ -37,7 +37,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     )
 )
 @ActiveProfiles("test")
-@org.springframework.context.annotation.Import(com.smartek.learningmicroservice.config.TestSecurityConfig.class)
+@org.springframework.context.annotation.Import({
+    com.smartek.learningmicroservice.config.TestSecurityConfig.class,
+    com.smartek.learningmicroservice.exception.GlobalExceptionHandler.class
+})
 @DisplayName("LearningPathController - Tests d'intégration")
 class LearningPathControllerTest {
 
@@ -107,11 +110,11 @@ class LearningPathControllerTest {
             when(pathService.createPath(any()))
                     .thenThrow(new RuntimeException("Un parcours avec ce titre existe déjà"));
 
-            // Le controller ne gère pas les RuntimeException — Spring propage en 500
             mockMvc.perform(post("/api/learning-paths")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(validRequest)))
-                    .andExpect(status().is5xxServerError());
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error").value("Un parcours avec ce titre existe déjà"));
         }
     }
 
@@ -161,9 +164,9 @@ class LearningPathControllerTest {
             when(pathService.getPathById(99L))
                     .thenThrow(new RuntimeException("Parcours d'apprentissage non trouvé"));
 
-            // Le controller ne gère pas les RuntimeException → Spring retourne 500
             mockMvc.perform(get("/api/learning-paths/99"))
-                    .andExpect(status().is5xxServerError());
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error").value("Parcours d'apprentissage non trouvé"));
         }
     }
 
@@ -234,9 +237,9 @@ class LearningPathControllerTest {
             doThrow(new RuntimeException("Parcours d'apprentissage non trouvé"))
                     .when(pathService).deletePath(99L);
 
-            // Le controller ne gère pas les RuntimeException → Spring retourne 500
             mockMvc.perform(delete("/api/learning-paths/99"))
-                    .andExpect(status().is5xxServerError());
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error").value("Parcours d'apprentissage non trouvé"));
         }
     }
 }

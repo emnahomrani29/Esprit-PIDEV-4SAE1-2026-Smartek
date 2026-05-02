@@ -113,10 +113,9 @@ class LearningPathControllerIntegrationTest {
     void GET_getPathById_notFound_throwsException() throws Exception {
         when(pathService.getPathById(99L)).thenThrow(new RuntimeException("Parcours d'apprentissage non trouvé"));
 
-        org.junit.jupiter.api.Assertions.assertThrows(
-            jakarta.servlet.ServletException.class,
-            () -> mockMvc.perform(get("/api/learning-paths/99"))
-        );
+        mockMvc.perform(get("/api/learning-paths/99"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Parcours d'apprentissage non trouvé"));
     }
 
     @Test

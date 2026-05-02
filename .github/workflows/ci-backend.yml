@@ -57,8 +57,19 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -u root -proot --silent; then
+              echo "MySQL is ready!"
+              break
+            fi
+            echo "Waiting for MySQL... ($i/30)"
+            sleep 2
+          done
+
       - name: Run tests + JaCoCo coverage
-        run: mvn verify -B --no-transfer-progress -Dspring.profiles.active=test
+        run: mvn verify -B --no-transfer-progress
         working-directory: Backend/${{ matrix.service }}
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/testdb?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
