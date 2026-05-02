@@ -2,7 +2,13 @@ name: SonarCloud Analysis
 
 on:
   push:
-    branches: [ main, master, develop, "feature/**", "event/**" ]
+    branches:
+      - main
+      - master
+      - develop
+      - "feature/**"
+      - "event/**"
+      - "event/planning-service"
   pull_request:
     types: [ opened, synchronize, reopened ]
   workflow_dispatch:
