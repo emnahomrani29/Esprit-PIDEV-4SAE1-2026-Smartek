@@ -72,20 +72,23 @@ jobs:
           SPRING_DATASOURCE_USERNAME: root
           SPRING_DATASOURCE_PASSWORD: root
 
-      - name: SonarQube analysis
+      - name: SonarCloud analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
           if [ -z "$SONAR_TOKEN" ]; then
-            echo "SONAR_TOKEN not configured - skipping"
+            echo "SONAR_TOKEN not configured - skipping SonarCloud analysis"
             exit 0
           fi
           mvn sonar:sonar \
-            -Dsonar.projectKey=smartek-${{ matrix.service }} \
+            -Dsonar.projectKey=${{ secrets.SONAR_ORGANIZATION }}_smartek-${{ matrix.service }} \
             -Dsonar.projectName="Smartek ${{ matrix.service }}" \
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
             -Dsonar.exclusions="**/dto/**,**/entity/**,**/config/**,**/*Application.java,**/db/migration/**" \
+            -Dsonar.java.binaries=target/classes \
             -B --no-transfer-progress
         working-directory: Backend/${{ matrix.service }}
 
