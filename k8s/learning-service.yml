@@ -27,6 +27,8 @@ spec:
           ports:
             - containerPort: 8092
           env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Xms128m -Xmx256m"
             - name: SPRING_DATASOURCE_URL
               value: "jdbc:mysql://mysql-service:3306/learning-db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
             - name: SPRING_DATASOURCE_USERNAME
