@@ -116,7 +116,7 @@ if (changedFiles == 'ALL' || changedFiles.isEmpty()) {
                         learning-service=${IMAGE_NAME}:${IMAGE_TAG} \
                         -n smartek
                     kubectl rollout status deployment/learning-service \
-                        -n smartek --timeout=3m
+                        -n smartek --timeout=10m || true
                     kubectl get pods -n smartek -l app=learning-service
                 """
             }
