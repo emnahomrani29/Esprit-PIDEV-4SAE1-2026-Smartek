@@ -1,5 +1,5 @@
 server:
-  port: 8084
+  port: 8080
 
 spring:
   application:
@@ -17,10 +17,8 @@ spring:
           uri: lb://auth-service
           predicates:
             - Path=/api/auth/**
-        - id: certification-badge-service
-          uri: lb://certification-badge-service
-          predicates:
-            - Path=/api/certifications-badges/**
+          filters:
+            - StripPrefix=1
       globalcors:
         cors-configurations:
           '[/**]':
@@ -42,6 +40,9 @@ eureka:
     fetch-registry: true
   instance:
     prefer-ip-address: true
+
+jwt:
+  secret: smartek-secret-key-for-jwt-token-generation-2024-very-secure
 
 management:
   endpoints:

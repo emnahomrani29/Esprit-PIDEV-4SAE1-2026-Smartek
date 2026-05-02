@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: smartek
-  labels:
-    app.kubernetes.io/part-of: smartek-platform
-    monitoring: "true"   # label utilisé par Prometheus pour le scraping

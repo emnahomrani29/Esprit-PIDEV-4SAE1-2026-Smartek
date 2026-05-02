@@ -31,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Tests d'intégration pour PlanningController.
  * JwtAuthenticationFilter exclu du scan pour éviter l'injection de JwtService.
+ * GlobalExceptionHandler importé pour tester la gestion des exceptions.
  */
 @WebMvcTest(
     value = PlanningController.class,
@@ -39,6 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         classes = com.smartek.planning.security.JwtAuthenticationFilter.class
     )
 )
+@org.springframework.context.annotation.Import(com.smartek.planning.exception.GlobalExceptionHandler.class)
 @DisplayName("PlanningController - Tests d'intégration")
 class PlanningControllerTest {
 
@@ -113,9 +115,9 @@ class PlanningControllerTest {
         }
 
         @Test
-        @DisplayName("Doit retourner 4xx si conflit de créneau")
+        @DisplayName("Doit retourner 400 si conflit de créneau")
         @WithMockUser(roles = "TRAINER")
-        void shouldReturn4xxOnConflict() throws Exception {
+        void shouldReturn400OnConflict() throws Exception {
             when(planningService.createPlanning(any()))
                     .thenThrow(new RuntimeException("Time slot conflicts with existing planning"));
 
@@ -123,7 +125,30 @@ class PlanningControllerTest {
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(validRequest)))
-                    .andExpect(status().is4xxClientError());
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error").value("Time slot conflicts with existing planning"));
+        }
+
+        @Test
+        @DisplayName("Doit retourner 400 si les champs obligatoires sont manquants")
+        @WithMockUser(roles = "TRAINER")
+        void shouldReturn400WhenRequiredFieldsMissing() throws Exception {
+            PlanningRequest invalidRequest = new PlanningRequest(
+                    null, // date manquante
+                    LocalTime.of(9, 0),
+                    LocalTime.of(11, 0),
+                    "", // titre vide
+                    null,
+                    "TRAINING",
+                    null,
+                    null
+            );
+
+            mockMvc.perform(post("/api/plannings")
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalidRequest)))
+                    .andExpect(status().isBadRequest());
         }
     }
 
@@ -196,14 +221,15 @@ class PlanningControllerTest {
         }
 
         @Test
-        @DisplayName("Doit retourner 4xx si le planning n'existe pas")
+        @DisplayName("Doit retourner 400 si le planning n'existe pas")
         @WithMockUser(roles = "TRAINER")
-        void shouldReturn4xxWhenPlanningNotFound() throws Exception {
+        void shouldReturn400WhenPlanningNotFound() throws Exception {
             when(planningService.publishPlanning(99L))
                     .thenThrow(new RuntimeException("Planning not found with id: 99"));
 
             mockMvc.perform(post("/api/plannings/99/publish").with(csrf()))
-                    .andExpect(status().is4xxClientError());
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error").value("Planning not found with id: 99"));
         }
     }
 
@@ -222,13 +248,14 @@ class PlanningControllerTest {
         }
 
         @Test
-        @DisplayName("Doit retourner 4xx si le planning n'existe pas")
+        @DisplayName("Doit retourner 400 si le planning n'existe pas")
         @WithMockUser(roles = "TRAINER")
-        void shouldReturn4xxWhenPlanningNotFound() throws Exception {
+        void shouldReturn400WhenPlanningNotFound() throws Exception {
             doThrow(new RuntimeException("Planning not found")).when(planningService).deletePlanning(99L);
 
             mockMvc.perform(delete("/api/plannings/99").with(csrf()))
-                    .andExpect(status().is4xxClientError());
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error").value("Planning not found"));
         }
     }
 

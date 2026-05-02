@@ -1,0 +1,400 @@
+# ============================================================
+#  SMARTEK - Tous les microservices (sauf course-service
+#  qui a son propre fichier dans k8s/services/)
+# ============================================================
+
+# ── OFFERS SERVICE ────────────────────────────────────────────
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: offers-service
+  namespace: smartek
+  labels:
+    app: offers-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: offers-service
+  template:
+    metadata:
+      labels:
+        app: offers-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8085"
+    spec:
+      containers:
+        - name: offers-service
+          image: smartek/offers-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8085
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/smartek_offers?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: smartek-secrets
+                  key: MYSQL_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartek-secrets
+                  key: MYSQL_PASSWORD
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: smartek-config
+                  key: EUREKA_URL
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8085
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 15
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8085
+            initialDelaySeconds: 90
+            periodSeconds: 20
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: offers-service
+  namespace: smartek
+spec:
+  selector:
+    app: offers-service
+  ports:
+    - port: 8085
+      targetPort: 8085
+  type: ClusterIP
+
+# ── CERTIFICATION BADGE SERVICE ───────────────────────────────
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: certification-badge-service
+  namespace: smartek
+  labels:
+    app: certification-badge-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: certification-badge-service
+  template:
+    metadata:
+      labels:
+        app: certification-badge-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8094"
+    spec:
+      containers:
+        - name: certification-badge-service
+          image: smartek/certification-badge-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8094
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/smartek_certification?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: smartek-secrets
+                  key: MYSQL_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartek-secrets
+                  key: MYSQL_PASSWORD
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: smartek-config
+                  key: EUREKA_URL
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8094
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 15
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8094
+            initialDelaySeconds: 90
+            periodSeconds: 20
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: certification-badge-service
+  namespace: smartek
+spec:
+  selector:
+    app: certification-badge-service
+  ports:
+    - port: 8094
+      targetPort: 8094
+  type: ClusterIP
+
+# ── SKILL EVIDENCE SERVICE ────────────────────────────────────
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skill-evidence-service
+  namespace: smartek
+  labels:
+    app: skill-evidence-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: skill-evidence-service
+  template:
+    metadata:
+      labels:
+        app: skill-evidence-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8091"
+    spec:
+      containers:
+        - name: skill-evidence-service
+          image: smartek/skill-evidence-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8091
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/smartek_skill_evidence?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: smartek-secrets
+                  key: MYSQL_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartek-secrets
+                  key: MYSQL_PASSWORD
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: smartek-config
+                  key: EUREKA_URL
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8091
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 15
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8091
+            initialDelaySeconds: 90
+            periodSeconds: 20
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: skill-evidence-service
+  namespace: smartek
+spec:
+  selector:
+    app: skill-evidence-service
+  ports:
+    - port: 8091
+      targetPort: 8091
+  type: ClusterIP
+
+# ── LEARNING SERVICE ──────────────────────────────────────────
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: learning-service
+  namespace: smartek
+  labels:
+    app: learning-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: learning-service
+  template:
+    metadata:
+      labels:
+        app: learning-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8092"
+    spec:
+      containers:
+        - name: learning-service
+          image: smartek/learning-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8092
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/smartek_learning?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: smartek-secrets
+                  key: MYSQL_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartek-secrets
+                  key: MYSQL_PASSWORD
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: smartek-config
+                  key: EUREKA_URL
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8092
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 15
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8092
+            initialDelaySeconds: 90
+            periodSeconds: 20
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: learning-service
+  namespace: smartek
+spec:
+  selector:
+    app: learning-service
+  ports:
+    - port: 8092
+      targetPort: 8092
+  type: ClusterIP
+
+# ── SPONSOR SERVICE ───────────────────────────────────────────
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sponsor-service
+  namespace: smartek
+  labels:
+    app: sponsor-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sponsor-service
+  template:
+    metadata:
+      labels:
+        app: sponsor-service
+    spec:
+      containers:
+        - name: sponsor-service
+          image: smartek/sponsor-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8093
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/smartek_sponsor?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: smartek-secrets
+                  key: MYSQL_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartek-secrets
+                  key: MYSQL_PASSWORD
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8093
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 15
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8093
+            initialDelaySeconds: 90
+            periodSeconds: 20
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sponsor-service
+  namespace: smartek
+spec:
+  selector:
+    app: sponsor-service
+  ports:
+    - port: 8093
+      targetPort: 8093
+  type: ClusterIP

@@ -3,7 +3,7 @@ spring:
     name: certification-badge-service
   
   datasource:
-    url: jdbc:mysql://localhost:3306/smartek_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/smartek_certification?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
     username: root
     password: 
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -50,7 +50,7 @@ spring:
             enable: true
 
 server:
-  port: 8083
+  port: 8094
 
 eureka:
   client:

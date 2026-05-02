@@ -287,6 +287,7 @@ class ApplicationIntegrationTest {
         Offer offer = saveActiveOffer("Dev Java MID");
         Application app = new Application();
         app.setOffer(offer);
+        app.setOfferId(offer.getId()); // set explicit offerId to avoid lazy loading
         app.setLearnerId(10L);
         app.setLearnerName("Alice");
         app.setLearnerEmail("alice@test.com");

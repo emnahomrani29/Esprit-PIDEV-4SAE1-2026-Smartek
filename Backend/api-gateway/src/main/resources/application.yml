@@ -41,6 +41,9 @@ eureka:
   instance:
     prefer-ip-address: true
 
+jwt:
+  secret: smartek-secret-key-for-jwt-token-generation-2024-very-secure
+
 management:
   endpoints:
     web:

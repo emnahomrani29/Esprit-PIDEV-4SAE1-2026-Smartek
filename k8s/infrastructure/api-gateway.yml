@@ -1,0 +1,74 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: smartek
+  labels:
+    app: api-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8090"
+    spec:
+      containers:
+        - name: api-gateway
+          image: smartek/api-gateway:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8090
+          env:
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: smartek-config
+                  key: EUREKA_URL
+            - name: JWT_SECRET
+              valueFrom:
+                configMapKeyRef:
+                  name: smartek-config
+                  key: JWT_SECRET
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8090
+            initialDelaySeconds: 40
+            periodSeconds: 10
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8090
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "300m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: smartek
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - port: 8090
+      targetPort: 8090
+      nodePort: 30090
+  type: NodePort

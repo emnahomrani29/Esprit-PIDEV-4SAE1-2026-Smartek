@@ -1,0 +1,97 @@
+name: Scheduled Tasks
+
+on:
+  schedule:
+    - cron: '0 2 * * *'    # Tous les jours a 2h - scan securite
+    - cron: '0 3 * * 1'    # Tous les lundis a 3h - dependances
+  workflow_dispatch:
+
+jobs:
+
+  # ── SCAN SECURITE QUOTIDIEN ───────────────────────────────────
+  daily-security-scan:
+    name: "OWASP Scan - ${{ matrix.service }}"
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 2 * * *' || github.event_name == 'workflow_dispatch'
+    strategy:
+      matrix:
+        service:
+          - auth-service
+          - event-service
+          - course-service
+          - exam-service
+          - offers-service
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: OWASP Dependency Check
+        run: |
+          mvn org.owasp:dependency-check-maven:check \
+            -DfailBuildOnCVSS=9 \
+            --no-transfer-progress || true
+        working-directory: Backend/${{ matrix.service }}
+
+      - name: Upload OWASP report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-${{ matrix.service }}
+          path: Backend/${{ matrix.service }}/target/dependency-check-report.html
+          retention-days: 30
+
+  # ── MISE A JOUR DEPENDANCES HEBDOMADAIRE ──────────────────────
+  weekly-dependency-check:
+    name: Weekly Dependency Check
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 3 * * 1' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Check Maven updates
+        run: |
+          for service in auth-service event-service course-service exam-service planning-service training-service offers-service; do
+            echo "=== $service ==="
+            mvn versions:display-dependency-updates \
+              -f Backend/$service/pom.xml \
+              --no-transfer-progress 2>/dev/null | grep "\->" | head -5 || true
+          done
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check npm outdated
+        run: npm outdated || true
+        working-directory: Frontend/angular-app
+
+  # ── NETTOYAGE DES ARTIFACTS ───────────────────────────────────
+  cleanup-artifacts:
+    name: Cleanup old workflow runs
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 2 * * *' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Delete old workflow runs
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          retain_days: 30
+          keep_minimum_runs: 5
+        continue-on-error: true

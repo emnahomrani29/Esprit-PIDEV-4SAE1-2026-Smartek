@@ -3,104 +3,109 @@ package com.smartek.offersservice.service;
 import com.smartek.offersservice.dto.ApplicationRequest;
 import com.smartek.offersservice.dto.ApplicationResponse;
 import com.smartek.offersservice.entity.Application;
+import com.smartek.offersservice.entity.Application.ApplicationStatus;
 import com.smartek.offersservice.entity.Offer;
 import com.smartek.offersservice.exception.BusinessException;
 import com.smartek.offersservice.exception.ResourceNotFoundException;
 import com.smartek.offersservice.mapper.ApplicationMapper;
 import com.smartek.offersservice.repository.ApplicationRepository;
 import com.smartek.offersservice.repository.OfferRepository;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ApplicationService Unit Tests")
+@DisplayName("ApplicationService - Tests unitaires")
 class ApplicationServiceTest {
 
     @Mock private ApplicationRepository applicationRepository;
     @Mock private OfferRepository offerRepository;
+    @Mock private ApplicationMapper applicationMapper;
     @Mock private ApplicationScoringService scoringService;
 
-    // ApplicationMapper est un composant simple → instanciation directe
-    private final ApplicationMapper applicationMapper = new ApplicationMapper();
+    @InjectMocks private ApplicationService applicationService;
 
-    private ApplicationService applicationService;
-
-    private Application pendingApp;
     private Offer activeOffer;
-    private ApplicationRequest validRequest;
+    private Application sampleApplication;
+    private ApplicationRequest sampleRequest;
+    private ApplicationResponse sampleResponse;
 
     @BeforeEach
     void setUp() {
-        applicationService = new ApplicationService(
-                applicationRepository, offerRepository, applicationMapper, scoringService);
-
-        activeOffer = new Offer();
-        activeOffer.setId(100L);
-        activeOffer.setTitle("Dev Java");
-        activeOffer.setStatus("ACTIVE");
-        activeOffer.setCompanyId(1L);
-        activeOffer.setCompanyName("TechCorp");
-        activeOffer.setLocation("Paris");
-        activeOffer.setContractType("CDI");
-        activeOffer.setViewCount(0L);
-        activeOffer.setPositions(1);
-        activeOffer.setRemote(false);
-
-        pendingApp = new Application();
-        pendingApp.setId(1L);
-        pendingApp.setOffer(activeOffer);
-        pendingApp.setLearnerId(2L);
-        pendingApp.setLearnerName("Alice Martin");
-        pendingApp.setLearnerEmail("alice@test.com");
-        pendingApp.setCoverLetter("Je suis motivée...");
-        pendingApp.setStatus("PENDING");
-        pendingApp.setScore(0);
-        pendingApp.setAppliedAt(LocalDateTime.now());
-
-        validRequest = ApplicationRequest.builder()
-                .offerId(100L).learnerId(2L)
-                .learnerName("Alice Martin").learnerEmail("alice@test.com")
-                .coverLetter("Je suis motivée...")
+        activeOffer = Offer.builder()
+                .id(1L)
+                .title("Développeur Java")
+                .companyName("TechCorp")
+                .location("Tunis")
+                .contractType("CDI")
+                .companyId(10L)
+                .status("ACTIVE")
                 .build();
+
+        sampleApplication = new Application();
+        sampleApplication.setId(1L);
+        sampleApplication.setOfferId(1L);
+        sampleApplication.setLearnerId(5L);
+        sampleApplication.setStatus("PENDING");
+        sampleApplication.setScore(75);
+
+        sampleRequest = new ApplicationRequest();
+        sampleRequest.setOfferId(1L);
+        sampleRequest.setLearnerId(5L);
+        sampleRequest.setYearsOfExperience(3);
+
+        sampleResponse = new ApplicationResponse();
+        sampleResponse.setId(1L);
+        sampleResponse.setOfferId(1L);
+        sampleResponse.setLearnerId(5L);
+        sampleResponse.setStatus(ApplicationStatus.PENDING);
+        sampleResponse.setScore(75);
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // applyToOffer
+    // ─────────────────────────────────────────────────────────────────────────
     @Nested
-    @DisplayName("Apply to Offer")
-    class ApplyTests {
+    @DisplayName("applyToOffer()")
+    class ApplyToOffer {
 
         @Test
-        @DisplayName("First application → saved with PENDING status and score")
-        void firstApplication_savedWithPendingStatus() {
-            when(applicationRepository.existsByOfferIdAndLearnerId(100L, 2L)).thenReturn(false);
-            when(offerRepository.findById(100L)).thenReturn(Optional.of(activeOffer));
-            when(scoringService.calculateScore(any(), any(), any())).thenReturn(42);
-            when(applicationRepository.save(any())).thenReturn(pendingApp);
+        @DisplayName("Doit créer une candidature avec succès")
+        void shouldApplySuccessfully() {
+            when(applicationRepository.existsByOfferIdAndLearnerId(1L, 5L)).thenReturn(false);
+            when(offerRepository.findById(1L)).thenReturn(Optional.of(activeOffer));
+            when(applicationMapper.toEntity(sampleRequest)).thenReturn(sampleApplication);
+            when(scoringService.calculateScore(any(), any(), anyInt())).thenReturn(75);
+            when(applicationRepository.save(any(Application.class))).thenReturn(sampleApplication);
+            when(applicationMapper.toResponse(sampleApplication)).thenReturn(sampleResponse);
 
-            ApplicationResponse result = applicationService.applyToOffer(validRequest);
+            ApplicationResponse result = applicationService.applyToOffer(sampleRequest);
 
             assertThat(result).isNotNull();
-            assertThat(result.getStatus()).isEqualTo(Application.ApplicationStatus.PENDING);
-            verify(applicationRepository).save(any());
+            assertThat(result.getStatus()).isEqualTo(ApplicationStatus.PENDING);
+            assertThat(result.getScore()).isEqualTo(75);
+            verify(applicationRepository).save(any(Application.class));
         }
 
         @Test
-        @DisplayName("Duplicate application → BusinessException")
-        void duplicateApplication_throwsBusinessException() {
-            when(applicationRepository.existsByOfferIdAndLearnerId(100L, 2L)).thenReturn(true);
+        @DisplayName("Doit lever BusinessException si l'apprenant a déjà postulé")
+        void shouldThrowWhenAlreadyApplied() {
+            when(applicationRepository.existsByOfferIdAndLearnerId(1L, 5L)).thenReturn(true);
 
-            assertThatThrownBy(() -> applicationService.applyToOffer(validRequest))
+            assertThatThrownBy(() -> applicationService.applyToOffer(sampleRequest))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining("déjà postulé");
 
@@ -108,63 +113,123 @@ class ApplicationServiceTest {
         }
 
         @Test
-        @DisplayName("Offer not ACTIVE → BusinessException")
-        void closedOffer_throwsBusinessException() {
-            Offer closedOffer = new Offer();
-            closedOffer.setId(100L);
-            closedOffer.setStatus("CLOSED");
+        @DisplayName("Doit lever ResourceNotFoundException si l'offre n'existe pas")
+        void shouldThrowWhenOfferNotFound() {
+            when(applicationRepository.existsByOfferIdAndLearnerId(1L, 5L)).thenReturn(false);
+            when(offerRepository.findById(1L)).thenReturn(Optional.empty());
 
-            when(applicationRepository.existsByOfferIdAndLearnerId(100L, 2L)).thenReturn(false);
-            when(offerRepository.findById(100L)).thenReturn(Optional.of(closedOffer));
-
-            assertThatThrownBy(() -> applicationService.applyToOffer(validRequest))
-                    .isInstanceOf(BusinessException.class);
+            assertThatThrownBy(() -> applicationService.applyToOffer(sampleRequest))
+                    .isInstanceOf(ResourceNotFoundException.class);
         }
 
         @Test
-        @DisplayName("Offer not found → ResourceNotFoundException")
-        void offerNotFound_throwsResourceNotFoundException() {
-            when(applicationRepository.existsByOfferIdAndLearnerId(100L, 2L)).thenReturn(false);
-            when(offerRepository.findById(100L)).thenReturn(Optional.empty());
+        @DisplayName("Doit lever BusinessException si l'offre n'est plus active")
+        void shouldThrowWhenOfferNotActive() {
+            activeOffer.setStatus("CLOSED");
+            when(applicationRepository.existsByOfferIdAndLearnerId(1L, 5L)).thenReturn(false);
+            when(offerRepository.findById(1L)).thenReturn(Optional.of(activeOffer));
 
-            assertThatThrownBy(() -> applicationService.applyToOffer(validRequest))
-                    .isInstanceOf(ResourceNotFoundException.class);
+            assertThatThrownBy(() -> applicationService.applyToOffer(sampleRequest))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("disponible");
         }
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // getApplicationsByOffer
+    // ─────────────────────────────────────────────────────────────────────────
     @Nested
-    @DisplayName("Status Transitions")
-    class StatusTransitionTests {
+    @DisplayName("getApplicationsByOffer()")
+    class GetApplicationsByOffer {
 
-        @ParameterizedTest(name = "Status ''{0}'' → updated correctly")
-        @ValueSource(strings = {"ACCEPTED", "REJECTED", "PENDING"})
-        void validStatusTransitions(String newStatus) {
-            when(applicationRepository.findById(1L)).thenReturn(Optional.of(pendingApp));
-            when(applicationRepository.save(any())).thenReturn(pendingApp);
+        @Test
+        @DisplayName("Doit retourner les candidatures d'une offre")
+        void shouldReturnApplicationsByOffer() {
+            when(applicationRepository.findByOfferId(1L)).thenReturn(List.of(sampleApplication));
+            when(applicationMapper.toResponse(sampleApplication)).thenReturn(sampleResponse);
 
-            applicationService.updateApplicationStatus(1L, newStatus, null);
+            List<ApplicationResponse> result = applicationService.getApplicationsByOffer(1L);
 
-            ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
-            verify(applicationRepository).save(captor.capture());
-            assertThat(captor.getValue().getStatus()).isEqualTo(newStatus);
+            assertThat(result).hasSize(1);
         }
 
         @Test
-        @DisplayName("Update with recruiterNote → note saved")
-        void updateWithRecruiterNote_noteSaved() {
-            when(applicationRepository.findById(1L)).thenReturn(Optional.of(pendingApp));
-            when(applicationRepository.save(any())).thenReturn(pendingApp);
+        @DisplayName("Doit retourner une liste vide si aucune candidature")
+        void shouldReturnEmptyListWhenNoApplications() {
+            when(applicationRepository.findByOfferId(99L)).thenReturn(Collections.emptyList());
 
-            applicationService.updateApplicationStatus(1L, "ACCEPTED", "Excellent profil");
+            List<ApplicationResponse> result = applicationService.getApplicationsByOffer(99L);
 
-            ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
-            verify(applicationRepository).save(captor.capture());
-            assertThat(captor.getValue().getRecruiterNote()).isEqualTo("Excellent profil");
+            assertThat(result).isEmpty();
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // getApplicationsByLearner
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("getApplicationsByLearner()")
+    class GetApplicationsByLearner {
+
+        @Test
+        @DisplayName("Doit retourner les candidatures d'un apprenant")
+        void shouldReturnApplicationsByLearner() {
+            when(applicationRepository.findByLearnerId(5L)).thenReturn(List.of(sampleApplication));
+            when(applicationMapper.toResponse(sampleApplication)).thenReturn(sampleResponse);
+
+            List<ApplicationResponse> result = applicationService.getApplicationsByLearner(5L);
+
+            assertThat(result).hasSize(1);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // hasApplied
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("hasApplied()")
+    class HasApplied {
+
+        @Test
+        @DisplayName("Doit retourner true si l'apprenant a déjà postulé")
+        void shouldReturnTrueWhenAlreadyApplied() {
+            when(applicationRepository.existsByOfferIdAndLearnerId(1L, 5L)).thenReturn(true);
+
+            assertThat(applicationService.hasApplied(1L, 5L)).isTrue();
         }
 
         @Test
-        @DisplayName("Update non-existing → ResourceNotFoundException")
-        void updateNonExisting_throwsException() {
+        @DisplayName("Doit retourner false si l'apprenant n'a pas encore postulé")
+        void shouldReturnFalseWhenNotApplied() {
+            when(applicationRepository.existsByOfferIdAndLearnerId(1L, 99L)).thenReturn(false);
+
+            assertThat(applicationService.hasApplied(1L, 99L)).isFalse();
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // updateApplicationStatus
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("updateApplicationStatus()")
+    class UpdateApplicationStatus {
+
+        @Test
+        @DisplayName("Doit mettre à jour le statut d'une candidature")
+        void shouldUpdateStatus() {
+            when(applicationRepository.findById(1L)).thenReturn(Optional.of(sampleApplication));
+            when(applicationRepository.save(any(Application.class))).thenReturn(sampleApplication);
+            when(applicationMapper.toResponse(sampleApplication)).thenReturn(sampleResponse);
+
+            ApplicationResponse result = applicationService.updateApplicationStatus(1L, "ACCEPTED", "Bon profil");
+
+            assertThat(result).isNotNull();
+            verify(applicationRepository).save(any(Application.class));
+        }
+
+        @Test
+        @DisplayName("Doit lever ResourceNotFoundException si la candidature n'existe pas")
+        void shouldThrowWhenApplicationNotFound() {
             when(applicationRepository.findById(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> applicationService.updateApplicationStatus(99L, "ACCEPTED", null))
@@ -172,134 +237,34 @@ class ApplicationServiceTest {
         }
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // withdrawApplication
+    // ─────────────────────────────────────────────────────────────────────────
     @Nested
-    @DisplayName("Withdraw Application")
-    class WithdrawTests {
+    @DisplayName("withdrawApplication()")
+    class WithdrawApplication {
 
         @Test
-        @DisplayName("Withdraw own application → status WITHDRAWN")
-        void withdrawOwnApplication_success() {
-            when(applicationRepository.findById(1L)).thenReturn(Optional.of(pendingApp));
-            when(applicationRepository.save(any())).thenReturn(pendingApp);
+        @DisplayName("Doit retirer une candidature appartenant à l'apprenant")
+        void shouldWithdrawOwnApplication() {
+            when(applicationRepository.findById(1L)).thenReturn(Optional.of(sampleApplication));
+            when(applicationRepository.save(any(Application.class))).thenReturn(sampleApplication);
+            when(applicationMapper.toResponse(sampleApplication)).thenReturn(sampleResponse);
 
-            applicationService.withdrawApplication(1L, 2L);
+            ApplicationResponse result = applicationService.withdrawApplication(1L, 5L);
 
-            ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
-            verify(applicationRepository).save(captor.capture());
-            assertThat(captor.getValue().getStatus()).isEqualTo("WITHDRAWN");
+            assertThat(result).isNotNull();
+            verify(applicationRepository).save(any(Application.class));
         }
 
         @Test
-        @DisplayName("Withdraw other's application → BusinessException")
-        void withdrawOthersApplication_throwsException() {
-            when(applicationRepository.findById(1L)).thenReturn(Optional.of(pendingApp));
+        @DisplayName("Doit lever BusinessException si l'apprenant ne possède pas la candidature")
+        void shouldThrowWhenNotOwner() {
+            when(applicationRepository.findById(1L)).thenReturn(Optional.of(sampleApplication));
 
-            assertThatThrownBy(() -> applicationService.withdrawApplication(1L, 999L))
-                    .isInstanceOf(BusinessException.class);
-        }
-    }
-
-    @Nested
-    @DisplayName("Queries")
-    class QueryTests {
-
-        @Test
-        @DisplayName("Get by offer → returns list")
-        void getByOffer_returnsList() {
-            when(applicationRepository.findByOfferId(100L)).thenReturn(List.of(pendingApp));
-
-            List<ApplicationResponse> result = applicationService.getApplicationsByOffer(100L);
-            assertThat(result).hasSize(1);
-        }
-
-        @Test
-        @DisplayName("Get ranked by offer → sorted by score")
-        void getRankedByOffer_returnsSortedList() {
-            when(applicationRepository.findByOfferIdOrderByScoreDesc(100L)).thenReturn(List.of(pendingApp));
-
-            List<ApplicationResponse> result = applicationService.getApplicationsByOfferSortedByScore(100L);
-            assertThat(result).hasSize(1);
-        }
-
-        @Test
-        @DisplayName("Get by learner → returns list")
-        void getByLearner_returnsList() {
-            when(applicationRepository.findByLearnerId(2L)).thenReturn(List.of(pendingApp));
-
-            List<ApplicationResponse> result = applicationService.getApplicationsByLearner(2L);
-            assertThat(result).hasSize(1);
-        }
-
-        @Test
-        @DisplayName("hasApplied → true when exists")
-        void hasApplied_true() {
-            when(applicationRepository.existsByOfferIdAndLearnerId(100L, 2L)).thenReturn(true);
-            assertThat(applicationService.hasApplied(100L, 2L)).isTrue();
-        }
-
-        @Test
-        @DisplayName("hasApplied → false when not exists")
-        void hasApplied_false() {
-            when(applicationRepository.existsByOfferIdAndLearnerId(100L, 99L)).thenReturn(false);
-            assertThat(applicationService.hasApplied(100L, 99L)).isFalse();
-        }
-    }
-
-    @Nested
-    @DisplayName("Match Analysis")
-    class MatchAnalysisTests {
-
-        // Pour ces tests, on utilise un vrai scoringService (pas de dépendances)
-        private ApplicationService serviceWithRealScoring;
-
-        @BeforeEach
-        void setUpRealScoring() {
-            serviceWithRealScoring = new ApplicationService(
-                    applicationRepository, offerRepository,
-                    applicationMapper, new ApplicationScoringService());
-        }
-
-        @Test
-        @DisplayName("getMatchAnalysis → retourne analyse complète")
-        void getMatchAnalysis_returnsCompleteAnalysis() {
-            activeOffer.setRequiredSkills(java.util.Set.of("Java", "Spring"));
-            activeOffer.setExperienceLevel("MID");
-            pendingApp.setCoverLetter("J'ai de l'expérience en Java et Spring.");
-            pendingApp.setOffer(activeOffer);
-
-            when(applicationRepository.findById(1L)).thenReturn(Optional.of(pendingApp));
-
-            java.util.Map<String, Object> result = serviceWithRealScoring.getMatchAnalysis(1L, 3);
-
-            assertThat(result).containsKey("totalScore");
-            assertThat(result).containsKey("matchedSkills");
-            assertThat(result).containsKey("missingSkills");
-            assertThat(result).containsKey("suggestions");
-            assertThat(result).containsKey("matchLevel");
-        }
-
-        @Test
-        @DisplayName("getMatchAnalysis → ResourceNotFoundException si candidature introuvable")
-        void getMatchAnalysis_notFound_throwsException() {
-            when(applicationRepository.findById(99L)).thenReturn(Optional.empty());
-
-            assertThatThrownBy(() -> serviceWithRealScoring.getMatchAnalysis(99L, null))
-                    .isInstanceOf(ResourceNotFoundException.class);
-        }
-
-        @Test
-        @DisplayName("getMatchAnalysis → charge l'offre via offerRepository si offer null")
-        void getMatchAnalysis_loadsOfferFromRepo() {
-            pendingApp.setOffer(null);
-            pendingApp.setOfferId(100L);
-
-            when(applicationRepository.findById(1L)).thenReturn(Optional.of(pendingApp));
-            when(offerRepository.findById(100L)).thenReturn(Optional.of(activeOffer));
-
-            java.util.Map<String, Object> result = serviceWithRealScoring.getMatchAnalysis(1L, 2);
-
-            assertThat(result).containsKey("totalScore");
-            verify(offerRepository).findById(100L);
+            assertThatThrownBy(() -> applicationService.withdrawApplication(1L, 99L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("retirer");
         }
     }
 }

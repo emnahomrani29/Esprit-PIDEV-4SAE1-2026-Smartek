@@ -55,6 +55,7 @@ public class ApplicationService {
                 .map(applicationMapper::toResponse).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<ApplicationResponse> getApplicationsByOfferSortedByScore(Long offerId) {
         return applicationRepository.findByOfferIdOrderByScoreDesc(offerId).stream()
                 .map(applicationMapper::toResponse).collect(Collectors.toList());
@@ -89,6 +90,7 @@ public class ApplicationService {
         return applicationMapper.toResponse(applicationRepository.save(application));
     }
 
+    @Transactional(readOnly = true)
     public java.util.Map<String, Object> getMatchAnalysis(Long applicationId, Integer yearsOfExperience) {
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Candidature non trouvée: " + applicationId));
@@ -98,6 +100,10 @@ public class ApplicationService {
         }
         if (offer == null) {
             return java.util.Map.of("error", "Offre non trouvée");
+        }
+        // Force l'initialisation de requiredSkills pour éviter LazyInitializationException
+        if (offer.getRequiredSkills() != null) {
+            offer.getRequiredSkills().size();
         }
         return scoringService.analyzeMatch(application, offer, yearsOfExperience);
     }

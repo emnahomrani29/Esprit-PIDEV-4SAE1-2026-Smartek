@@ -6,6 +6,8 @@ import com.smartek.learningmicroservice.entity.LearningPath;
 import com.smartek.learningmicroservice.entity.LearningPathStatus;
 import com.smartek.learningmicroservice.repository.LearningPathRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,36 +24,35 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("LearningPathService - Tests unitaires")
 class LearningPathServiceTest {
 
-    @Mock
-    private LearningPathRepository pathRepository;
+    @Mock private LearningPathRepository pathRepository;
 
-    @InjectMocks
-    private LearningPathService service;
+    @InjectMocks private LearningPathService learningPathService;
 
-    private LearningPath path;
-    private LearningPathRequest request;
+    private LearningPath samplePath;
+    private LearningPathRequest sampleRequest;
 
     @BeforeEach
     void setUp() {
-        path = LearningPath.builder()
+        samplePath = LearningPath.builder()
                 .pathId(1L)
-                .title("Spring Boot Mastery")
-                .description("Learn Spring Boot from scratch")
+                .title("Parcours Java Backend")
+                .description("Maîtriser Spring Boot et les microservices")
                 .learnerId(5L)
-                .learnerName("Bob Martin")
+                .learnerName("Alice Dupont")
                 .status(LearningPathStatus.EN_COURS)
                 .startDate(LocalDate.of(2026, 1, 1))
                 .endDate(LocalDate.of(2026, 6, 30))
                 .progress(40)
                 .build();
 
-        request = new LearningPathRequest(
-                "Spring Boot Mastery",
-                "Learn Spring Boot from scratch",
+        sampleRequest = new LearningPathRequest(
+                "Parcours Java Backend",
+                "Maîtriser Spring Boot et les microservices",
                 5L,
-                "Bob Martin",
+                "Alice Dupont",
                 LearningPathStatus.EN_COURS,
                 LocalDate.of(2026, 1, 1),
                 LocalDate.of(2026, 6, 30),
@@ -58,147 +60,248 @@ class LearningPathServiceTest {
         );
     }
 
-    // ===== createPath =====
+    // ─────────────────────────────────────────────────────────────────────────
+    // createPath
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("createPath()")
+    class CreatePath {
 
-    @Test
-    void createPath_success() {
-        when(pathRepository.existsByLearnerIdAndTitle(5L, "Spring Boot Mastery")).thenReturn(false);
-        when(pathRepository.save(any())).thenReturn(path);
+        @Test
+        @DisplayName("Doit créer un parcours avec succès")
+        void shouldCreatePathSuccessfully() {
+            when(pathRepository.existsByLearnerIdAndTitle(5L, "Parcours Java Backend")).thenReturn(false);
+            when(pathRepository.save(any(LearningPath.class))).thenReturn(samplePath);
 
-        LearningPathResponse response = service.createPath(request);
+            LearningPathResponse result = learningPathService.createPath(sampleRequest);
 
-        assertThat(response).isNotNull();
-        assertThat(response.getTitle()).isEqualTo("Spring Boot Mastery");
-        assertThat(response.getLearnerId()).isEqualTo(5L);
-        verify(pathRepository).save(any(LearningPath.class));
+            assertThat(result).isNotNull();
+            assertThat(result.getTitle()).isEqualTo("Parcours Java Backend");
+            assertThat(result.getLearnerId()).isEqualTo(5L);
+            assertThat(result.getProgress()).isEqualTo(40);
+            verify(pathRepository).save(any(LearningPath.class));
+        }
+
+        @Test
+        @DisplayName("Doit lever RuntimeException si un parcours avec ce titre existe déjà")
+        void shouldThrowWhenDuplicateTitle() {
+            when(pathRepository.existsByLearnerIdAndTitle(5L, "Parcours Java Backend")).thenReturn(true);
+
+            assertThatThrownBy(() -> learningPathService.createPath(sampleRequest))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("existe déjà");
+
+            verify(pathRepository, never()).save(any());
+        }
     }
 
-    @Test
-    void createPath_duplicateTitle_throwsException() {
-        when(pathRepository.existsByLearnerIdAndTitle(5L, "Spring Boot Mastery")).thenReturn(true);
+    // ─────────────────────────────────────────────────────────────────────────
+    // getAllPathsByLearner
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("getAllPathsByLearner()")
+    class GetAllPathsByLearner {
 
-        assertThatThrownBy(() -> service.createPath(request))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("existe déjà");
+        @Test
+        @DisplayName("Doit retourner les parcours d'un apprenant")
+        void shouldReturnPathsByLearner() {
+            when(pathRepository.findByLearnerIdOrderByStartDateDesc(5L)).thenReturn(List.of(samplePath));
 
-        verify(pathRepository, never()).save(any());
+            List<LearningPathResponse> result = learningPathService.getAllPathsByLearner(5L);
+
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getLearnerId()).isEqualTo(5L);
+        }
+
+        @Test
+        @DisplayName("Doit retourner une liste vide si aucun parcours")
+        void shouldReturnEmptyListWhenNoPaths() {
+            when(pathRepository.findByLearnerIdOrderByStartDateDesc(99L)).thenReturn(Collections.emptyList());
+
+            List<LearningPathResponse> result = learningPathService.getAllPathsByLearner(99L);
+
+            assertThat(result).isEmpty();
+        }
     }
 
-    // ===== getPathById =====
+    // ─────────────────────────────────────────────────────────────────────────
+    // getPathById
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("getPathById()")
+    class GetPathById {
 
-    @Test
-    void getPathById_found() {
-        when(pathRepository.findById(1L)).thenReturn(Optional.of(path));
+        @Test
+        @DisplayName("Doit retourner le parcours par ID")
+        void shouldReturnPathById() {
+            when(pathRepository.findById(1L)).thenReturn(Optional.of(samplePath));
 
-        LearningPathResponse response = service.getPathById(1L);
+            LearningPathResponse result = learningPathService.getPathById(1L);
 
-        assertThat(response.getPathId()).isEqualTo(1L);
-        assertThat(response.getStatus()).isEqualTo(LearningPathStatus.EN_COURS);
+            assertThat(result).isNotNull();
+            assertThat(result.getPathId()).isEqualTo(1L);
+            assertThat(result.getTitle()).isEqualTo("Parcours Java Backend");
+        }
+
+        @Test
+        @DisplayName("Doit lever RuntimeException si le parcours n'existe pas")
+        void shouldThrowWhenPathNotFound() {
+            when(pathRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> learningPathService.getPathById(99L))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("non trouvé");
+        }
     }
 
-    @Test
-    void getPathById_notFound_throwsException() {
-        when(pathRepository.findById(99L)).thenReturn(Optional.empty());
+    // ─────────────────────────────────────────────────────────────────────────
+    // getPathsByStatus
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("getPathsByStatus()")
+    class GetPathsByStatus {
 
-        assertThatThrownBy(() -> service.getPathById(99L))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("non trouvé");
+        @Test
+        @DisplayName("Doit retourner les parcours filtrés par statut EN_COURS")
+        void shouldReturnPathsByStatus() {
+            when(pathRepository.findByStatus(LearningPathStatus.EN_COURS)).thenReturn(List.of(samplePath));
+
+            List<LearningPathResponse> result = learningPathService.getPathsByStatus(LearningPathStatus.EN_COURS);
+
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getStatus()).isEqualTo(LearningPathStatus.EN_COURS);
+        }
+
+        @Test
+        @DisplayName("Doit retourner une liste vide si aucun parcours avec ce statut")
+        void shouldReturnEmptyListForUnknownStatus() {
+            when(pathRepository.findByStatus(LearningPathStatus.TERMINE)).thenReturn(Collections.emptyList());
+
+            List<LearningPathResponse> result = learningPathService.getPathsByStatus(LearningPathStatus.TERMINE);
+
+            assertThat(result).isEmpty();
+        }
     }
 
-    // ===== getAllPathsByLearner =====
+    // ─────────────────────────────────────────────────────────────────────────
+    // getPathsByLearnerAndStatus
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("getPathsByLearnerAndStatus()")
+    class GetPathsByLearnerAndStatus {
 
-    @Test
-    void getAllPathsByLearner_returnsList() {
-        when(pathRepository.findByLearnerIdOrderByStartDateDesc(5L)).thenReturn(List.of(path));
+        @Test
+        @DisplayName("Doit retourner les parcours d'un apprenant filtrés par statut")
+        void shouldReturnPathsByLearnerAndStatus() {
+            when(pathRepository.findByLearnerIdAndStatus(5L, LearningPathStatus.EN_COURS))
+                    .thenReturn(List.of(samplePath));
 
-        List<LearningPathResponse> result = service.getAllPathsByLearner(5L);
+            List<LearningPathResponse> result = learningPathService.getPathsByLearnerAndStatus(
+                    5L, LearningPathStatus.EN_COURS);
 
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getLearnerName()).isEqualTo("Bob Martin");
+            assertThat(result).hasSize(1);
+        }
     }
 
-    @Test
-    void getAllPathsByLearner_empty_returnsEmptyList() {
-        when(pathRepository.findByLearnerIdOrderByStartDateDesc(99L)).thenReturn(List.of());
+    // ─────────────────────────────────────────────────────────────────────────
+    // updatePath
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("updatePath()")
+    class UpdatePath {
 
-        List<LearningPathResponse> result = service.getAllPathsByLearner(99L);
+        @Test
+        @DisplayName("Doit mettre à jour un parcours existant")
+        void shouldUpdatePathSuccessfully() {
+            when(pathRepository.findById(1L)).thenReturn(Optional.of(samplePath));
+            when(pathRepository.existsByLearnerIdAndTitleAndPathIdNot(5L, "Parcours Java Backend", 1L))
+                    .thenReturn(false);
+            when(pathRepository.save(any(LearningPath.class))).thenReturn(samplePath);
 
-        assertThat(result).isEmpty();
+            LearningPathResponse result = learningPathService.updatePath(1L, sampleRequest);
+
+            assertThat(result).isNotNull();
+            verify(pathRepository).save(any(LearningPath.class));
+        }
+
+        @Test
+        @DisplayName("Doit lever RuntimeException si le parcours à mettre à jour n'existe pas")
+        void shouldThrowWhenPathNotFound() {
+            when(pathRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> learningPathService.updatePath(99L, sampleRequest))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("non trouvé");
+        }
+
+        @Test
+        @DisplayName("Doit lever RuntimeException si le nouveau titre est déjà utilisé par un autre parcours")
+        void shouldThrowWhenTitleAlreadyUsedByAnotherPath() {
+            when(pathRepository.findById(1L)).thenReturn(Optional.of(samplePath));
+            when(pathRepository.existsByLearnerIdAndTitleAndPathIdNot(5L, "Parcours Java Backend", 1L))
+                    .thenReturn(true);
+
+            assertThatThrownBy(() -> learningPathService.updatePath(1L, sampleRequest))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("existe déjà");
+        }
     }
 
-    // ===== getPathsByStatus =====
+    // ─────────────────────────────────────────────────────────────────────────
+    // deletePath
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("deletePath()")
+    class DeletePath {
 
-    @Test
-    void getPathsByStatus_returnsFiltered() {
-        when(pathRepository.findByStatus(LearningPathStatus.EN_COURS)).thenReturn(List.of(path));
+        @Test
+        @DisplayName("Doit supprimer un parcours existant")
+        void shouldDeletePathSuccessfully() {
+            when(pathRepository.existsById(1L)).thenReturn(true);
 
-        List<LearningPathResponse> result = service.getPathsByStatus(LearningPathStatus.EN_COURS);
+            learningPathService.deletePath(1L);
 
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getStatus()).isEqualTo(LearningPathStatus.EN_COURS);
+            verify(pathRepository).deleteById(1L);
+        }
+
+        @Test
+        @DisplayName("Doit lever RuntimeException si le parcours n'existe pas")
+        void shouldThrowWhenPathNotFound() {
+            when(pathRepository.existsById(99L)).thenReturn(false);
+
+            assertThatThrownBy(() -> learningPathService.deletePath(99L))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("non trouvé");
+
+            verify(pathRepository, never()).deleteById(any());
+        }
     }
 
-    // ===== updatePath =====
+    // ─────────────────────────────────────────────────────────────────────────
+    // getAllPaths
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("getAllPaths()")
+    class GetAllPaths {
 
-    @Test
-    void updatePath_success() {
-        when(pathRepository.findById(1L)).thenReturn(Optional.of(path));
-        when(pathRepository.existsByLearnerIdAndTitleAndPathIdNot(5L, "Spring Boot Mastery", 1L)).thenReturn(false);
-        when(pathRepository.save(any())).thenReturn(path);
+        @Test
+        @DisplayName("Doit retourner tous les parcours")
+        void shouldReturnAllPaths() {
+            when(pathRepository.findAll()).thenReturn(List.of(samplePath));
 
-        LearningPathResponse response = service.updatePath(1L, request);
+            List<LearningPathResponse> result = learningPathService.getAllPaths();
 
-        assertThat(response).isNotNull();
-        verify(pathRepository).save(path);
-    }
+            assertThat(result).hasSize(1);
+        }
 
-    @Test
-    void updatePath_notFound_throwsException() {
-        when(pathRepository.findById(99L)).thenReturn(Optional.empty());
+        @Test
+        @DisplayName("Doit retourner une liste vide si aucun parcours")
+        void shouldReturnEmptyListWhenNoPaths() {
+            when(pathRepository.findAll()).thenReturn(Collections.emptyList());
 
-        assertThatThrownBy(() -> service.updatePath(99L, request))
-                .isInstanceOf(RuntimeException.class);
-    }
+            List<LearningPathResponse> result = learningPathService.getAllPaths();
 
-    @Test
-    void updatePath_duplicateTitle_throwsException() {
-        when(pathRepository.findById(1L)).thenReturn(Optional.of(path));
-        when(pathRepository.existsByLearnerIdAndTitleAndPathIdNot(5L, "Spring Boot Mastery", 1L)).thenReturn(true);
-
-        assertThatThrownBy(() -> service.updatePath(1L, request))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("existe déjà");
-    }
-
-    // ===== deletePath =====
-
-    @Test
-    void deletePath_success() {
-        when(pathRepository.existsById(1L)).thenReturn(true);
-
-        service.deletePath(1L);
-
-        verify(pathRepository).deleteById(1L);
-    }
-
-    @Test
-    void deletePath_notFound_throwsException() {
-        when(pathRepository.existsById(99L)).thenReturn(false);
-
-        assertThatThrownBy(() -> service.deletePath(99L))
-                .isInstanceOf(RuntimeException.class);
-    }
-
-    // ===== getPathsByLearnerAndStatus =====
-
-    @Test
-    void getPathsByLearnerAndStatus_returnsFiltered() {
-        when(pathRepository.findByLearnerIdAndStatus(5L, LearningPathStatus.EN_COURS))
-                .thenReturn(List.of(path));
-
-        List<LearningPathResponse> result = service.getPathsByLearnerAndStatus(5L, LearningPathStatus.EN_COURS);
-
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getProgress()).isEqualTo(40);
+            assertThat(result).isEmpty();
+        }
     }
 }

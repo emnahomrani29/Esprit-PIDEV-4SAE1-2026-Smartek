@@ -3,7 +3,7 @@ spring:
     name: offers-service
 
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/offers_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/smartek_offers?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
     username: ${DB_USER:root}
     password: ${DB_PASS:}
     driver-class-name: com.mysql.cj.jdbc.Driver

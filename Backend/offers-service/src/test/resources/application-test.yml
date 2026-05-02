@@ -1,6 +1,9 @@
 spring:
+  application:
+    name: offers-service-test
+
   datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -9,27 +12,31 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: false
+    open-in-view: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
 
-  # Désactiver Redis pour les tests
-  cache:
-    type: simple
-
-  # Désactiver Eureka pour les tests
   cloud:
     config:
       enabled: false
+    openfeign:
+      client:
+        config:
+          default:
+            connectTimeout: 1000
+            readTimeout: 1000
 
 eureka:
   client:
     enabled: false
+    register-with-eureka: false
+    fetch-registry: false
 
 jwt:
-  secret: test-secret-key-for-jwt-token-generation-2024-very-secure-test
+  secret: smartek-secret-key-for-jwt-token-generation-2024-very-secure
 
 logging:
   level:
-    com.smartek: WARN
+    com.smartek: DEBUG
     org.springframework.security: WARN

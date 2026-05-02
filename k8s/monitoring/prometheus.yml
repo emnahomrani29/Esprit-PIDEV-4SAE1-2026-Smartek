@@ -1,0 +1,173 @@
+---
+# ─────────────────────────────────────────────────────────────
+# ConfigMap — prometheus.yml pour Kubernetes
+# Utilise la découverte automatique des pods annotés
+# ─────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: smartek
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    scrape_configs:
+      # Prometheus lui-même
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+
+      # Découverte automatique des pods annotés dans le namespace smartek
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - smartek
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: "true"
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: replace
+            target_label: application
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: pod
+
+---
+# ─────────────────────────────────────────────────────────────
+# ClusterRole — accès aux pods pour la découverte
+# ─────────────────────────────────────────────────────────────
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus
+rules:
+  - apiGroups: [""]
+    resources:
+      - nodes
+      - nodes/proxy
+      - services
+      - endpoints
+      - pods
+    verbs: ["get", "list", "watch"]
+  - nonResourceURLs: ["/metrics"]
+    verbs: ["get"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: smartek
+
+---
+# ─────────────────────────────────────────────────────────────
+# PersistentVolumeClaim — stockage Prometheus
+# ─────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-pvc
+  namespace: smartek
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+# ─────────────────────────────────────────────────────────────
+# Deployment Prometheus
+# ─────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: smartek
+  labels:
+    app: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.51.2
+          ports:
+            - containerPort: 9090
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus"
+            - "--storage.tsdb.retention.time=15d"
+            - "--web.enable-lifecycle"
+          volumeMounts:
+            - name: prometheus-config
+              mountPath: /etc/prometheus
+            - name: prometheus-storage
+              mountPath: /prometheus
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "300m"
+      volumes:
+        - name: prometheus-config
+          configMap:
+            name: prometheus-config
+        - name: prometheus-storage
+          persistentVolumeClaim:
+            claimName: prometheus-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: smartek
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - port: 9090
+      targetPort: 9090
+      nodePort: 30090
+  type: NodePort

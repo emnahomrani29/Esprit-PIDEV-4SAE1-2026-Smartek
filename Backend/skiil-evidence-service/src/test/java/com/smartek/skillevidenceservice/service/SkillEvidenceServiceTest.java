@@ -4,9 +4,12 @@ import com.smartek.skillevidenceservice.dto.SkillEvidenceRequest;
 import com.smartek.skillevidenceservice.dto.SkillEvidenceResponse;
 import com.smartek.skillevidenceservice.entity.EvidenceCategory;
 import com.smartek.skillevidenceservice.entity.EvidenceStatus;
+import com.smartek.skillevidenceservice.entity.NotificationType;
 import com.smartek.skillevidenceservice.entity.SkillEvidence;
 import com.smartek.skillevidenceservice.repository.SkillEvidenceRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,246 +26,321 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("SkillEvidenceService - Tests unitaires")
 class SkillEvidenceServiceTest {
 
-    @Mock
-    private SkillEvidenceRepository evidenceRepository;
+    @Mock private SkillEvidenceRepository evidenceRepository;
+    @Mock private NotificationService notificationService;
 
-    @Mock
-    private NotificationService notificationService;
+    @InjectMocks private SkillEvidenceService skillEvidenceService;
 
-    @InjectMocks
-    private SkillEvidenceService service;
-
-    private SkillEvidence evidence;
-    private SkillEvidenceRequest request;
+    private SkillEvidence sampleEvidence;
+    private SkillEvidenceRequest sampleRequest;
 
     @BeforeEach
     void setUp() {
-        evidence = SkillEvidence.builder()
+        sampleEvidence = SkillEvidence.builder()
                 .evidenceId(1)
-                .title("Java Certification")
-                .fileUrl("http://example.com/cert.pdf")
-                .description("Oracle Java SE 17")
-                .learnerId(10L)
+                .title("Certificat Spring Boot")
+                .fileUrl("https://example.com/cert.pdf")
+                .description("Certification obtenue")
+                .learnerId(5L)
                 .learnerName("Alice Dupont")
-                .learnerEmail("alice@example.com")
+                .learnerEmail("alice@smartek.com")
                 .uploadDate(LocalDate.now())
                 .status(EvidenceStatus.PENDING)
                 .category(EvidenceCategory.PROGRAMMING)
                 .build();
 
-        request = new SkillEvidenceRequest(
-                "Java Certification",
-                "http://example.com/cert.pdf",
-                "Oracle Java SE 17",
-                10L,
+        sampleRequest = new SkillEvidenceRequest(
+                "Certificat Spring Boot",
+                "https://example.com/cert.pdf",
+                "Certification obtenue",
+                5L,
                 "Alice Dupont",
-                "alice@example.com",
+                "alice@smartek.com",
                 EvidenceCategory.PROGRAMMING
         );
     }
 
-    // ===== createEvidence =====
+    // ─────────────────────────────────────────────────────────────────────────
+    // createEvidence
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("createEvidence()")
+    class CreateEvidence {
 
-    @Test
-    void createEvidence_success() {
-        when(evidenceRepository.existsByLearnerIdAndTitle(10L, "Java Certification")).thenReturn(false);
-        when(evidenceRepository.save(any())).thenReturn(evidence);
+        @Test
+        @DisplayName("Doit créer une preuve avec succès")
+        void shouldCreateEvidenceSuccessfully() {
+            when(evidenceRepository.existsByLearnerIdAndTitle(5L, "Certificat Spring Boot")).thenReturn(false);
+            when(evidenceRepository.save(any(SkillEvidence.class))).thenReturn(sampleEvidence);
 
-        SkillEvidenceResponse response = service.createEvidence(request);
+            SkillEvidenceResponse result = skillEvidenceService.createEvidence(sampleRequest);
 
-        assertThat(response).isNotNull();
-        assertThat(response.getTitle()).isEqualTo("Java Certification");
-        assertThat(response.getLearnerId()).isEqualTo(10L);
-        verify(evidenceRepository).save(any(SkillEvidence.class));
+            assertThat(result).isNotNull();
+            assertThat(result.getTitle()).isEqualTo("Certificat Spring Boot");
+            assertThat(result.getLearnerId()).isEqualTo(5L);
+            verify(evidenceRepository).save(any(SkillEvidence.class));
+        }
+
+        @Test
+        @DisplayName("Doit lever RuntimeException si une preuve avec ce titre existe déjà")
+        void shouldThrowWhenDuplicateTitle() {
+            when(evidenceRepository.existsByLearnerIdAndTitle(5L, "Certificat Spring Boot")).thenReturn(true);
+
+            assertThatThrownBy(() -> skillEvidenceService.createEvidence(sampleRequest))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("existe déjà");
+
+            verify(evidenceRepository, never()).save(any());
+        }
     }
 
-    @Test
-    void createEvidence_duplicateTitle_throwsException() {
-        when(evidenceRepository.existsByLearnerIdAndTitle(10L, "Java Certification")).thenReturn(true);
+    // ─────────────────────────────────────────────────────────────────────────
+    // getAllEvidenceByLearner
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("getAllEvidenceByLearner()")
+    class GetAllEvidenceByLearner {
 
-        assertThatThrownBy(() -> service.createEvidence(request))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("existe déjà");
+        @Test
+        @DisplayName("Doit retourner les preuves d'un apprenant")
+        void shouldReturnEvidenceByLearner() {
+            when(evidenceRepository.findByLearnerIdOrderByUploadDateDesc(5L))
+                    .thenReturn(List.of(sampleEvidence));
 
-        verify(evidenceRepository, never()).save(any());
+            List<SkillEvidenceResponse> result = skillEvidenceService.getAllEvidenceByLearner(5L);
+
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getLearnerId()).isEqualTo(5L);
+        }
+
+        @Test
+        @DisplayName("Doit retourner une liste vide si aucune preuve")
+        void shouldReturnEmptyListWhenNoEvidence() {
+            when(evidenceRepository.findByLearnerIdOrderByUploadDateDesc(99L))
+                    .thenReturn(Collections.emptyList());
+
+            List<SkillEvidenceResponse> result = skillEvidenceService.getAllEvidenceByLearner(99L);
+
+            assertThat(result).isEmpty();
+        }
     }
 
-    // ===== getEvidenceById =====
+    // ─────────────────────────────────────────────────────────────────────────
+    // getEvidenceById
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("getEvidenceById()")
+    class GetEvidenceById {
 
-    @Test
-    void getEvidenceById_found() {
-        when(evidenceRepository.findById(1)).thenReturn(Optional.of(evidence));
+        @Test
+        @DisplayName("Doit retourner la preuve par ID")
+        void shouldReturnEvidenceById() {
+            when(evidenceRepository.findById(1)).thenReturn(Optional.of(sampleEvidence));
 
-        SkillEvidenceResponse response = service.getEvidenceById(1);
+            SkillEvidenceResponse result = skillEvidenceService.getEvidenceById(1);
 
-        assertThat(response.getEvidenceId()).isEqualTo(1);
-        assertThat(response.getStatus()).isEqualTo(EvidenceStatus.PENDING);
+            assertThat(result).isNotNull();
+            assertThat(result.getTitle()).isEqualTo("Certificat Spring Boot");
+        }
+
+        @Test
+        @DisplayName("Doit lever RuntimeException si la preuve n'existe pas")
+        void shouldThrowWhenEvidenceNotFound() {
+            when(evidenceRepository.findById(99)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> skillEvidenceService.getEvidenceById(99))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("non trouvée");
+        }
     }
 
-    @Test
-    void getEvidenceById_notFound_throwsException() {
-        when(evidenceRepository.findById(99)).thenReturn(Optional.empty());
+    // ─────────────────────────────────────────────────────────────────────────
+    // deleteEvidence
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("deleteEvidence()")
+    class DeleteEvidence {
 
-        assertThatThrownBy(() -> service.getEvidenceById(99))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("non trouvée");
+        @Test
+        @DisplayName("Doit supprimer une preuve existante")
+        void shouldDeleteEvidenceSuccessfully() {
+            when(evidenceRepository.existsById(1)).thenReturn(true);
+
+            skillEvidenceService.deleteEvidence(1);
+
+            verify(evidenceRepository).deleteById(1);
+        }
+
+        @Test
+        @DisplayName("Doit lever RuntimeException si la preuve n'existe pas")
+        void shouldThrowWhenEvidenceNotFound() {
+            when(evidenceRepository.existsById(99)).thenReturn(false);
+
+            assertThatThrownBy(() -> skillEvidenceService.deleteEvidence(99))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("non trouvée");
+
+            verify(evidenceRepository, never()).deleteById(any());
+        }
     }
 
-    // ===== getAllEvidenceByLearner =====
+    // ─────────────────────────────────────────────────────────────────────────
+    // approveEvidence - logique métier
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("approveEvidence() - Validation métier")
+    class ApproveEvidence {
 
-    @Test
-    void getAllEvidenceByLearner_returnsList() {
-        when(evidenceRepository.findByLearnerIdOrderByUploadDateDesc(10L))
-                .thenReturn(List.of(evidence));
+        @Test
+        @DisplayName("Doit approuver une preuve avec un score valide")
+        void shouldApproveEvidenceWithValidScore() {
+            when(evidenceRepository.findById(1)).thenReturn(Optional.of(sampleEvidence));
+            when(evidenceRepository.save(any(SkillEvidence.class))).thenReturn(sampleEvidence);
 
-        List<SkillEvidenceResponse> result = service.getAllEvidenceByLearner(10L);
+            SkillEvidence result = skillEvidenceService.approveEvidence(1, 85, 10L, "Excellent travail");
 
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getLearnerName()).isEqualTo("Alice Dupont");
+            assertThat(result).isNotNull();
+            verify(evidenceRepository).save(any(SkillEvidence.class));
+            verify(notificationService).createNotification(
+                    eq(5L), eq(1), anyString(), eq(NotificationType.APPROVAL));
+        }
+
+        @Test
+        @DisplayName("Doit lever IllegalArgumentException si le score est null")
+        void shouldThrowWhenScoreIsNull() {
+            assertThatThrownBy(() -> skillEvidenceService.approveEvidence(1, null, 10L, "Commentaire"))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Score");
+        }
+
+        @Test
+        @DisplayName("Doit lever IllegalArgumentException si le score est hors limites (> 100)")
+        void shouldThrowWhenScoreExceedsMax() {
+            assertThatThrownBy(() -> skillEvidenceService.approveEvidence(1, 101, 10L, "Commentaire"))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Score");
+        }
+
+        @Test
+        @DisplayName("Doit lever IllegalArgumentException si le score est négatif")
+        void shouldThrowWhenScoreIsNegative() {
+            assertThatThrownBy(() -> skillEvidenceService.approveEvidence(1, -1, 10L, "Commentaire"))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Score");
+        }
     }
 
-    // ===== updateEvidence =====
+    // ─────────────────────────────────────────────────────────────────────────
+    // rejectEvidence - logique métier
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("rejectEvidence() - Validation métier")
+    class RejectEvidence {
 
-    @Test
-    void updateEvidence_success() {
-        when(evidenceRepository.findById(1)).thenReturn(Optional.of(evidence));
-        when(evidenceRepository.existsByLearnerIdAndTitleAndEvidenceIdNot(10L, "Java Certification", 1)).thenReturn(false);
-        when(evidenceRepository.save(any())).thenReturn(evidence);
+        @Test
+        @DisplayName("Doit rejeter une preuve avec un commentaire")
+        void shouldRejectEvidenceWithComment() {
+            when(evidenceRepository.findById(1)).thenReturn(Optional.of(sampleEvidence));
+            when(evidenceRepository.save(any(SkillEvidence.class))).thenReturn(sampleEvidence);
 
-        SkillEvidenceResponse response = service.updateEvidence(1, request);
+            SkillEvidence result = skillEvidenceService.rejectEvidence(1, "Preuve insuffisante", 10L);
 
-        assertThat(response).isNotNull();
-        verify(evidenceRepository).save(evidence);
+            assertThat(result).isNotNull();
+            verify(notificationService).createNotification(
+                    eq(5L), eq(1), anyString(), eq(NotificationType.REJECTION));
+        }
+
+        @Test
+        @DisplayName("Doit lever IllegalArgumentException si le commentaire est vide")
+        void shouldThrowWhenCommentIsEmpty() {
+            assertThatThrownBy(() -> skillEvidenceService.rejectEvidence(1, "", 10L))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("comment");
+        }
+
+        @Test
+        @DisplayName("Doit lever IllegalArgumentException si le commentaire est null")
+        void shouldThrowWhenCommentIsNull() {
+            assertThatThrownBy(() -> skillEvidenceService.rejectEvidence(1, null, 10L))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("comment");
+        }
     }
 
-    @Test
-    void updateEvidence_notFound_throwsException() {
-        when(evidenceRepository.findById(99)).thenReturn(Optional.empty());
+    // ─────────────────────────────────────────────────────────────────────────
+    // reviewEvidence - validation du score pour APPROVED
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("reviewEvidence() - Validation selon statut")
+    class ReviewEvidence {
 
-        assertThatThrownBy(() -> service.updateEvidence(99, request))
-                .isInstanceOf(RuntimeException.class);
+        @Test
+        @DisplayName("Doit lever IllegalArgumentException si APPROVED sans score")
+        void shouldThrowWhenApprovingWithoutScore() {
+            when(evidenceRepository.findById(1)).thenReturn(Optional.of(sampleEvidence));
+
+            assertThatThrownBy(() ->
+                    skillEvidenceService.reviewEvidence(1, EvidenceStatus.APPROVED, null, "Commentaire", 10L))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Score");
+        }
+
+        @Test
+        @DisplayName("Doit lever IllegalArgumentException si REJECTED sans commentaire")
+        void shouldThrowWhenRejectingWithoutComment() {
+            when(evidenceRepository.findById(1)).thenReturn(Optional.of(sampleEvidence));
+
+            assertThatThrownBy(() ->
+                    skillEvidenceService.reviewEvidence(1, EvidenceStatus.REJECTED, null, "", 10L))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Comment");
+        }
+
+        @Test
+        @DisplayName("Doit mettre à jour le statut PENDING sans contrainte")
+        void shouldUpdateToPendingWithoutConstraints() {
+            when(evidenceRepository.findById(1)).thenReturn(Optional.of(sampleEvidence));
+            when(evidenceRepository.save(any(SkillEvidence.class))).thenReturn(sampleEvidence);
+
+            SkillEvidence result = skillEvidenceService.reviewEvidence(
+                    1, EvidenceStatus.PENDING, null, null, 10L);
+
+            assertThat(result).isNotNull();
+            verify(evidenceRepository).save(any(SkillEvidence.class));
+        }
     }
 
-    // ===== deleteEvidence =====
+    // ─────────────────────────────────────────────────────────────────────────
+    // getEvidencesByStatus
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("getEvidencesByStatus()")
+    class GetEvidencesByStatus {
 
-    @Test
-    void deleteEvidence_success() {
-        when(evidenceRepository.existsById(1)).thenReturn(true);
+        @Test
+        @DisplayName("Doit retourner les preuves filtrées par statut PENDING")
+        void shouldReturnEvidencesByStatus() {
+            when(evidenceRepository.findByStatus(EvidenceStatus.PENDING))
+                    .thenReturn(List.of(sampleEvidence));
 
-        service.deleteEvidence(1);
+            List<SkillEvidenceResponse> result = skillEvidenceService.getEvidencesByStatus(EvidenceStatus.PENDING);
 
-        verify(evidenceRepository).deleteById(1);
-    }
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getStatus()).isEqualTo(EvidenceStatus.PENDING);
+        }
 
-    @Test
-    void deleteEvidence_notFound_throwsException() {
-        when(evidenceRepository.existsById(99)).thenReturn(false);
+        @Test
+        @DisplayName("Doit retourner une liste vide si aucune preuve avec ce statut")
+        void shouldReturnEmptyListWhenNoEvidenceWithStatus() {
+            when(evidenceRepository.findByStatus(EvidenceStatus.APPROVED))
+                    .thenReturn(Collections.emptyList());
 
-        assertThatThrownBy(() -> service.deleteEvidence(99))
-                .isInstanceOf(RuntimeException.class);
-    }
+            List<SkillEvidenceResponse> result = skillEvidenceService.getEvidencesByStatus(EvidenceStatus.APPROVED);
 
-    // ===== approveEvidence =====
-
-    @Test
-    void approveEvidence_success() {
-        when(evidenceRepository.findById(1)).thenReturn(Optional.of(evidence));
-        when(evidenceRepository.save(any())).thenReturn(evidence);
-
-        SkillEvidence result = service.approveEvidence(1, 85, 1L, "Bon travail");
-
-        assertThat(result.getStatus()).isEqualTo(EvidenceStatus.APPROVED);
-        assertThat(result.getScore()).isEqualTo(85);
-        verify(notificationService).createNotification(eq(10L), eq(1), anyString(), any());
-    }
-
-    @Test
-    void approveEvidence_invalidScore_throwsException() {
-        assertThatThrownBy(() -> service.approveEvidence(1, 150, 1L, ""))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Score must be between 0 and 100");
-    }
-
-    @Test
-    void approveEvidence_nullScore_throwsException() {
-        assertThatThrownBy(() -> service.approveEvidence(1, null, 1L, ""))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    // ===== rejectEvidence =====
-
-    @Test
-    void rejectEvidence_success() {
-        when(evidenceRepository.findById(1)).thenReturn(Optional.of(evidence));
-        when(evidenceRepository.save(any())).thenReturn(evidence);
-
-        SkillEvidence result = service.rejectEvidence(1, "Preuve insuffisante", 1L);
-
-        assertThat(result.getStatus()).isEqualTo(EvidenceStatus.REJECTED);
-        verify(notificationService).createNotification(eq(10L), eq(1), anyString(), any());
-    }
-
-    @Test
-    void rejectEvidence_emptyComment_throwsException() {
-        assertThatThrownBy(() -> service.rejectEvidence(1, "", 1L))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("required");
-    }
-
-    @Test
-    void rejectEvidence_nullComment_throwsException() {
-        assertThatThrownBy(() -> service.rejectEvidence(1, null, 1L))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    // ===== reviewEvidence =====
-
-    @Test
-    void reviewEvidence_approve_requiresScore() {
-        when(evidenceRepository.findById(1)).thenReturn(Optional.of(evidence));
-
-        assertThatThrownBy(() -> service.reviewEvidence(1, EvidenceStatus.APPROVED, null, null, 1L))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Score is required");
-    }
-
-    @Test
-    void reviewEvidence_reject_requiresComment() {
-        when(evidenceRepository.findById(1)).thenReturn(Optional.of(evidence));
-
-        assertThatThrownBy(() -> service.reviewEvidence(1, EvidenceStatus.REJECTED, null, "", 1L))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Comment is required");
-    }
-
-    // ===== getLearnerAnalytics =====
-
-    @Test
-    void getLearnerAnalytics_emptyList_returnsZeroCounts() {
-        when(evidenceRepository.findByLearnerIdOrderByUploadDateDesc(10L)).thenReturn(List.of());
-
-        var analytics = service.getLearnerAnalytics(10L);
-
-        assertThat(analytics.getTotalCount()).isEqualTo(0);
-        assertThat(analytics.getApprovedCount()).isEqualTo(0);
-        assertThat(analytics.getAverageScore()).isNull();
-    }
-
-    @Test
-    void getLearnerAnalytics_withApprovedEvidence_calculatesAverage() {
-        SkillEvidence approved = SkillEvidence.builder()
-                .evidenceId(2).title("Test").learnerId(10L).learnerName("Alice")
-                .learnerEmail("alice@example.com").uploadDate(LocalDate.now())
-                .status(EvidenceStatus.APPROVED).score(80).category(EvidenceCategory.OTHER)
-                .build();
-
-        when(evidenceRepository.findByLearnerIdOrderByUploadDateDesc(10L)).thenReturn(List.of(approved));
-
-        var analytics = service.getLearnerAnalytics(10L);
-
-        assertThat(analytics.getApprovedCount()).isEqualTo(1);
-        assertThat(analytics.getAverageScore()).isEqualTo(80.0);
+            assertThat(result).isEmpty();
+        }
     }
 }

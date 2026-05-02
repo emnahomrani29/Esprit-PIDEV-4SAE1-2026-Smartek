@@ -13,9 +13,9 @@ import com.smartek.certificationbadgeservice.repository.BadgeTemplateRepository;
 import com.smartek.certificationbadgeservice.repository.EarnedBadgeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -25,163 +25,198 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for EarnedBadgeService.
- * Covers: award, duplicate prevention, bulk operations.
- */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("EarnedBadgeService Unit Tests")
+@DisplayName("EarnedBadgeService - Tests unitaires")
 class EarnedBadgeServiceTest {
 
     @Mock private EarnedBadgeRepository earnedBadgeRepository;
     @Mock private BadgeTemplateRepository badgeTemplateRepository;
     @Mock private EarnedBadgeMapper earnedBadgeMapper;
 
-    @InjectMocks
-    private EarnedBadgeService earnedBadgeService;
+    @InjectMocks private EarnedBadgeService earnedBadgeService;
 
-    private BadgeTemplate template;
-    private EarnedBadge savedBadge;
-    private EarnedBadgeDTO badgeDTO;
+    private BadgeTemplate sampleTemplate;
+    private EarnedBadge sampleEarnedBadge;
+    private EarnedBadgeDTO sampleDTO;
+    private AwardBadgeRequestDTO sampleRequest;
 
     @BeforeEach
     void setUp() {
-        template = new BadgeTemplate();
-        template.setId(1L);
-        template.setName("Spring Expert Badge");
-        template.setMinimumScore(70.0);
+        sampleTemplate = new BadgeTemplate();
+        sampleTemplate.setId(1L);
+        sampleTemplate.setName("Spring Boot Expert");
+        sampleTemplate.setDescription("Badge pour les experts Spring Boot");
+        sampleTemplate.setMinimumScore(70.0);
 
-        savedBadge = new EarnedBadge();
-        savedBadge.setId(10L);
-        savedBadge.setBadgeTemplate(template);
-        savedBadge.setLearnerId(2L);
-        savedBadge.setAwardDate(LocalDate.now());
-        savedBadge.setAwardedBy(5L);
+        sampleEarnedBadge = new EarnedBadge();
+        sampleEarnedBadge.setId(1L);
+        sampleEarnedBadge.setBadgeTemplate(sampleTemplate);
+        sampleEarnedBadge.setLearnerId(5L);
+        sampleEarnedBadge.setAwardDate(LocalDate.now());
+        sampleEarnedBadge.setAwardedBy(10L);
+        sampleEarnedBadge.setVerificationId("abc-123");
 
-        badgeDTO = new EarnedBadgeDTO();
-        badgeDTO.setId(10L);
+        sampleDTO = new EarnedBadgeDTO();
+        sampleDTO.setId(1L);
+        sampleDTO.setLearnerId(5L);
+        sampleDTO.setAwardDate(LocalDate.now());
+        sampleDTO.setAwardedBy(10L);
+        sampleDTO.setVerificationId("abc-123");
+
+        sampleRequest = new AwardBadgeRequestDTO(1L, 5L, 10L);
     }
 
-    // ─── AWARD BADGE ──────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
+    // awardBadge
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("awardBadge()")
+    class AwardBadge {
 
-    @Test
-    @DisplayName("Award badge — valid request → success")
-    void awardBadge_validRequest_success() {
-        AwardBadgeRequestDTO request = buildRequest(1L, 2L, 5L);
+        @Test
+        @DisplayName("Doit attribuer un badge avec succès")
+        void shouldAwardBadgeSuccessfully() {
+            when(badgeTemplateRepository.findById(1L)).thenReturn(Optional.of(sampleTemplate));
+            when(earnedBadgeRepository.existsByBadgeTemplateIdAndLearnerId(1L, 5L)).thenReturn(false);
+            when(earnedBadgeRepository.save(any(EarnedBadge.class))).thenReturn(sampleEarnedBadge);
+            when(earnedBadgeMapper.toDTO(sampleEarnedBadge)).thenReturn(sampleDTO);
 
-        when(badgeTemplateRepository.findById(1L)).thenReturn(Optional.of(template));
-        when(earnedBadgeRepository.existsByBadgeTemplateIdAndLearnerId(1L, 2L)).thenReturn(false);
-        when(earnedBadgeRepository.save(any())).thenReturn(savedBadge);
-        when(earnedBadgeMapper.toDTO(savedBadge)).thenReturn(badgeDTO);
+            EarnedBadgeDTO result = earnedBadgeService.awardBadge(sampleRequest);
 
-        EarnedBadgeDTO result = earnedBadgeService.awardBadge(request);
+            assertThat(result).isNotNull();
+            assertThat(result.getLearnerId()).isEqualTo(5L);
+            assertThat(result.getVerificationId()).isEqualTo("abc-123");
+            verify(earnedBadgeRepository).save(any(EarnedBadge.class));
+        }
 
-        assertThat(result).isNotNull();
-        assertThat(result.getId()).isEqualTo(10L);
-        verify(earnedBadgeRepository).save(any());
+        @Test
+        @DisplayName("Doit lever ResourceNotFoundException si le template n'existe pas")
+        void shouldThrowWhenTemplateNotFound() {
+            when(badgeTemplateRepository.findById(99L)).thenReturn(Optional.empty());
+            sampleRequest.setBadgeTemplateId(99L);
+
+            assertThatThrownBy(() -> earnedBadgeService.awardBadge(sampleRequest))
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessageContaining("99");
+
+            verify(earnedBadgeRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Doit lever DuplicateAwardException si le badge a déjà été attribué")
+        void shouldThrowWhenBadgeAlreadyAwarded() {
+            when(badgeTemplateRepository.findById(1L)).thenReturn(Optional.of(sampleTemplate));
+            when(earnedBadgeRepository.existsByBadgeTemplateIdAndLearnerId(1L, 5L)).thenReturn(true);
+
+            assertThatThrownBy(() -> earnedBadgeService.awardBadge(sampleRequest))
+                    .isInstanceOf(DuplicateAwardException.class)
+                    .hasMessageContaining("already awarded");
+
+            verify(earnedBadgeRepository, never()).save(any());
+        }
     }
 
-    @Test
-    @DisplayName("Award badge — template not found → ResourceNotFoundException")
-    void awardBadge_templateNotFound_throwsException() {
-        AwardBadgeRequestDTO request = buildRequest(99L, 2L, 5L);
-        when(badgeTemplateRepository.findById(99L)).thenReturn(Optional.empty());
+    // ─────────────────────────────────────────────────────────────────────────
+    // findById
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("findById()")
+    class FindById {
 
-        assertThatThrownBy(() -> earnedBadgeService.awardBadge(request))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("99");
+        @Test
+        @DisplayName("Doit retourner le badge gagné par ID")
+        void shouldReturnEarnedBadgeById() {
+            when(earnedBadgeRepository.findById(1L)).thenReturn(Optional.of(sampleEarnedBadge));
+            when(earnedBadgeMapper.toDTO(sampleEarnedBadge)).thenReturn(sampleDTO);
 
-        verify(earnedBadgeRepository, never()).save(any());
+            EarnedBadgeDTO result = earnedBadgeService.findById(1L);
+
+            assertThat(result).isNotNull();
+            assertThat(result.getId()).isEqualTo(1L);
+        }
+
+        @Test
+        @DisplayName("Doit lever ResourceNotFoundException si le badge n'existe pas")
+        void shouldThrowWhenNotFound() {
+            when(earnedBadgeRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> earnedBadgeService.findById(99L))
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessageContaining("99");
+        }
     }
 
-    @Test
-    @DisplayName("Award badge — duplicate → DuplicateAwardException")
-    void awardBadge_duplicate_throwsDuplicateAwardException() {
-        AwardBadgeRequestDTO request = buildRequest(1L, 2L, 5L);
+    // ─────────────────────────────────────────────────────────────────────────
+    // findByLearnerId
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("findByLearnerId()")
+    class FindByLearnerId {
 
-        when(badgeTemplateRepository.findById(1L)).thenReturn(Optional.of(template));
-        when(earnedBadgeRepository.existsByBadgeTemplateIdAndLearnerId(1L, 2L)).thenReturn(true);
+        @Test
+        @DisplayName("Doit retourner les badges d'un apprenant")
+        void shouldReturnBadgesByLearner() {
+            when(earnedBadgeRepository.findByLearnerId(5L)).thenReturn(List.of(sampleEarnedBadge));
+            when(earnedBadgeMapper.toDTO(sampleEarnedBadge)).thenReturn(sampleDTO);
 
-        assertThatThrownBy(() -> earnedBadgeService.awardBadge(request))
-                .isInstanceOf(DuplicateAwardException.class)
-                .hasMessageContaining("already awarded");
+            List<EarnedBadgeDTO> result = earnedBadgeService.findByLearnerId(5L);
 
-        verify(earnedBadgeRepository, never()).save(any());
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getLearnerId()).isEqualTo(5L);
+        }
+
+        @Test
+        @DisplayName("Doit retourner une liste vide si l'apprenant n'a aucun badge")
+        void shouldReturnEmptyListWhenNoBadges() {
+            when(earnedBadgeRepository.findByLearnerId(99L)).thenReturn(List.of());
+
+            List<EarnedBadgeDTO> result = earnedBadgeService.findByLearnerId(99L);
+
+            assertThat(result).isEmpty();
+        }
     }
 
-    @Test
-    @DisplayName("Award badge — correct data mapped to entity")
-    void awardBadge_correctDataMappedToEntity() {
-        AwardBadgeRequestDTO request = buildRequest(1L, 42L, 7L);
+    // ─────────────────────────────────────────────────────────────────────────
+    // bulkAwardBadges
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("bulkAwardBadges() - Attribution en masse")
+    class BulkAwardBadges {
 
-        when(badgeTemplateRepository.findById(1L)).thenReturn(Optional.of(template));
-        when(earnedBadgeRepository.existsByBadgeTemplateIdAndLearnerId(1L, 42L)).thenReturn(false);
-        when(earnedBadgeRepository.save(any())).thenReturn(savedBadge);
-        when(earnedBadgeMapper.toDTO(any())).thenReturn(badgeDTO);
+        @Test
+        @DisplayName("Doit retourner des échecs pour tous si le template n'existe pas")
+        void shouldReturnAllFailuresWhenTemplateNotFound() {
+            when(badgeTemplateRepository.existsById(99L)).thenReturn(false);
 
-        ArgumentCaptor<EarnedBadge> captor = ArgumentCaptor.forClass(EarnedBadge.class);
-        earnedBadgeService.awardBadge(request);
+            BulkAwardBadgeRequestDTO request = new BulkAwardBadgeRequestDTO(99L, List.of(1L, 2L, 3L), 10L);
 
-        verify(earnedBadgeRepository).save(captor.capture());
-        EarnedBadge captured = captor.getValue();
-        assertThat(captured.getLearnerId()).isEqualTo(42L);
-        assertThat(captured.getAwardedBy()).isEqualTo(7L);
-        assertThat(captured.getBadgeTemplate()).isEqualTo(template);
-        assertThat(captured.getAwardDate()).isEqualTo(LocalDate.now());
-    }
+            BulkAwardResponseDTO result = earnedBadgeService.bulkAwardBadges(request);
 
-    // ─── BULK AWARD ───────────────────────────────────────────────────────────
+            assertThat(result.getSuccessCount()).isZero();
+            assertThat(result.getFailureCount()).isEqualTo(3);
+        }
 
-    @Test
-    @DisplayName("Bulk award — template not found → all fail")
-    void bulkAward_templateNotFound_allFail() {
-        BulkAwardBadgeRequestDTO request = new BulkAwardBadgeRequestDTO();
-        request.setBadgeTemplateId(99L);
-        request.setLearnerIds(List.of(1L, 2L, 3L));
-        request.setAwardedBy(5L);
+        @Test
+        @DisplayName("Doit traiter chaque apprenant indépendamment")
+        void shouldProcessEachLearnerIndependently() {
+            when(badgeTemplateRepository.existsById(1L)).thenReturn(true);
+            // Learner 5 : succès
+            when(badgeTemplateRepository.findById(1L)).thenReturn(Optional.of(sampleTemplate));
+            when(earnedBadgeRepository.existsByBadgeTemplateIdAndLearnerId(1L, 5L)).thenReturn(false);
+            when(earnedBadgeRepository.save(any(EarnedBadge.class))).thenReturn(sampleEarnedBadge);
+            when(earnedBadgeMapper.toDTO(any(EarnedBadge.class))).thenReturn(sampleDTO);
+            // Learner 6 : déjà attribué
+            when(earnedBadgeRepository.existsByBadgeTemplateIdAndLearnerId(1L, 6L)).thenReturn(true);
 
-        when(badgeTemplateRepository.existsById(99L)).thenReturn(false);
+            BulkAwardBadgeRequestDTO request = new BulkAwardBadgeRequestDTO(1L, List.of(5L, 6L), 10L);
 
-        BulkAwardResponseDTO response = earnedBadgeService.bulkAwardBadges(request);
+            BulkAwardResponseDTO result = earnedBadgeService.bulkAwardBadges(request);
 
-        assertThat(response.getFailureCount()).isEqualTo(3);
-        assertThat(response.getSuccessCount()).isEqualTo(0);
-    }
-
-    // ─── FIND BY LEARNER ──────────────────────────────────────────────────────
-
-    @Test
-    @DisplayName("Find by learner — returns mapped list")
-    void findByLearnerId_returnsMappedList() {
-        when(earnedBadgeRepository.findByLearnerId(2L)).thenReturn(List.of(savedBadge));
-        when(earnedBadgeMapper.toDTO(savedBadge)).thenReturn(badgeDTO);
-
-        List<EarnedBadgeDTO> result = earnedBadgeService.findByLearnerId(2L);
-
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getId()).isEqualTo(10L);
-    }
-
-    @Test
-    @DisplayName("Find by learner — no badges → empty list")
-    void findByLearnerId_noBadges_emptyList() {
-        when(earnedBadgeRepository.findByLearnerId(99L)).thenReturn(List.of());
-
-        List<EarnedBadgeDTO> result = earnedBadgeService.findByLearnerId(99L);
-
-        assertThat(result).isEmpty();
-    }
-
-    // ─── HELPERS ──────────────────────────────────────────────────────────────
-
-    private AwardBadgeRequestDTO buildRequest(Long templateId, Long learnerId, Long awardedBy) {
-        AwardBadgeRequestDTO request = new AwardBadgeRequestDTO();
-        request.setBadgeTemplateId(templateId);
-        request.setLearnerId(learnerId);
-        request.setAwardedBy(awardedBy);
-        return request;
+            assertThat(result.getSuccessCount()).isEqualTo(1);
+            assertThat(result.getFailureCount()).isEqualTo(1);
+        }
     }
 }

@@ -73,7 +73,7 @@ services:
     ports:
       - "8081:8081"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartek_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartek_auth?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -82,6 +82,16 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - smartek-network
 
@@ -106,6 +116,16 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - smartek-network
 
@@ -119,15 +139,15 @@ services:
     container_name: smartek-certification
     restart: unless-stopped
     ports:
-      - "8083:8083"
+      - "8094:8094"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartek_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartek_certification?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       AUTH_SERVICE_BASE_URL: http://auth-service:8081
-      CERTIFICATE_VERIFICATION_BASE_URL: http://certification-badge-service:8083
-      PDF_VERIFICATION_BASE_URL: http://certification-badge-service:8083
+      CERTIFICATE_VERIFICATION_BASE_URL: http://certification-badge-service:8094
+      PDF_VERIFICATION_BASE_URL: http://certification-badge-service:8094
     depends_on:
       mysql:
         condition: service_healthy
@@ -135,6 +155,16 @@ services:
         condition: service_healthy
       auth-service:
         condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8094/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - smartek-network
 
@@ -148,7 +178,7 @@ services:
     container_name: smartek-planning
     restart: unless-stopped
     ports:
-      - "8094:8083"
+      - "8083:8083"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartek_planning?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
@@ -159,6 +189,16 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - smartek-network
 
@@ -174,7 +214,7 @@ services:
     ports:
       - "8084:8084"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/training_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartek_training?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -183,6 +223,16 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8084/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - smartek-network
 
@@ -198,7 +248,7 @@ services:
     ports:
       - "8085:8085"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/offers_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartek_offers?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -207,6 +257,16 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - smartek-network
 
@@ -222,7 +282,7 @@ services:
     ports:
       - "8086:8086"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/course_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartek_course?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -231,6 +291,16 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8086/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - smartek-network
 
@@ -246,7 +316,7 @@ services:
     ports:
       - "8087:8087"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/exam_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartek_exam?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -255,6 +325,16 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8087/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - smartek-network
 
@@ -270,7 +350,7 @@ services:
     ports:
       - "8091:8091"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/skill_evidence_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartek_skill_evidence?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -279,6 +359,16 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8091/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - smartek-network
 
@@ -294,7 +384,7 @@ services:
     ports:
       - "8092:8092"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/learning_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartek_learning?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -303,6 +393,16 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8092/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - smartek-network
 
@@ -316,9 +416,9 @@ services:
     container_name: smartek-sponsor
     restart: unless-stopped
     ports:
-      - "8093:8082"
+      - "8093:8093"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sponsor_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartek_sponsor?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       AUTH_SERVICE_URL: http://auth-service:8081
@@ -327,6 +427,16 @@ services:
         condition: service_healthy
       auth-service:
         condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8093/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - smartek-network
 
@@ -340,7 +450,7 @@ services:
     container_name: smartek-gateway
     restart: unless-stopped
     ports:
-      - "8090:8090"
+      - "8080:8080"
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_CLOUD_GATEWAY_GLOBALCORS_CORSCONFIGURATIONS_[/**]_ALLOWEDORIGINS: "http://localhost:4200,http://frontend:80"
@@ -400,8 +510,10 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=30d'
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
       - prometheus_data:/prometheus
     networks:
       - smartek-network
@@ -419,10 +531,60 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       - prometheus
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # LOKI (agregation de logs)
+  # ─────────────────────────────────────────
+  loki:
+    image: grafana/loki:latest
+    container_name: smartek-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki/loki-config.yml:/etc/loki/loki-config.yml
+      - loki_data:/loki
+    command: -config.file=/etc/loki/loki-config.yml
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # PROMTAIL (collecte des logs)
+  # ─────────────────────────────────────────
+  promtail:
+    image: grafana/promtail:latest
+    container_name: smartek-promtail
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml
+      - /var/log:/var/log:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: -config.file=/etc/promtail/promtail-config.yml
+    depends_on:
+      - loki
+    networks:
+      - smartek-network
+
+  # ─────────────────────────────────────────
+  # JAEGER (tracing distribue)
+  # ─────────────────────────────────────────
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: smartek-jaeger
+    restart: unless-stopped
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    ports:
+      - "16686:16686"
+      - "9411:9411"
     networks:
       - smartek-network
 
@@ -481,6 +643,7 @@ volumes:
   mysql_data:
   prometheus_data:
   grafana_data:
+  loki_data:
   sonarqube_data:
   sonarqube_logs:
   sonarqube_extensions:

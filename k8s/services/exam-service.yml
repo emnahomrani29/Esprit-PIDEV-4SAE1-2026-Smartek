@@ -1,0 +1,85 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exam-service
+  namespace: smartek
+  labels:
+    app: exam-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: exam-service
+  template:
+    metadata:
+      labels:
+        app: exam-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8087"
+    spec:
+      containers:
+        - name: exam-service
+          image: smartek/exam-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8087
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/exam_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: smartek-secrets
+                  key: MYSQL_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartek-secrets
+                  key: MYSQL_PASSWORD
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: smartek-config
+                  key: EUREKA_URL
+            - name: JWT_SECRET
+              valueFrom:
+                configMapKeyRef:
+                  name: smartek-config
+                  key: JWT_SECRET
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8087
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 15
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8087
+            initialDelaySeconds: 90
+            periodSeconds: 20
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: exam-service
+  namespace: smartek
+spec:
+  selector:
+    app: exam-service
+  ports:
+    - port: 8087
+      targetPort: 8087
+  type: ClusterIP

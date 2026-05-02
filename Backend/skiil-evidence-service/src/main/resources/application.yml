@@ -3,7 +3,7 @@ spring:
     name: skill-evidence-service
 
   datasource:
-    url: jdbc:mysql://localhost:3306/skill-db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/smartek_skill_evidence?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
     username: root
     password:
     driver-class-name: com.mysql.cj.jdbc.Driver

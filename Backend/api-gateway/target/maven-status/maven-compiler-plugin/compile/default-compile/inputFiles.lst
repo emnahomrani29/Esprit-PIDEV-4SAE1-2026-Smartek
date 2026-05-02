@@ -1,1 +1,3 @@
-C:\Users\anasb\Smartek\Backend\api-gateway\src\main\java\com\smartek\gateway\ApiGatewayApplication.java
+C:\Users\rahma\OneDrive - ESPRIT\Desktop\Esprit-PI-4SAE1-2026-Smartek\Backend\api-gateway\src\main\java\com\smartek\gateway\config\CorsConfig.java
+C:\Users\rahma\OneDrive - ESPRIT\Desktop\Esprit-PI-4SAE1-2026-Smartek\Backend\api-gateway\src\main\java\com\smartek\gateway\filter\JwtAuthGatewayFilter.java
+C:\Users\rahma\OneDrive - ESPRIT\Desktop\Esprit-PI-4SAE1-2026-Smartek\Backend\api-gateway\src\main\java\com\smartek\gateway\ApiGatewayApplication.java

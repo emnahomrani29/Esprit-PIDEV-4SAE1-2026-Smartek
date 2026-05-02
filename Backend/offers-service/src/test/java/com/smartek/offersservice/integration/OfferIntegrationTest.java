@@ -612,6 +612,7 @@ class OfferIntegrationTest {
                         .score(score)
                         .build();
                 app.setOffer(offer);
+                app.setOfferId(offer.getId()); // explicit offerId to avoid lazy loading
                 applicationRepository.save(app);
             }
 

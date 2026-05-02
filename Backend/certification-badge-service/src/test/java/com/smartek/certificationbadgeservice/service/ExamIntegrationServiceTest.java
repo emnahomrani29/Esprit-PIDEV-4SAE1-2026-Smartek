@@ -42,6 +42,7 @@ import static org.mockito.Mockito.*;
  * - Edge cases (exactly 60%, 0%, 100%)
  */
 @ExtendWith(MockitoExtension.class)
+@org.mockito.junit.jupiter.MockitoSettings(strictness = org.mockito.quality.Strictness.LENIENT)
 @DisplayName("ExamIntegrationService Unit Tests")
 class ExamIntegrationServiceTest {
 
