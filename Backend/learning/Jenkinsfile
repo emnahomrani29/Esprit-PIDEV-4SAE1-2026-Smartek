@@ -105,29 +105,17 @@ if (changedFiles == 'ALL' || changedFiles.isEmpty()) {
             }
         }
 
-        stage('Trivy Scan') {
-            steps {
-                echo 'Trivy scan skipped - will be enabled later'
-            }
-        }
-
-        stage('Deploy Local') {
+        stage('Deploy to Kubernetes') {
             steps {
                 sh """
-                    docker stop ${SERVICE_NAME} || true
-                    docker rm   ${SERVICE_NAME} || true
-                    docker stop smartek-learning || true
-                    docker rm   smartek-learning || true
-                    docker run -d \
-                        --name smartek-learning \
-                        --network bridge \
-                        -p ${CONTAINER_PORT}:${CONTAINER_PORT} \
-                        -e 'SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/learning_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true' \
-                        -e SPRING_DATASOURCE_USERNAME=root \
-                        -e SPRING_DATASOURCE_PASSWORD=root \
-                        -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/ \
-                        --restart unless-stopped \
-                        ${IMAGE_NAME}:${IMAGE_TAG}
+                    kubectl apply -f k8s/namespace.yml
+                    kubectl apply -f k8s/learning-service.yml
+                    kubectl set image deployment/learning-service \
+                        learning-service=${IMAGE_NAME}:${IMAGE_TAG} \
+                        -n smartek
+                    kubectl rollout status deployment/learning-service \
+                        -n smartek --timeout=3m
+                    kubectl get pods -n smartek -l app=learning-service
                 """
             }
         }

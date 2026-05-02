@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: smartek-config
+  namespace: smartek
+data:
+  # Database Configuration
+  MYSQL_HOST: "mysql-service.smartek.svc.cluster.local"
+  MYSQL_PORT: "3306"
+  MYSQL_ROOT_USER: "root"
+  SPRING_DATASOURCE_DRIVERCLASSNAME: "com.mysql.cj.jdbc.Driver"
+  
+  # Service Discovery - Eureka
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://eureka-server:8761/eureka/"
+  EUREKA_INSTANCE_PREFERIPADDRESS: "true"
+  
+  # Gateway Configuration
+  SERVER_SERVLET_CONTEXTPATH: "/"
+  SPRING_CLOUD_GATEWAY_GLOBALCORS_CORSCONFIGURATIONS: "[/**]"
+  
+  # Actuator for Health Checks
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics"
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: "always"
+  
+  # Application Settings
+  SPRING_APPLICATION_NAME: "smartek-service"
+  SPRING_PROFILES_ACTIVE: "prod"

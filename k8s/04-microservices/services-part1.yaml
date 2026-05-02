@@ -1,0 +1,284 @@
+---
+# EVENT SERVICE
+apiVersion: v1
+kind: Service
+metadata:
+  name: event-service
+  namespace: smartek
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8082
+    targetPort: 8082
+  selector:
+    app: event-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-service
+  namespace: smartek
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: event-service
+  template:
+    metadata:
+      labels:
+        app: event-service
+    spec:
+      containers:
+      - name: event-service
+        image: your-docker-registry/smartek/event-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8082
+        env:
+        - name: SERVER_PORT
+          value: "8082"
+        - name: SPRING_APPLICATION_NAME
+          value: "event-service"
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:mysql://mysql-service.smartek.svc.cluster.local:3306/smartek_events?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: smartek-db-credentials
+              key: SPRING_DATASOURCE_USERNAME
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: smartek-db-credentials
+              key: SPRING_DATASOURCE_PASSWORD
+        - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          valueFrom:
+            configMapKeyRef:
+              name: smartek-config
+              key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8082
+          initialDelaySeconds: 40
+          periodSeconds: 10
+---
+# PLANNING SERVICE
+apiVersion: v1
+kind: Service
+metadata:
+  name: planning-service
+  namespace: smartek
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8083
+    targetPort: 8083
+  selector:
+    app: planning-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: planning-service
+  namespace: smartek
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: planning-service
+  template:
+    metadata:
+      labels:
+        app: planning-service
+    spec:
+      containers:
+      - name: planning-service
+        image: your-docker-registry/smartek/planning-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8083
+        env:
+        - name: SERVER_PORT
+          value: "8083"
+        - name: SPRING_APPLICATION_NAME
+          value: "planning-service"
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:mysql://mysql-service.smartek.svc.cluster.local:3306/smartek_planning?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: smartek-db-credentials
+              key: SPRING_DATASOURCE_USERNAME
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: smartek-db-credentials
+              key: SPRING_DATASOURCE_PASSWORD
+        - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          valueFrom:
+            configMapKeyRef:
+              name: smartek-config
+              key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8083
+          initialDelaySeconds: 40
+          periodSeconds: 10
+---
+# TRAINING SERVICE
+apiVersion: v1
+kind: Service
+metadata:
+  name: training-service
+  namespace: smartek
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8084
+    targetPort: 8084
+  selector:
+    app: training-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: training-service
+  namespace: smartek
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: training-service
+  template:
+    metadata:
+      labels:
+        app: training-service
+    spec:
+      containers:
+      - name: training-service
+        image: your-docker-registry/smartek/training-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8084
+        env:
+        - name: SERVER_PORT
+          value: "8084"
+        - name: SPRING_APPLICATION_NAME
+          value: "training-service"
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:mysql://mysql-service.smartek.svc.cluster.local:3306/training_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: smartek-db-credentials
+              key: SPRING_DATASOURCE_USERNAME
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: smartek-db-credentials
+              key: SPRING_DATASOURCE_PASSWORD
+        - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          valueFrom:
+            configMapKeyRef:
+              name: smartek-config
+              key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8084
+          initialDelaySeconds: 40
+          periodSeconds: 10
+---
+# OFFERS SERVICE
+apiVersion: v1
+kind: Service
+metadata:
+  name: offers-service
+  namespace: smartek
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8085
+    targetPort: 8085
+  selector:
+    app: offers-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: offers-service
+  namespace: smartek
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: offers-service
+  template:
+    metadata:
+      labels:
+        app: offers-service
+    spec:
+      containers:
+      - name: offers-service
+        image: your-docker-registry/smartek/offers-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8085
+        env:
+        - name: SERVER_PORT
+          value: "8085"
+        - name: SPRING_APPLICATION_NAME
+          value: "offers-service"
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:mysql://mysql-service.smartek.svc.cluster.local:3306/offers_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: smartek-db-credentials
+              key: SPRING_DATASOURCE_USERNAME
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: smartek-db-credentials
+              key: SPRING_DATASOURCE_PASSWORD
+        - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          valueFrom:
+            configMapKeyRef:
+              name: smartek-config
+              key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8085
+          initialDelaySeconds: 40
+          periodSeconds: 10

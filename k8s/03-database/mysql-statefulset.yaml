@@ -1,0 +1,125 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  namespace: smartek
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  namespace: smartek
+spec:
+  clusterIP: None
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: smartek
+spec:
+  serviceName: mysql-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: smartek-db-credentials
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_ROOT_HOST
+          value: "%"
+        volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+        - name: init-script
+          mountPath: /docker-entrypoint-initdb.d
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - mysqladmin ping -h localhost -u root -p$MYSQL_ROOT_PASSWORD
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - mysqladmin ping -h localhost -u root -p$MYSQL_ROOT_PASSWORD
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      volumes:
+      - name: init-script
+        configMap:
+          name: mysql-init-script
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-script
+  namespace: smartek
+data:
+  init-db.sql: |
+    -- Create databases
+    CREATE DATABASE IF NOT EXISTS smartek_db;
+    CREATE DATABASE IF NOT EXISTS smartek_events;
+    CREATE DATABASE IF NOT EXISTS smartek_planning;
+    CREATE DATABASE IF NOT EXISTS training_db;
+    CREATE DATABASE IF NOT EXISTS offers_db;
+    CREATE DATABASE IF NOT EXISTS exam_db;
+    CREATE DATABASE IF NOT EXISTS course_db;
+    CREATE DATABASE IF NOT EXISTS learning_db;
+    CREATE DATABASE IF NOT EXISTS skill_evidence_db;
+    
+    -- Create smartek_user
+    CREATE USER IF NOT EXISTS 'smartek_user'@'%' IDENTIFIED BY 'smartek_pass123';
+    GRANT ALL PRIVILEGES ON smartek_db.* TO 'smartek_user'@'%';
+    GRANT ALL PRIVILEGES ON smartek_events.* TO 'smartek_user'@'%';
+    GRANT ALL PRIVILEGES ON smartek_planning.* TO 'smartek_user'@'%';
+    GRANT ALL PRIVILEGES ON training_db.* TO 'smartek_user'@'%';
+    GRANT ALL PRIVILEGES ON offers_db.* TO 'smartek_user'@'%';
+    GRANT ALL PRIVILEGES ON exam_db.* TO 'smartek_user'@'%';
+    GRANT ALL PRIVILEGES ON course_db.* TO 'smartek_user'@'%';
+    GRANT ALL PRIVILEGES ON learning_db.* TO 'smartek_user'@'%';
+    GRANT ALL PRIVILEGES ON skill_evidence_db.* TO 'smartek_user'@'%';
+    FLUSH PRIVILEGES;
