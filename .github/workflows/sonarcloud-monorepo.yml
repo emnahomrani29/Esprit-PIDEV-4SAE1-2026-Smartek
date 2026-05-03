@@ -1,12 +1,14 @@
-name: SonarCloud Monorepo Analysis
+name: SonarCloud Monorepo Analysis (Disabled - Exceeds Free Plan Limit)
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    types: [opened, synchronize, reopened]
   workflow_dispatch:
+  # Désactivé - Le projet complet dépasse la limite du plan gratuit SonarCloud
+  # Utiliser sonarcloud.yml à la place pour analyser chaque service séparément
+  # push:
+  #   branches:
+  #     - main
+  # pull_request:
+  #   types: [opened, synchronize, reopened]
 
 env:
   JAVA_VERSION: '17'
