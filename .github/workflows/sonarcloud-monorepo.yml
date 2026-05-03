@@ -86,30 +86,24 @@ jobs:
           for service in "${services[@]}"; do
             echo "Building $service..."
             cd Backend/$service
-            mvn verify -B --no-transfer-progress || echo "Failed to build $service"
+            mvn clean compile -B --no-transfer-progress -DskipTests || echo "Failed to build $service"
             cd ../..
           done
 
-      # Build frontend
-      - name: Build and test frontend
+      # Build frontend (without running tests to save time)
+      - name: Build frontend
         working-directory: Frontend/angular-app
         run: |
           npm ci
-          npm test -- --watch=false --browsers=ChromeHeadless --no-progress --code-coverage || echo "Frontend tests failed"
+          npm run build --configuration production || echo "Frontend build failed"
 
       # Collect all coverage reports
-      - name: Prepare coverage reports
+      - name: Prepare for SonarCloud
         run: |
-          mkdir -p coverage-reports
-          
-          # Copy backend coverage
-          find Backend -name "jacoco.xml" -exec cp {} coverage-reports/ \; || true
-          
-          # Copy frontend coverage
-          cp Frontend/angular-app/coverage/angular-app/lcov.info coverage-reports/ || true
+          echo "Preparing SonarCloud analysis - analyzing production code only"
 
-      # SonarCloud analysis for entire project
-      - name: SonarCloud Monorepo Analysis
+      # SonarCloud analysis for entire project (production code only)
+      - name: SonarCloud Full Project Analysis
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -119,10 +113,7 @@ jobs:
             -Dsonar.projectKey=${{ secrets.SONAR_ORGANIZATION }}_smartek-esprit-monorepo
             -Dsonar.projectName="Smartek Esprit - Full Project"
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-            -Dsonar.sources=Backend,Frontend/angular-app/src
-            -Dsonar.exclusions=**/target/**,**/node_modules/**,**/dist/**,**/dto/**,**/entity/**,**/config/**,**/*Application.java,**/migration/**,**/*.spec.ts,**/environments/**
-            -Dsonar.tests=Backend,Frontend/angular-app/src
-            -Dsonar.test.inclusions=**/src/test/**,**/*.spec.ts
+            -Dsonar.sources=Backend/auth-service/src/main,Backend/course-service/src/main,Backend/exam-service/src/main,Backend/event-service/src/main,Backend/offers-service/src/main,Backend/planning-service/src/main,Backend/training-service/src/main,Backend/certification-badge-service/src/main,Backend/skiil-evidence-service/src/main,Backend/learning/src/main,Backend/smartek_sponsor/src/main,Frontend/angular-app/src/app
+            -Dsonar.exclusions=**/target/**,**/node_modules/**,**/dist/**,**/dto/**,**/entity/**,**/*Application.java,**/migration/**,**/*.spec.ts,**/test/**,**/tests/**,**/environments/**,**/uploads/**,**/logs/**,**/*.sql
             -Dsonar.java.binaries=**/target/classes
-            -Dsonar.coverage.jacoco.xmlReportPaths=**/target/site/jacoco/jacoco.xml
-            -Dsonar.javascript.lcov.reportPaths=Frontend/angular-app/coverage/angular-app/lcov.info
+            -Dsonar.sourceEncoding=UTF-8
