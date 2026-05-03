@@ -70,17 +70,20 @@ jobs:
           SPRING_DATASOURCE_PASSWORD: root
         run: |
           services=(
+            "api-gateway"
             "auth-service"
+            "certification-badge-service"
+            "config-server"
             "course-service"
-            "exam-service"
+            "eureka-server"
             "event-service"
+            "exam-service"
+            "learning"
             "offers-service"
             "planning-service"
-            "training-service"
-            "certification-badge-service"
             "skiil-evidence-service"
-            "learning"
             "smartek_sponsor"
+            "training-service"
           )
           
           for service in "${services[@]}"; do
@@ -113,7 +116,7 @@ jobs:
             -Dsonar.projectKey=${{ secrets.SONAR_ORGANIZATION }}_smartek-esprit-monorepo
             -Dsonar.projectName="Smartek Esprit - Full Project"
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-            -Dsonar.sources=Backend/auth-service/src/main,Backend/course-service/src/main,Backend/exam-service/src/main,Backend/event-service/src/main,Backend/offers-service/src/main,Backend/planning-service/src/main,Backend/training-service/src/main,Backend/certification-badge-service/src/main,Backend/skiil-evidence-service/src/main,Backend/learning/src/main,Backend/smartek_sponsor/src/main,Frontend/angular-app/src/app
+            -Dsonar.sources=Backend/api-gateway/src/main,Backend/auth-service/src/main,Backend/certification-badge-service/src/main,Backend/config-server/src/main,Backend/course-service/src/main,Backend/eureka-server/src/main,Backend/event-service/src/main,Backend/exam-service/src/main,Backend/learning/src/main,Backend/offers-service/src/main,Backend/planning-service/src/main,Backend/skiil-evidence-service/src/main,Backend/smartek_sponsor/src/main,Backend/training-service/src/main,Frontend/angular-app/src/app
             -Dsonar.exclusions=**/target/**,**/node_modules/**,**/dist/**,**/dto/**,**/entity/**,**/*Application.java,**/migration/**,**/*.spec.ts,**/test/**,**/tests/**,**/environments/**,**/uploads/**,**/logs/**,**/*.sql
             -Dsonar.java.binaries=**/target/classes
             -Dsonar.sourceEncoding=UTF-8

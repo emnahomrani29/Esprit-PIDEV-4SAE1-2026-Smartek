@@ -27,17 +27,20 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - service: api-gateway
           - service: auth-service
+          - service: certification-badge-service
+          - service: config-server
           - service: course-service
-          - service: exam-service
+          - service: eureka-server
           - service: event-service
+          - service: exam-service
+          - service: learning
           - service: offers-service
           - service: planning-service
-          - service: training-service
-          - service: certification-badge-service
           - service: skiil-evidence-service
-          - service: learning
           - service: smartek_sponsor
+          - service: training-service
 
     services:
       mysql:
