@@ -146,7 +146,7 @@ jobs:
         with:
           projectBaseDir: Frontend/angular-app
           args: >
-            -Dsonar.projectKey=${{ secrets.SONAR_ORGANIZATION }}_smartek-esprit
+            -Dsonar.projectKey=${{ secrets.SONAR_ORGANIZATION }}_smartek-frontend
             -Dsonar.projectName="Smartek Esprit - Frontend"
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
             -Dsonar.sources=src
