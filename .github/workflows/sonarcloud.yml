@@ -1,15 +1,16 @@
-name: SonarCloud Analysis
+name: SonarCloud Analysis (Per Service - Disabled)
 
 on:
-  push:
-    branches:
-      - main
-      - develop
-      - "feature/**"
-      - "event/**"
-  pull_request:
-    types: [ opened, synchronize, reopened ]
   workflow_dispatch:
+  # Temporairement désactivé - utiliser sonarcloud-monorepo.yml à la place
+  # push:
+  #   branches:
+  #     - main
+  #     - develop
+  #     - "feature/**"
+  #     - "event/**"
+  # pull_request:
+  #   types: [ opened, synchronize, reopened ]
 
 env:
   JAVA_VERSION: '17'

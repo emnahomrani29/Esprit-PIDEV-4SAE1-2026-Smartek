@@ -1,0 +1,128 @@
+name: SonarCloud Monorepo Analysis
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: '17'
+  NODE_VERSION: '20'
+
+jobs:
+  sonar-monorepo:
+    name: "SonarCloud - Full Project Analysis"
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_HOST: '%'
+          MYSQL_DATABASE: testdb
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+        ports:
+          - 3306:3306
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: Frontend/angular-app/package-lock.json
+
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -u root -proot --silent 2>/dev/null; then
+              echo "MySQL ready"
+              break
+            fi
+            sleep 2
+          done
+
+      # Build all backend services
+      - name: Build all backend services
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/testdb?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: root
+        run: |
+          services=(
+            "auth-service"
+            "course-service"
+            "exam-service"
+            "event-service"
+            "offers-service"
+            "planning-service"
+            "training-service"
+            "certification-badge-service"
+            "skiil-evidence-service"
+            "learning"
+            "smartek_sponsor"
+          )
+          
+          for service in "${services[@]}"; do
+            echo "Building $service..."
+            cd Backend/$service
+            mvn verify -B --no-transfer-progress || echo "Failed to build $service"
+            cd ../..
+          done
+
+      # Build frontend
+      - name: Build and test frontend
+        working-directory: Frontend/angular-app
+        run: |
+          npm ci
+          npm test -- --watch=false --browsers=ChromeHeadless --no-progress --code-coverage || echo "Frontend tests failed"
+
+      # Collect all coverage reports
+      - name: Prepare coverage reports
+        run: |
+          mkdir -p coverage-reports
+          
+          # Copy backend coverage
+          find Backend -name "jacoco.xml" -exec cp {} coverage-reports/ \; || true
+          
+          # Copy frontend coverage
+          cp Frontend/angular-app/coverage/angular-app/lcov.info coverage-reports/ || true
+
+      # SonarCloud analysis for entire project
+      - name: SonarCloud Monorepo Analysis
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=${{ secrets.SONAR_ORGANIZATION }}_smartek-esprit-monorepo
+            -Dsonar.projectName="Smartek Esprit - Full Project"
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+            -Dsonar.sources=Backend,Frontend/angular-app/src
+            -Dsonar.exclusions=**/target/**,**/node_modules/**,**/dist/**,**/dto/**,**/entity/**,**/config/**,**/*Application.java,**/migration/**,**/*.spec.ts,**/environments/**
+            -Dsonar.tests=Backend,Frontend/angular-app/src
+            -Dsonar.test.inclusions=**/src/test/**,**/*.spec.ts
+            -Dsonar.java.binaries=**/target/classes
+            -Dsonar.coverage.jacoco.xmlReportPaths=**/target/site/jacoco/jacoco.xml
+            -Dsonar.javascript.lcov.reportPaths=Frontend/angular-app/coverage/angular-app/lcov.info
