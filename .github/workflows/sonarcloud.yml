@@ -27,12 +27,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - service: api-gateway
           - service: auth-service
           - service: certification-badge-service
-          - service: config-server
           - service: course-service
-          - service: eureka-server
           - service: event-service
           - service: exam-service
           - service: learning
