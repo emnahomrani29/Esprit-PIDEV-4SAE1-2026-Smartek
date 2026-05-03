@@ -116,7 +116,7 @@ class AuthControllerTest {
         @Test
         @DisplayName("Mauvais credentials - retourne 401")
         void login_badCredentials_returns401() throws Exception {
-            when(authService.login(any())).thenThrow(new RuntimeException("Credentials invalides"));
+            when(authService.login(any())).thenThrow(new RuntimeException("Email ou mot de passe incorrect"));
 
             mockMvc.perform(post("/api/auth/login")
                             .contentType(MediaType.APPLICATION_JSON)

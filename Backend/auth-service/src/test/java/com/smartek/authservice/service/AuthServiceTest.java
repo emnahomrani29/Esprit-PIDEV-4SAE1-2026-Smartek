@@ -173,13 +173,14 @@ class AuthServiceTest {
         }
 
         @Test
-        @DisplayName("Mauvais mot de passe - lève BadCredentialsException")
+        @DisplayName("Mauvais mot de passe - lève RuntimeException avec message français")
         void login_badCredentials_throwsException() {
             when(authenticationManager.authenticate(any()))
                     .thenThrow(new BadCredentialsException("Bad credentials"));
 
             assertThatThrownBy(() -> authService.login(loginRequest))
-                    .isInstanceOf(BadCredentialsException.class);
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessage("Email ou mot de passe incorrect");
 
             verify(userRepository, never()).findByEmail(anyString());
         }

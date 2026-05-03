@@ -11,6 +11,7 @@ import com.smartek.authservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -78,13 +79,18 @@ public class AuthService {
     public AuthResponse login(LoginRequest request) {
         log.info("Tentative de connexion pour l'email: {}", request.getEmail());
         
-        // Authentifier l'utilisateur
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
+        try {
+            // Authentifier l'utilisateur
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
+            );
+        } catch (BadCredentialsException e) {
+            log.error("Échec d'authentification pour: {}", request.getEmail());
+            throw new RuntimeException("Email ou mot de passe incorrect");
+        }
         
         // Récupérer l'utilisateur
         User user = userRepository.findByEmail(request.getEmail())
