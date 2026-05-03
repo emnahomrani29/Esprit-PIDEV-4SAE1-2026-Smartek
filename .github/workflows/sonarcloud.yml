@@ -7,7 +7,6 @@ on:
       - develop
       - "feature/**"
       - "event/**"
-      - "event/planning-service"
   pull_request:
     types: [ opened, synchronize, reopened ]
   workflow_dispatch:
