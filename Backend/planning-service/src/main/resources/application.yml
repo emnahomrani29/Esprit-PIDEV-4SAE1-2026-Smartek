@@ -39,10 +39,10 @@ management:
 
 # Twilio SMS Configuration
 twilio:
-  account-sid: AC8d62d2f57ca2a96cea7fa7448de22721
-  auth-token: 0a3096886e325514230cf7401bdc6fbc
-  phone-number: "+18145235365"
-  enabled: true
+  account-sid: ${TWILIO_ACCOUNT_SID:}
+  auth-token: ${TWILIO_AUTH_TOKEN:}
+  phone-number: ${TWILIO_PHONE_NUMBER:+18145235365}
+  enabled: ${TWILIO_ENABLED:false}
 
 # Auth service URL for fetching learner phone numbers
 auth-service:

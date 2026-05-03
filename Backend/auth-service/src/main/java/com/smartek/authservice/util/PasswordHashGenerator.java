@@ -9,36 +9,24 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 public class PasswordHashGenerator {
     
     public static void main(String[] args) {
+        if (args.length < 1) {
+            System.out.println("Usage: java PasswordHashGenerator <password>");
+            System.out.println("Example: java PasswordHashGenerator MySecurePassword123");
+            System.exit(1);
+        }
+        
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        String inputPassword = args[0];
         
         System.out.println("=== SMARTEK Password Hash Generator ===\n");
         
-        // Generate hash for Formateur123
-        String formateurPassword = "Formateur123";
-        String formateurHash = encoder.encode(formateurPassword);
-        System.out.println("Password: " + formateurPassword);
-        System.out.println("BCrypt Hash: " + formateurHash);
-        System.out.println("Verify: " + encoder.matches(formateurPassword, formateurHash));
+        String passwordHash = encoder.encode(inputPassword);
+        System.out.println("BCrypt Hash: " + passwordHash);
+        System.out.println("Verify: " + encoder.matches(inputPassword, passwordHash));
         System.out.println();
         
-        // Generate hash for Learner123
-        String learnerPassword = "Learner123";
-        String learnerHash = encoder.encode(learnerPassword);
-        System.out.println("Password: " + learnerPassword);
-        System.out.println("BCrypt Hash: " + learnerHash);
-        System.out.println("Verify: " + encoder.matches(learnerPassword, learnerHash));
-        System.out.println();
-        
-        System.out.println("=== SQL INSERT STATEMENTS ===\n");
-        System.out.println("-- Delete existing users");
-        System.out.println("DELETE FROM users WHERE email IN ('Formateur@smartek.com', 'Learner@smartek.com');");
-        System.out.println();
-        System.out.println("-- Insert Trainer");
+        System.out.println("=== SQL INSERT EXAMPLE ===\n");
         System.out.println("INSERT INTO users (first_name, email, password, phone, role, experience)");
-        System.out.println("VALUES ('Formateur', 'Formateur@smartek.com', '" + formateurHash + "', '+33123456789', 'TRAINER', 5);");
-        System.out.println();
-        System.out.println("-- Insert Learner");
-        System.out.println("INSERT INTO users (first_name, email, password, phone, role, experience)");
-        System.out.println("VALUES ('Learner', 'Learner@smartek.com', '" + learnerHash + "', '+33123456790', 'LEARNER', 0);");
+        System.out.println("VALUES ('FirstName', 'email@example.com', '" + passwordHash + "', '+33123456789', 'ROLE', 0);");
     }
 }

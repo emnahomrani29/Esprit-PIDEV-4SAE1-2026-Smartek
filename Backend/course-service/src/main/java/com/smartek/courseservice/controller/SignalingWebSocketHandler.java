@@ -1,6 +1,7 @@
 package com.smartek.courseservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartek.courseservice.constants.WebSocketConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
@@ -29,14 +30,14 @@ public class SignalingWebSocketHandler extends TextWebSocketHandler {
         log.info("WebSocket connected: {}", session.getId());
 
         // Send session ID to client
-        sendTo(session, Map.of("type", "session-id", "sessionId", session.getId()));
+        sendTo(session, Map.of("type", "session-id", WebSocketConstants.SESSION_ID, session.getId()));
     }
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         Map<String, Object> payload = objectMapper.readValue(message.getPayload(), Map.class);
         String type = (String) payload.get("type");
-        String roomId = (String) payload.get("roomId");
+        String roomId = (String) payload.get(WebSocketConstants.ROOM_ID);
 
         switch (type) {
             case "join" -> handleJoin(session, payload, roomId);
@@ -52,8 +53,8 @@ public class SignalingWebSocketHandler extends TextWebSocketHandler {
 
     private void handleJoin(WebSocketSession session, Map<String, Object> payload, String roomId) throws IOException {
         String sessionId = session.getId();
-        String userName = (String) payload.getOrDefault("userName", "Anonyme");
-        String userId = (String) payload.getOrDefault("userId", sessionId);
+        String userName = (String) payload.getOrDefault(WebSocketConstants.USER_NAME, WebSocketConstants.DEFAULT_USER_NAME);
+        String userId = (String) payload.getOrDefault(WebSocketConstants.USER_ID, sessionId);
 
         log.info("User {} ({}) joining room {}", userName, sessionId, roomId);
 
@@ -66,9 +67,9 @@ public class SignalingWebSocketHandler extends TextWebSocketHandler {
             if (info != null) {
                 sendTo(session, Map.of(
                         "type", "existing-participant",
-                        "sessionId", existingId,
-                        "userName", info.getOrDefault("userName", "Anonyme"),
-                        "userId", info.getOrDefault("userId", existingId)
+                        WebSocketConstants.SESSION_ID, existingId,
+                        WebSocketConstants.USER_NAME, info.getOrDefault(WebSocketConstants.USER_NAME, WebSocketConstants.DEFAULT_USER_NAME),
+                        WebSocketConstants.USER_ID, info.getOrDefault(WebSocketConstants.USER_ID, existingId)
                 ));
             }
         }
@@ -76,18 +77,18 @@ public class SignalingWebSocketHandler extends TextWebSocketHandler {
         // Register participant
         rooms.computeIfAbsent(roomId, k -> ConcurrentHashMap.newKeySet()).add(sessionId);
         participantInfo.put(sessionId, new HashMap<>(Map.of(
-                "sessionId", sessionId,
-                "userId", userId,
-                "userName", userName,
-                "roomId", roomId
+                WebSocketConstants.SESSION_ID, sessionId,
+                WebSocketConstants.USER_ID, userId,
+                WebSocketConstants.USER_NAME, userName,
+                WebSocketConstants.ROOM_ID, roomId
         )));
 
         // Notify all others in the room about the new user
         broadcastToRoom(roomId, sessionId, Map.of(
                 "type", "user-joined",
-                "sessionId", sessionId,
-                "userName", userName,
-                "userId", userId
+                WebSocketConstants.SESSION_ID, sessionId,
+                WebSocketConstants.USER_NAME, userName,
+                WebSocketConstants.USER_ID, userId
         ));
     }
 
@@ -104,12 +105,12 @@ public class SignalingWebSocketHandler extends TextWebSocketHandler {
 
     private void handleChat(WebSocketSession session, Map<String, Object> payload, String roomId) throws IOException {
         Map<String, Object> info = participantInfo.getOrDefault(session.getId(), Map.of());
-        String userName = (String) info.getOrDefault("userName", "Anonyme");
+        String userName = (String) info.getOrDefault(WebSocketConstants.USER_NAME, WebSocketConstants.DEFAULT_USER_NAME);
 
         broadcastToRoom(roomId, null, Map.of(
                 "type", "chat",
                 "from", session.getId(),
-                "userName", userName,
+                WebSocketConstants.USER_NAME, userName,
                 "message", payload.getOrDefault("message", ""),
                 "timestamp", System.currentTimeMillis()
         ));
@@ -135,8 +136,8 @@ public class SignalingWebSocketHandler extends TextWebSocketHandler {
 
         Map<String, Object> info = participantInfo.remove(sessionId);
         if (info != null) {
-            String roomId = (String) info.get("roomId");
-            String userName = (String) info.getOrDefault("userName", "Anonyme");
+            String roomId = (String) info.get(WebSocketConstants.ROOM_ID);
+            String userName = (String) info.getOrDefault(WebSocketConstants.USER_NAME, WebSocketConstants.DEFAULT_USER_NAME);
             if (roomId != null) {
                 Set<String> room = rooms.get(roomId);
                 if (room != null) {
@@ -145,8 +146,8 @@ public class SignalingWebSocketHandler extends TextWebSocketHandler {
                 }
                 broadcastToRoom(roomId, null, Map.of(
                         "type", "user-left",
-                        "sessionId", sessionId,
-                        "userName", userName
+                        WebSocketConstants.SESSION_ID, sessionId,
+                        WebSocketConstants.USER_NAME, userName
                 ));
             }
         }
@@ -160,12 +161,12 @@ public class SignalingWebSocketHandler extends TextWebSocketHandler {
             if (room.isEmpty()) rooms.remove(roomId);
         }
         Map<String, Object> info = participantInfo.remove(sessionId);
-        String userName = info != null ? (String) info.getOrDefault("userName", "Anonyme") : "Anonyme";
+        String userName = info != null ? (String) info.getOrDefault(WebSocketConstants.USER_NAME, WebSocketConstants.DEFAULT_USER_NAME) : WebSocketConstants.DEFAULT_USER_NAME;
 
         broadcastToRoom(roomId, null, Map.of(
                 "type", "user-left",
-                "sessionId", sessionId,
-                "userName", userName
+                WebSocketConstants.SESSION_ID, sessionId,
+                WebSocketConstants.USER_NAME, userName
         ));
     }
 

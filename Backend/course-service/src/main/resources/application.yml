@@ -6,8 +6,8 @@ spring:
     name: course-service
   servlet:
     multipart:
-      max-file-size: 50MB
-      max-request-size: 50MB
+      max-file-size: ${MAX_FILE_SIZE:8MB}
+      max-request-size: ${MAX_REQUEST_SIZE:8MB}
   datasource:
     url: jdbc:mysql://localhost:3306/smartek_course?createDatabaseIfNotExist=true
     username: root

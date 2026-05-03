@@ -1,5 +1,6 @@
 package com.smartek.certificationbadgeservice.security;
 
+import com.smartek.certificationbadgeservice.constants.RoleConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -85,14 +86,14 @@ public class AuthorizationService {
             Long userId = currentUser.getUserId();
             
             // ADMIN, TRAINER, and RH users can access any learner data
-            if (role.equals("ADMIN") || role.equals("TRAINER") || 
-                role.equals("RH_COMPANY") || role.equals("RH_SMARTEK")) {
+            if (role.equals(RoleConstants.ADMIN) || role.equals(RoleConstants.TRAINER) || 
+                role.equals(RoleConstants.RH_COMPANY) || role.equals(RoleConstants.RH_SMARTEK)) {
                 log.debug("User {} with role {} granted access to learner {}", userId, role, learnerId);
                 return true;
             }
             
             // LEARNER can only access their own data
-            if (role.equals("LEARNER")) {
+            if (role.equals(RoleConstants.LEARNER)) {
                 boolean canAccess = userId.equals(learnerId);
                 if (!canAccess) {
                     log.warn("Learner {} attempted to access data for learner {}", userId, learnerId);
@@ -114,48 +115,48 @@ public class AuthorizationService {
      * Check if the current user is an admin
      */
     public boolean isAdmin() {
-        return hasRole("ADMIN");
+        return hasRole(RoleConstants.ADMIN);
     }
     
     /**
      * Check if the current user is a trainer
      */
     public boolean isTrainer() {
-        return hasRole("TRAINER");
+        return hasRole(RoleConstants.TRAINER);
     }
     
     /**
      * Check if the current user is a learner
      */
     public boolean isLearner() {
-        return hasRole("LEARNER");
+        return hasRole(RoleConstants.LEARNER);
     }
     
     /**
      * Check if the current user is an RH user (RH_COMPANY or RH_SMARTEK)
      */
     public boolean isRHUser() {
-        return hasAnyRole("RH_COMPANY", "RH_SMARTEK");
+        return hasAnyRole(RoleConstants.RH_COMPANY, RoleConstants.RH_SMARTEK);
     }
     
     /**
      * Check if the current user can create or modify templates
      */
     public boolean canManageTemplates() {
-        return hasAnyRole("ADMIN", "TRAINER");
+        return hasAnyRole(RoleConstants.ADMIN, RoleConstants.TRAINER);
     }
     
     /**
      * Check if the current user can award badges or certifications
      */
     public boolean canAwardAchievements() {
-        return hasAnyRole("ADMIN", "TRAINER");
+        return hasAnyRole(RoleConstants.ADMIN, RoleConstants.TRAINER);
     }
     
     /**
      * Check if the current user can view statistics
      */
     public boolean canViewStatistics() {
-        return hasAnyRole("ADMIN", "RH_COMPANY", "RH_SMARTEK");
+        return hasAnyRole(RoleConstants.ADMIN, RoleConstants.RH_COMPANY, RoleConstants.RH_SMARTEK);
     }
 }

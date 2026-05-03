@@ -5,6 +5,8 @@ import com.smartek.authservice.dto.LoginRequest;
 import com.smartek.authservice.dto.RegisterRequest;
 import com.smartek.authservice.entity.User;
 import com.smartek.authservice.enums.RoleType;
+import com.smartek.authservice.exception.DuplicateEmailException;
+import com.smartek.authservice.exception.UserNotFoundException;
 import com.smartek.authservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,8 +37,8 @@ public class AuthService {
         log.info("Tentative d'inscription pour l'email: {}", request.getEmail());
         
         // Vérifier si l'email existe déjà
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Cet email est déjà utilisé");
+        if (Boolean.TRUE.equals(userRepository.existsByEmail(request.getEmail()))) {
+            throw new DuplicateEmailException(request.getEmail());
         }
         
         // Créer le nouvel utilisateur
@@ -86,7 +88,7 @@ public class AuthService {
         
         // Récupérer l'utilisateur
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+                .orElseThrow(() -> new UserNotFoundException("Utilisateur non trouvé"));
         
         // Générer le token JWT
         Map<String, Object> claims = new HashMap<>();
@@ -115,7 +117,7 @@ public class AuthService {
     
     public AuthResponse getUserById(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+                .orElseThrow(() -> new UserNotFoundException(userId));
         
         return AuthResponse.builder()
                 .userId(user.getUserId())
