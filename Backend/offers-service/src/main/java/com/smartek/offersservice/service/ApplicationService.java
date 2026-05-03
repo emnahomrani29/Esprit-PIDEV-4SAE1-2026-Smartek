@@ -103,7 +103,8 @@ public class ApplicationService {
         }
         // Force l'initialisation de requiredSkills pour éviter LazyInitializationException
         if (offer.getRequiredSkills() != null) {
-            offer.getRequiredSkills().size();
+            int skillsCount = offer.getRequiredSkills().size();
+            log.debug("Loaded {} required skills for offer {}", skillsCount, offerId);
         }
         return scoringService.analyzeMatch(application, offer, yearsOfExperience);
     }

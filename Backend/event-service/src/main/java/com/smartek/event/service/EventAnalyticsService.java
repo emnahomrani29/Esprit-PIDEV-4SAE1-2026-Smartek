@@ -46,7 +46,7 @@ public class EventAnalyticsService {
                 (double) analytics.getConfirmedRegistrations() / event.getTotalCapacity() * 100 : 0;
         analytics.setFillRate(Math.round(fillRate * 100.0) / 100.0);
 
-        long totalRegistrations = analytics.getConfirmedRegistrations() + waitingListSize;
+        long totalRegistrations = (long) analytics.getConfirmedRegistrations() + waitingListSize;
         long cancelledCount = registrationRepository.countCancelledByEventId(eventId);
         double cancellationRate = totalRegistrations > 0 ? 
                 (double) cancelledCount / (totalRegistrations + cancelledCount) * 100 : 0;

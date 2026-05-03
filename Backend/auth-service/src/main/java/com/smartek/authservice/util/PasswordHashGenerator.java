@@ -1,5 +1,7 @@
 package com.smartek.authservice.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 /**
@@ -8,25 +10,26 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
  */
 public class PasswordHashGenerator {
     
+    private static final Logger logger = LoggerFactory.getLogger(PasswordHashGenerator.class);
+    
     public static void main(String[] args) {
         if (args.length < 1) {
-            System.out.println("Usage: java PasswordHashGenerator <password>");
-            System.out.println("Example: java PasswordHashGenerator MySecurePassword123");
+            logger.info("Usage: java PasswordHashGenerator <password>");
+            logger.info("Example: java PasswordHashGenerator MySecurePassword123");
             System.exit(1);
         }
         
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         String inputPassword = args[0];
         
-        System.out.println("=== SMARTEK Password Hash Generator ===\n");
+        logger.info("=== SMARTEK Password Hash Generator ===");
         
         String passwordHash = encoder.encode(inputPassword);
-        System.out.println("BCrypt Hash: " + passwordHash);
-        System.out.println("Verify: " + encoder.matches(inputPassword, passwordHash));
-        System.out.println();
+        logger.info("BCrypt Hash: {}", passwordHash);
+        logger.info("Verify: {}", encoder.matches(inputPassword, passwordHash));
         
-        System.out.println("=== SQL INSERT EXAMPLE ===\n");
-        System.out.println("INSERT INTO users (first_name, email, password, phone, role, experience)");
-        System.out.println("VALUES ('FirstName', 'email@example.com', '" + passwordHash + "', '+33123456789', 'ROLE', 0);");
+        logger.info("=== SQL INSERT EXAMPLE ===");
+        logger.info("INSERT INTO users (first_name, email, password, phone, role, experience)");
+        logger.info("VALUES ('FirstName', 'email@example.com', '{}', '+33123456789', 'ROLE', 0);", passwordHash);
     }
 }

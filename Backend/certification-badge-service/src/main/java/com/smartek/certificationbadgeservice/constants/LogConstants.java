@@ -9,6 +9,7 @@ public final class LogConstants {
     // Log Keys
     public static final String OPERATION = "operation";
     public static final String USER_ID = "userId";
+    public static final String LEARNER = "Learner";
     
     // Prevent instantiation
     private LogConstants() {
