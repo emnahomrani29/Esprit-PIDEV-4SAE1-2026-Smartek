@@ -63,13 +63,13 @@ spec:
             cpu: "500m"
         startupProbe:
           httpGet:
-            path: /actuator/health
+            path: /api/auth/health
             port: 8081
           failureThreshold: 60
           periodSeconds: 10
         readinessProbe:
           httpGet:
-            path: /actuator/health
+            path: /api/auth/health
             port: 8081
           initialDelaySeconds: 180
           periodSeconds: 15
