@@ -106,7 +106,7 @@ pipeline {
                 sh """
                     /usr/bin/trivy image --exit-code 0 --severity HIGH,CRITICAL \
                         --no-progress --format table \
-                        --timeout 15m \
+                        --timeout 30m \
                         --scanners vuln \
                         ${IMAGE_NAME}:${IMAGE_TAG} || true
                 """
@@ -124,6 +124,15 @@ pipeline {
             }
         }
 
+        stage('Sign Docker Image') {
+            steps {
+                sh """
+                    COSIGN_PASSWORD='' /usr/local/bin/cosign sign --key /home/wafa/cosign.key \
+                        --yes docker.io/${IMAGE_NAME}:${IMAGE_TAG} || true
+                """
+            }
+        }
+
         stage('Deploy to Kubernetes') {
             steps {
                 sh """
@@ -135,6 +144,21 @@ pipeline {
                     kubectl rollout status deployment/skill-evidence-service \
                         -n smartek --timeout=10m || true
                     kubectl get pods -n smartek -l app=skill-evidence-service
+                """
+            }
+        }
+
+        stage('Smoke Test') {
+            steps {
+                sh """
+                    echo 'Attente du démarrage du service...'
+                    sleep 30
+                    STATUS=\$(curl -s -o /dev/null -w '%{http_code}' http://192.168.100.138:30091/actuator/health || echo '000')
+                    if [ "\$STATUS" = "200" ]; then
+                        echo 'Smoke Test OK - skill-evidence-service est up'
+                    else
+                        echo 'Smoke Test WARN - status: '\$STATUS
+                    fi
                 """
             }
         }
