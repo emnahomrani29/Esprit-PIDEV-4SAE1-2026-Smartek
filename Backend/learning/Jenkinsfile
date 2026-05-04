@@ -122,7 +122,7 @@ if (changedFiles == 'ALL' || changedFiles.isEmpty()) {
         stage('Sign Docker Image') {
             steps {
                 sh """
-                    COSIGN_PASSWORD='' /usr/local/bin/cosign sign --key /home/wafa/cosign.key \
+                    COSIGN_PASSWORD='2525' /usr/local/bin/cosign sign --key /home/wafa/cosign.key \
                         --yes docker.io/${IMAGE_NAME}:${IMAGE_TAG} || true
                 """
             }
