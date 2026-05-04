@@ -9,24 +9,24 @@ scrape_configs:
   - job_name: 'learning-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['192.168.100.138:8092']
+      - targets: ['192.168.100.138:30092']
 
   - job_name: 'skill-evidence-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['192.168.100.138:8091']
+      - targets: ['192.168.100.138:30091']
 
   - job_name: 'auth-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['192.168.100.138:8081']
+      - targets: ['192.168.100.138:30081']
 
   - job_name: 'course-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['192.168.100.138:8086']
+      - targets: ['192.168.100.138:30086']
 
   - job_name: 'api-gateway'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['192.168.100.138:8090']
+      - targets: ['192.168.100.138:30090']

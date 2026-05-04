@@ -96,6 +96,16 @@ if (changedFiles == 'ALL' || changedFiles.isEmpty()) {
             }
         }
 
+        stage('Trivy Scan') {
+            steps {
+                sh """
+                    trivy image --exit-code 0 --severity HIGH,CRITICAL \
+                        --no-progress --format table \
+                        ${IMAGE_NAME}:${IMAGE_TAG} || true
+                """
+            }
+        }
+
         stage('Docker Push') {
             steps {
                 sh """
