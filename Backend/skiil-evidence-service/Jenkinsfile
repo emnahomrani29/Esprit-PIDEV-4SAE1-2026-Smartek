@@ -127,8 +127,10 @@ pipeline {
         stage('Sign Docker Image') {
             steps {
                 sh """
+                    echo \$DOCKERHUB_CREDENTIALS_PSW | docker login -u \$DOCKERHUB_CREDENTIALS_USR --password-stdin
                     COSIGN_PASSWORD='2525' /usr/local/bin/cosign sign --key /home/wafa/cosign.key \
                         --yes docker.io/${IMAGE_NAME}:${IMAGE_TAG} || true
+                    docker logout
                 """
             }
         }
@@ -152,7 +154,7 @@ pipeline {
             steps {
                 sh """
                     echo 'Attente du démarrage du service...'
-                    sleep 30
+                    sleep 60
                     STATUS=\$(curl -s -o /dev/null -w '%{http_code}' http://192.168.100.138:30091/actuator/health || echo '000')
                     if [ "\$STATUS" = "200" ]; then
                         echo 'Smoke Test OK - skill-evidence-service est up'
