@@ -65,6 +65,35 @@ data:
       static_configs:
       - targets: ['api-gateway:8090']
 
+  alerts.yml: |
+    groups:
+    - name: smartek-services
+      rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} est DOWN"
+          description: "Le service {{ $labels.job }} ne repond plus depuis 1 minute."
+      - alert: HighMemoryUsage
+        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.85
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Memoire JVM elevee sur {{ $labels.job }}"
+          description: "Heap JVM > 85% depuis 2 minutes sur {{ $labels.job }}."
+      - alert: HighErrorRate
+        expr: rate(http_server_requests_seconds_count{status=~"5.."}[5m]) > 0.1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Taux d erreurs eleve sur {{ $labels.job }}"
+          description: "Plus de 10% de requetes en erreur 5xx sur {{ $labels.job }}."
+
 ---
 apiVersion: v1
 kind: Service
@@ -105,9 +134,6 @@ spec:
         volumeMounts:
         - name: prometheus-config
           mountPath: /etc/prometheus
-        - name: prometheus-alerts
-          mountPath: /etc/prometheus/alerts.yml
-          subPath: alerts.yml
         - name: prometheus-storage
           mountPath: /prometheus
           subPath: prometheus
@@ -128,9 +154,6 @@ spec:
       - name: prometheus-config
         configMap:
           name: prometheus-config
-      - name: prometheus-alerts
-        configMap:
-          name: prometheus-alerts
       - name: prometheus-storage
         emptyDir: {}
 
