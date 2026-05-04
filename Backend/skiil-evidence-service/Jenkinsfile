@@ -106,6 +106,8 @@ pipeline {
                 sh """
                     /usr/bin/trivy image --exit-code 0 --severity HIGH,CRITICAL \
                         --no-progress --format table \
+                        --timeout 15m \
+                        --scanners vuln \
                         ${IMAGE_NAME}:${IMAGE_TAG} || true
                 """
             }
