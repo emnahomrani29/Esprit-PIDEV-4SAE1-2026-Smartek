@@ -1,0 +1,156 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║  🚀 PUSH DES IMAGES DOCKER - GUIDE RAPIDE                                 ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+📋 PRÉREQUIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Docker Desktop installé et démarré
+2. Compte Docker Hub créé (https://hub.docker.com/signup)
+3. Connecté à Docker Hub (docker login)
+4. Au moins 10GB d'espace disque libre
+
+
+🎯 MÉTHODE RAPIDE (WINDOWS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Option 1 : PowerShell (Recommandé)
+───────────────────────────────────
+Ouvrir PowerShell et exécuter :
+
+    .\Push-DockerImages.ps1 -Registry "VOTRE_USERNAME" -Tag "latest"
+
+Exemple :
+    .\Push-DockerImages.ps1 -Registry "johndoe" -Tag "v1.0.0"
+
+
+Option 2 : Batch File
+─────────────────────
+Double-cliquer sur :
+    push-docker-images.bat
+
+Ou exécuter :
+    push-docker-images.bat VOTRE_USERNAME latest
+
+
+Option 3 : Git Bash
+───────────────────
+Ouvrir Git Bash et exécuter :
+
+    ./scripts/build-and-push.sh --registry VOTRE_USERNAME --tag latest
+
+
+📊 CE QUI SERA FAIT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Construction de 15 images Docker
+✅ Connexion à Docker Hub
+✅ Push de toutes les images
+✅ Vérification du succès
+
+Total : 15 images (14 backend + 1 frontend)
+
+
+⏱️ TEMPS ESTIMÉ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Construction : 30-45 minutes (première fois)
+Push :         15-30 minutes (selon connexion)
+Total :        45-75 minutes
+
+
+📦 IMAGES QUI SERONT POUSSÉES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Backend (14) :
+  • api-gateway
+  • auth-service
+  • certification-badge-service
+  • config-server
+  • course-service
+  • eureka-server
+  • event-service
+  • exam-service
+  • learning-service
+  • offers-service
+  • planning-service
+  • skill-evidence-service
+  • sponsor-service
+  • training-service
+
+Frontend (1) :
+  • angular-app
+
+
+🔐 SE CONNECTER À DOCKER HUB
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Via Docker Desktop (Plus facile) :
+  1. Ouvrir Docker Desktop
+  2. Cliquer sur "Sign in"
+  3. Entrer vos identifiants
+
+Via ligne de commande :
+  docker login
+  # Entrer username et password
+
+
+✅ VÉRIFIER LE SUCCÈS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Aller sur : https://hub.docker.com/r/VOTRE_USERNAME
+
+2. Tester un pull :
+   docker pull VOTRE_USERNAME/auth-service:latest
+
+3. Lister les images :
+   docker images | findstr "VOTRE_USERNAME"
+
+
+🐛 PROBLÈMES COURANTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problème : "Docker n'est pas en cours d'exécution"
+Solution : Démarrer Docker Desktop
+
+Problème : "denied: requested access to the resource is denied"
+Solution : docker logout puis docker login
+
+Problème : "image not found locally"
+Solution : Le script construira automatiquement les images
+
+Problème : "unauthorized: authentication required"
+Solution : docker login
+
+
+📚 DOCUMENTATION COMPLÈTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Pour plus de détails :
+  • README_DOCKER_PUSH.md          - Guide complet
+  • PUSH_DOCKER_IMAGES.md          - Guide détaillé
+  • scripts/DOCKER_IMAGES_README.md - Documentation des scripts
+
+
+🎯 COMMANDE FINALE (COPY-PASTE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Remplacez VOTRE_USERNAME par votre username Docker Hub :
+
+PowerShell :
+    .\Push-DockerImages.ps1 -Registry "VOTRE_USERNAME" -Tag "latest"
+
+Git Bash :
+    ./scripts/build-and-push.sh --registry VOTRE_USERNAME --tag latest
+
+Batch :
+    push-docker-images.bat VOTRE_USERNAME latest
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║  🚀 Bonne chance avec votre push !                                        ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝

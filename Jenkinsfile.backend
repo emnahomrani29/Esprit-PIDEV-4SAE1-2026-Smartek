@@ -1,0 +1,248 @@
+pipeline {
+    agent any
+    
+    tools {
+        maven 'Maven-3.9'
+        jdk 'JDK-17'
+    }
+    
+    triggers {
+        // Polling SCM - vérifie le repo toutes les 5 minutes
+        // Fonctionne sans webhook (pas besoin d'être owner du repo)
+        pollSCM('H/5 * * * *')
+    }
+    
+    environment {
+        DOCKER_REGISTRY = 'ghcr.io'
+        DOCKER_REPO = "${env.GITHUB_REPOSITORY ?: 'smartek/backend'}"
+        SONAR_TOKEN = credentials('sonar-token')
+        GITHUB_TOKEN = credentials('github-token')
+    }
+    
+    parameters {
+        choice(
+            name: 'SERVICE',
+            choices: [
+                'auth-service',
+                'event-service',
+                'planning-service',
+                'training-service',
+                'offers-service',
+                'course-service',
+                'exam-service',
+                'certification-badge-service',
+                'skiil-evidence-service',
+                'learning',
+                'smartek_sponsor'
+            ],
+            description: 'Sélectionner le service à builder'
+        )
+        booleanParam(
+            name: 'RUN_TESTS',
+            defaultValue: true,
+            description: 'Exécuter les tests unitaires'
+        )
+        booleanParam(
+            name: 'RUN_SONAR',
+            defaultValue: true,
+            description: 'Exécuter l\'analyse SonarQube'
+        )
+        booleanParam(
+            name: 'BUILD_DOCKER',
+            defaultValue: true,
+            description: 'Builder et pusher l\'image Docker'
+        )
+    }
+    
+    stages {
+        stage('🔍 Checkout') {
+            steps {
+                echo "📥 Cloning repository..."
+                checkout scm
+                script {
+                    env.GIT_COMMIT_SHORT = sh(
+                        script: "git rev-parse --short HEAD",
+                        returnStdout: true
+                    ).trim()
+                    env.BUILD_TIME = sh(
+                        script: "date '+%Y-%m-%d %H:%M:%S'",
+                        returnStdout: true
+                    ).trim()
+                }
+                echo "✅ Commit: ${env.GIT_COMMIT_SHORT}"
+            }
+        }
+        
+        stage('🔧 Setup MySQL') {
+            steps {
+                echo "🐬 Starting MySQL container for tests..."
+                sh '''
+                    docker run -d \
+                        --name mysql-test-${BUILD_NUMBER} \
+                        -e MYSQL_ROOT_PASSWORD=root \
+                        -e MYSQL_DATABASE=testdb \
+                        -p 3307:3306 \
+                        mysql:8.0
+                    
+                    # Wait for MySQL to be ready
+                    for i in {1..30}; do
+                        if docker exec mysql-test-${BUILD_NUMBER} mysqladmin ping -h localhost -u root -proot --silent; then
+                            echo "✅ MySQL is ready!"
+                            break
+                        fi
+                        echo "⏳ Waiting for MySQL... ($i/30)"
+                        sleep 2
+                    done
+                '''
+            }
+        }
+        
+        stage('🏗️ Build') {
+            steps {
+                dir("Backend/${params.SERVICE}") {
+                    echo "🔨 Building ${params.SERVICE}..."
+                    sh '''
+                        mvn clean compile -B \
+                            -DskipTests \
+                            --no-transfer-progress
+                    '''
+                    echo "✅ Build completed"
+                }
+            }
+        }
+        
+        stage('🧪 Tests') {
+            when {
+                expression { params.RUN_TESTS == true }
+            }
+            steps {
+                dir("Backend/${params.SERVICE}") {
+                    echo "🧪 Running tests for ${params.SERVICE}..."
+                    sh '''
+                        mvn verify -B \
+                            --no-transfer-progress \
+                            -Dspring.datasource.url=jdbc:mysql://localhost:3307/testdb?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true \
+                            -Dspring.datasource.username=root \
+                            -Dspring.datasource.password=root
+                    '''
+                    echo "✅ Tests passed"
+                }
+            }
+            post {
+                always {
+                    dir("Backend/${params.SERVICE}") {
+                        // Publish test results
+                        junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
+                        
+                        // Publish JaCoCo coverage report
+                        jacoco(
+                            execPattern: '**/target/jacoco.exec',
+                            classPattern: '**/target/classes',
+                            sourcePattern: '**/src/main/java',
+                            exclusionPattern: '**/dto/**,**/entity/**,**/config/**,**/*Application.class'
+                        )
+                    }
+                }
+            }
+        }
+        
+        stage('📊 SonarQube Analysis') {
+            when {
+                expression { params.RUN_SONAR == true }
+            }
+            steps {
+                dir("Backend/${params.SERVICE}") {
+                    echo "📊 Running SonarQube analysis..."
+                    withSonarQubeEnv('SonarCloud') {
+                        sh '''
+                            mvn sonar:sonar \
+                                -Dsonar.projectKey=smartek-${SERVICE} \
+                                -Dsonar.projectName="Smartek - ${SERVICE}" \
+                                -Dsonar.host.url=https://sonarcloud.io \
+                                -Dsonar.token=${SONAR_TOKEN} \
+                                -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+                                -Dsonar.java.binaries=target/classes \
+                                -Dsonar.sources=src/main/java \
+                                -Dsonar.tests=src/test/java \
+                                -Dsonar.exclusions="**/dto/**,**/entity/**,**/config/**,**/*Application.java" \
+                                -B --no-transfer-progress
+                        '''
+                    }
+                    echo "✅ SonarQube analysis completed"
+                }
+            }
+        }
+        
+        stage('🐳 Docker Build & Push') {
+            when {
+                expression { params.BUILD_DOCKER == true }
+            }
+            steps {
+                dir("Backend/${params.SERVICE}") {
+                    echo "🐳 Building Docker image for ${params.SERVICE}..."
+                    script {
+                        def imageName = "${DOCKER_REGISTRY}/${DOCKER_REPO}/${params.SERVICE}"
+                        def imageTag = "${env.GIT_COMMIT_SHORT}"
+                        
+                        sh """
+                            docker build -t ${imageName}:${imageTag} .
+                            docker tag ${imageName}:${imageTag} ${imageName}:latest
+                        """
+                        
+                        echo "📤 Pushing Docker image..."
+                        withCredentials([usernamePassword(
+                            credentialsId: 'github-token',
+                            usernameVariable: 'DOCKER_USER',
+                            passwordVariable: 'DOCKER_PASS'
+                        )]) {
+                            sh """
+                                echo \$DOCKER_PASS | docker login ${DOCKER_REGISTRY} -u \$DOCKER_USER --password-stdin
+                                docker push ${imageName}:${imageTag}
+                                docker push ${imageName}:latest
+                            """
+                        }
+                        
+                        echo "✅ Docker image pushed: ${imageName}:${imageTag}"
+                    }
+                }
+            }
+        }
+        
+        stage('📈 Archive Artifacts') {
+            steps {
+                dir("Backend/${params.SERVICE}") {
+                    echo "📦 Archiving artifacts..."
+                    archiveArtifacts artifacts: '**/target/*.jar', allowEmptyArchive: true
+                    archiveArtifacts artifacts: '**/target/site/jacoco/**', allowEmptyArchive: true
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo "🧹 Cleaning up..."
+            sh '''
+                # Stop and remove MySQL test container
+                docker stop mysql-test-${BUILD_NUMBER} || true
+                docker rm mysql-test-${BUILD_NUMBER} || true
+                
+                # Clean Docker images
+                docker image prune -f
+            '''
+        }
+        success {
+            echo "✅ Pipeline completed successfully!"
+            echo "📊 Build: ${env.BUILD_NUMBER}"
+            echo "🔖 Commit: ${env.GIT_COMMIT_SHORT}"
+            echo "⏰ Time: ${env.BUILD_TIME}"
+        }
+        failure {
+            echo "❌ Pipeline failed!"
+            echo "📧 Sending notification..."
+        }
+        unstable {
+            echo "⚠️ Pipeline is unstable"
+        }
+    }
+}

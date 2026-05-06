@@ -1,0 +1,203 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    GUIDE: BUILD & PUSH DOCKER IMAGES                         ║
+║                         Projet Smartek Platform                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+📦 IMAGES INCLUSES (24 au total)
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─ BACKEND SERVICES (14) ─────────────────────────────────────────────────────┐
+│ 1.  smartek-eureka-server                  - Service Discovery              │
+│ 2.  smartek-config-server                  - Configuration centralisée      │
+│ 3.  smartek-api-gateway                    - API Gateway                    │
+│ 4.  smartek-auth-service                   - Authentification               │
+│ 5.  smartek-event-service                  - Gestion des événements         │
+│ 6.  smartek-certification-badge-service    - Certifications & Badges        │
+│ 7.  smartek-planning-service               - Planification                  │
+│ 8.  smartek-training-service               - Formations                     │
+│ 9.  smartek-offers-service                 - Offres d'emploi                │
+│ 10. smartek-course-service                 - Cours                          │
+│ 11. smartek-exam-service                   - Examens                        │
+│ 12. smartek-skill-evidence-service         - Preuves de compétences         │
+│ 13. smartek-learning                       - Parcours d'apprentissage       │
+│ 14. smartek-sponsor-service                - Parrainage                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ FRONTEND (1) ──────────────────────────────────────────────────────────────┐
+│ 15. smartek-frontend                       - Application Angular            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ INFRASTRUCTURE & MONITORING (6) ───────────────────────────────────────────┐
+│ 16. smartek-mysql                          - Base de données MySQL          │
+│ 17. smartek-prometheus                     - Métriques                      │
+│ 18. smartek-grafana                        - Dashboards                     │
+│ 19. smartek-loki                           - Agrégation de logs             │
+│ 20. smartek-promtail                       - Collecte de logs               │
+│ 21. smartek-jaeger                         - Tracing distribué              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ DEVOPS (3) ────────────────────────────────────────────────────────────────┐
+│ 22. smartek-sonarqube                      - Qualité du code                │
+│ 23. smartek-nexus                          - Repository Manager             │
+│ 24. smartek-jenkins                        - CI/CD                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+🚀 UTILISATION
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─ OPTION 1: BUILD & PUSH TOUT (Recommandé) ─────────────────────────────────┐
+│                                                                              │
+│   .\Build-And-Push-All.ps1                                                  │
+│                                                                              │
+│   ➜ Build toutes les images custom                                          │
+│   ➜ Pull et tag toutes les images officielles                               │
+│   ➜ Push toutes les images vers Docker Desktop                              │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ OPTION 2: BUILD SEULEMENT (sans push) ────────────────────────────────────┐
+│                                                                              │
+│   .\Build-And-Push-All.ps1 -SkipPush                                        │
+│                                                                              │
+│   ➜ Build et tag toutes les images localement                               │
+│   ➜ Pas de push vers le registry                                            │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ OPTION 3: PUSH SEULEMENT (images déjà buildées) ──────────────────────────┐
+│                                                                              │
+│   .\Build-And-Push-All.ps1 -SkipBuild                                       │
+│                                                                              │
+│   ➜ Push les images existantes                                              │
+│   ➜ Pas de rebuild                                                           │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ OPTION 4: REGISTRY PERSONNALISÉ ──────────────────────────────────────────┐
+│                                                                              │
+│   .\Build-And-Push-All.ps1 -Registry "myregistry.azurecr.io"               │
+│                                                                              │
+│   ➜ Utilise un registry personnalisé                                        │
+│   ➜ Par défaut: localhost                                                   │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+📋 PRÉ-REQUIS
+═══════════════════════════════════════════════════════════════════════════════
+
+✓ Docker Desktop installé et démarré
+✓ PowerShell 5.1+ ou PowerShell Core 7+
+✓ Connexion Internet (pour pull des images officielles)
+✓ Espace disque suffisant (~15-20 GB)
+
+
+⏱️ TEMPS ESTIMÉ
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ Build complet:           30-45 minutes (première fois)                      │
+│ Build incrémental:       10-15 minutes (si cache disponible)                │
+│ Push vers registry:      5-10 minutes (selon connexion)                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+📊 SORTIE DU SCRIPT
+═══════════════════════════════════════════════════════════════════════════════
+
+Le script affiche:
+  ✓ Progression en temps réel pour chaque image
+  ✓ Messages de succès/erreur colorés
+  ✓ Résumé final avec statistiques:
+      - Total d'images traitées
+      - Succès / Échecs / Ignorées
+      - Durée totale d'exécution
+
+
+🔍 VÉRIFICATION POST-BUILD
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─ Lister toutes les images Smartek ─────────────────────────────────────────┐
+│                                                                              │
+│   docker images | findstr smartek                                           │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ Vérifier une image spécifique ────────────────────────────────────────────┐
+│                                                                              │
+│   docker inspect localhost/smartek-auth-service:latest                      │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ Tester une image ─────────────────────────────────────────────────────────┐
+│                                                                              │
+│   docker run --rm localhost/smartek-auth-service:latest                     │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+🐛 DÉPANNAGE
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─ Erreur: "Docker is not available" ────────────────────────────────────────┐
+│ Solution: Démarrer Docker Desktop                                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ Erreur: "Path not found" ─────────────────────────────────────────────────┐
+│ Solution: Exécuter le script depuis la racine du projet                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ Erreur: Build failed ─────────────────────────────────────────────────────┐
+│ Solution: Vérifier les logs Docker et les Dockerfiles                       │
+│           Nettoyer le cache: docker builder prune                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ Erreur: Push failed ──────────────────────────────────────────────────────┐
+│ Solution: Vérifier la connexion au registry                                 │
+│           Se connecter: docker login <registry>                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+🧹 NETTOYAGE
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─ Supprimer toutes les images Smartek ──────────────────────────────────────┐
+│                                                                              │
+│   docker images | findstr smartek | ForEach-Object {                        │
+│       $imageId = ($_ -split '\s+')[2]                                       │
+│       docker rmi $imageId -f                                                │
+│   }                                                                          │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ Nettoyer le cache Docker ─────────────────────────────────────────────────┐
+│                                                                              │
+│   docker system prune -a --volumes                                           │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+📚 FICHIERS ASSOCIÉS
+═══════════════════════════════════════════════════════════════════════════════
+
+Build-And-Push-All.ps1          - Script principal
+docker-compose.yml              - Configuration des services
+docker-compose.prod.yml         - Configuration production
+Backend/*/Dockerfile            - Dockerfiles des services backend
+Frontend/angular-app/Dockerfile - Dockerfile du frontend
+
+
+💡 CONSEILS
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Première exécution: Lancer avec -SkipPush pour tester le build
+2. Utiliser le cache Docker pour accélérer les builds suivants
+3. Vérifier l'espace disque avant de commencer
+4. Monitorer l'utilisation mémoire de Docker Desktop
+5. Faire un backup des images importantes avant nettoyage
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                              Smartek Platform v1.0
+═══════════════════════════════════════════════════════════════════════════════

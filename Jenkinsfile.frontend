@@ -1,0 +1,243 @@
+pipeline {
+    agent any
+    
+    tools {
+        nodejs 'NodeJS-20'
+    }
+    
+    triggers {
+        // Polling SCM - vérifie le repo toutes les 5 minutes
+        // Fonctionne sans webhook (pas besoin d'être owner du repo)
+        pollSCM('H/5 * * * *')
+    }
+    
+    environment {
+        DOCKER_REGISTRY = 'ghcr.io'
+        DOCKER_REPO = "${env.GITHUB_REPOSITORY ?: 'smartek/frontend'}"
+        SONAR_TOKEN = credentials('sonar-token')
+        GITHUB_TOKEN = credentials('github-token')
+        CHROME_BIN = '/usr/bin/google-chrome'
+    }
+    
+    parameters {
+        booleanParam(
+            name: 'RUN_TESTS',
+            defaultValue: true,
+            description: 'Exécuter les tests unitaires'
+        )
+        booleanParam(
+            name: 'RUN_LINT',
+            defaultValue: true,
+            description: 'Exécuter le linting'
+        )
+        booleanParam(
+            name: 'RUN_SONAR',
+            defaultValue: true,
+            description: 'Exécuter l\'analyse SonarQube'
+        )
+        booleanParam(
+            name: 'BUILD_DOCKER',
+            defaultValue: true,
+            description: 'Builder et pusher l\'image Docker'
+        )
+        choice(
+            name: 'BUILD_CONFIG',
+            choices: ['production', 'staging', 'development'],
+            description: 'Configuration de build'
+        )
+    }
+    
+    stages {
+        stage('🔍 Checkout') {
+            steps {
+                echo "📥 Cloning repository..."
+                checkout scm
+                script {
+                    env.GIT_COMMIT_SHORT = sh(
+                        script: "git rev-parse --short HEAD",
+                        returnStdout: true
+                    ).trim()
+                    env.BUILD_TIME = sh(
+                        script: "date '+%Y-%m-%d %H:%M:%S'",
+                        returnStdout: true
+                    ).trim()
+                }
+                echo "✅ Commit: ${env.GIT_COMMIT_SHORT}"
+            }
+        }
+        
+        stage('📦 Install Dependencies') {
+            steps {
+                dir('Frontend/angular-app') {
+                    echo "📦 Installing npm dependencies..."
+                    sh '''
+                        node --version
+                        npm --version
+                        npm ci --prefer-offline --no-audit
+                    '''
+                    echo "✅ Dependencies installed"
+                }
+            }
+        }
+        
+        stage('🔍 Lint') {
+            when {
+                expression { params.RUN_LINT == true }
+            }
+            steps {
+                dir('Frontend/angular-app') {
+                    echo "🔍 Running ESLint..."
+                    sh 'npm run lint || true'
+                    echo "✅ Linting completed"
+                }
+            }
+        }
+        
+        stage('🧪 Tests') {
+            when {
+                expression { params.RUN_TESTS == true }
+            }
+            steps {
+                dir('Frontend/angular-app') {
+                    echo "🧪 Running unit tests..."
+                    sh '''
+                        npm test -- \
+                            --watch=false \
+                            --browsers=ChromeHeadless \
+                            --no-progress \
+                            --code-coverage
+                    '''
+                    echo "✅ Tests passed"
+                }
+            }
+            post {
+                always {
+                    dir('Frontend/angular-app') {
+                        // Publish test results
+                        junit allowEmptyResults: true, testResults: '**/TESTS-*.xml'
+                        
+                        // Publish coverage report
+                        publishHTML([
+                            allowMissing: true,
+                            alwaysLinkToLastBuild: true,
+                            keepAll: true,
+                            reportDir: 'coverage/angular-app',
+                            reportFiles: 'index.html',
+                            reportName: 'Coverage Report'
+                        ])
+                    }
+                }
+            }
+        }
+        
+        stage('📊 SonarQube Analysis') {
+            when {
+                expression { params.RUN_SONAR == true }
+            }
+            steps {
+                dir('Frontend/angular-app') {
+                    echo "📊 Running SonarQube analysis..."
+                    withSonarQubeEnv('SonarCloud') {
+                        sh '''
+                            sonar-scanner \
+                                -Dsonar.projectKey=smartek-frontend \
+                                -Dsonar.projectName="Smartek - Frontend" \
+                                -Dsonar.sources=src \
+                                -Dsonar.exclusions="src/**/*.spec.ts,src/environments/**,node_modules/**,dist/**" \
+                                -Dsonar.tests=src \
+                                -Dsonar.test.inclusions="src/**/*.spec.ts" \
+                                -Dsonar.javascript.lcov.reportPaths=coverage/angular-app/lcov.info \
+                                -Dsonar.typescript.tsconfigPath=tsconfig.json \
+                                -Dsonar.host.url=https://sonarcloud.io \
+                                -Dsonar.token=${SONAR_TOKEN}
+                        '''
+                    }
+                    echo "✅ SonarQube analysis completed"
+                }
+            }
+        }
+        
+        stage('🏗️ Build Production') {
+            steps {
+                dir('Frontend/angular-app') {
+                    echo "🏗️ Building Angular app for ${params.BUILD_CONFIG}..."
+                    sh """
+                        npm run build -- \
+                            --configuration ${params.BUILD_CONFIG} \
+                            --output-path=dist/angular-app
+                    """
+                    echo "✅ Build completed"
+                }
+            }
+        }
+        
+        stage('🐳 Docker Build & Push') {
+            when {
+                expression { params.BUILD_DOCKER == true }
+            }
+            steps {
+                dir('Frontend/angular-app') {
+                    echo "🐳 Building Docker image for frontend..."
+                    script {
+                        def imageName = "${DOCKER_REGISTRY}/${DOCKER_REPO}/frontend"
+                        def imageTag = "${env.GIT_COMMIT_SHORT}"
+                        
+                        sh """
+                            docker build -t ${imageName}:${imageTag} .
+                            docker tag ${imageName}:${imageTag} ${imageName}:latest
+                        """
+                        
+                        echo "📤 Pushing Docker image..."
+                        withCredentials([usernamePassword(
+                            credentialsId: 'github-token',
+                            usernameVariable: 'DOCKER_USER',
+                            passwordVariable: 'DOCKER_PASS'
+                        )]) {
+                            sh """
+                                echo \$DOCKER_PASS | docker login ${DOCKER_REGISTRY} -u \$DOCKER_USER --password-stdin
+                                docker push ${imageName}:${imageTag}
+                                docker push ${imageName}:latest
+                            """
+                        }
+                        
+                        echo "✅ Docker image pushed: ${imageName}:${imageTag}"
+                    }
+                }
+            }
+        }
+        
+        stage('📈 Archive Artifacts') {
+            steps {
+                dir('Frontend/angular-app') {
+                    echo "📦 Archiving build artifacts..."
+                    archiveArtifacts artifacts: 'dist/**/*', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'coverage/**/*', allowEmptyArchive: true
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo "🧹 Cleaning up..."
+            sh '''
+                # Clean Docker images
+                docker image prune -f
+            '''
+        }
+        success {
+            echo "✅ Pipeline completed successfully!"
+            echo "📊 Build: ${env.BUILD_NUMBER}"
+            echo "🔖 Commit: ${env.GIT_COMMIT_SHORT}"
+            echo "⏰ Time: ${env.BUILD_TIME}"
+            echo "🎯 Config: ${params.BUILD_CONFIG}"
+        }
+        failure {
+            echo "❌ Pipeline failed!"
+            echo "📧 Sending notification..."
+        }
+        unstable {
+            echo "⚠️ Pipeline is unstable"
+        }
+    }
+}
