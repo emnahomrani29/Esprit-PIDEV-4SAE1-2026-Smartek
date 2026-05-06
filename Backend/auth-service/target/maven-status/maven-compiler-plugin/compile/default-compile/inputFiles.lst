@@ -6,6 +6,10 @@ C:\Users\rahma\OneDrive - ESPRIT\Desktop\Esprit-PI-4SAE1-2026-Smartek\Backend\au
 C:\Users\rahma\OneDrive - ESPRIT\Desktop\Esprit-PI-4SAE1-2026-Smartek\Backend\auth-service\src\main\java\com\smartek\authservice\dto\RegisterRequest.java
 C:\Users\rahma\OneDrive - ESPRIT\Desktop\Esprit-PI-4SAE1-2026-Smartek\Backend\auth-service\src\main\java\com\smartek\authservice\entity\User.java
 C:\Users\rahma\OneDrive - ESPRIT\Desktop\Esprit-PI-4SAE1-2026-Smartek\Backend\auth-service\src\main\java\com\smartek\authservice\enums\RoleType.java
+C:\Users\rahma\OneDrive - ESPRIT\Desktop\Esprit-PI-4SAE1-2026-Smartek\Backend\auth-service\src\main\java\com\smartek\authservice\exception\AuthenticationException.java
+C:\Users\rahma\OneDrive - ESPRIT\Desktop\Esprit-PI-4SAE1-2026-Smartek\Backend\auth-service\src\main\java\com\smartek\authservice\exception\DuplicateEmailException.java
+C:\Users\rahma\OneDrive - ESPRIT\Desktop\Esprit-PI-4SAE1-2026-Smartek\Backend\auth-service\src\main\java\com\smartek\authservice\exception\GlobalExceptionHandler.java
+C:\Users\rahma\OneDrive - ESPRIT\Desktop\Esprit-PI-4SAE1-2026-Smartek\Backend\auth-service\src\main\java\com\smartek\authservice\exception\UserNotFoundException.java
 C:\Users\rahma\OneDrive - ESPRIT\Desktop\Esprit-PI-4SAE1-2026-Smartek\Backend\auth-service\src\main\java\com\smartek\authservice\repository\UserRepository.java
 C:\Users\rahma\OneDrive - ESPRIT\Desktop\Esprit-PI-4SAE1-2026-Smartek\Backend\auth-service\src\main\java\com\smartek\authservice\service\AuthService.java
 C:\Users\rahma\OneDrive - ESPRIT\Desktop\Esprit-PI-4SAE1-2026-Smartek\Backend\auth-service\src\main\java\com\smartek\authservice\service\JwtService.java

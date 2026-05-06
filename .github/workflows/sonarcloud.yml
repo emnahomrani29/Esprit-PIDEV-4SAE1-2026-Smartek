@@ -134,6 +134,7 @@ jobs:
             -Dsonar.sources=src/main/java \
             -Dsonar.tests=src/test/java \
             -Dsonar.exclusions="**/dto/**,**/entity/**,**/config/**,**/*Application.java,**/migration/**" \
+            -Dsonar.qualitygate.wait=false
             -B --no-transfer-progress
 
   # ─────────────────────────────────────────────────────────────

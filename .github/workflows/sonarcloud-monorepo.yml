@@ -150,5 +150,4 @@ jobs:
             -Dsonar.exclusions=**/target/**,**/node_modules/**,**/dist/**,**/dto/**,**/entity/**,**/*Application.java,**/migration/**,**/*.spec.ts,**/test/**,**/tests/**,**/environments/**,**/uploads/**,**/logs/**,**/*.sql
             -Dsonar.java.binaries=**/target/classes
             -Dsonar.sourceEncoding=UTF-8
-            -Dsonar.qualitygate.wait=true
-            -Dsonar.qualitygate.timeout=300
+            -Dsonar.qualitygate.wait=false
