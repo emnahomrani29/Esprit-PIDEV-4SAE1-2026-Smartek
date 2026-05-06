@@ -45,6 +45,39 @@ jobs:
           distribution: temurin
           cache: maven
 
+      - name: Configure Maven settings
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml << 'EOF'
+          <settings>
+            <mirrors>
+              <mirror>
+                <id>maven-default-http-blocker</id>
+                <mirrorOf>external:http:*</mirrorOf>
+                <name>Pseudo repository to mirror external repositories initially using HTTP.</name>
+                <url>http://0.0.0.0/</url>
+                <blocked>true</blocked>
+              </mirror>
+            </mirrors>
+            <profiles>
+              <profile>
+                <id>default</id>
+                <repositories>
+                  <repository>
+                    <id>central</id>
+                    <url>https://repo1.maven.org/maven2</url>
+                    <releases><enabled>true</enabled></releases>
+                    <snapshots><enabled>false</enabled></snapshots>
+                  </repository>
+                </repositories>
+              </profile>
+            </profiles>
+            <activeProfiles>
+              <activeProfile>default</activeProfile>
+            </activeProfiles>
+          </settings>
+          EOF
+
       - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
