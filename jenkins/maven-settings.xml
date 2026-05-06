@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0
+                              https://maven.apache.org/xsd/settings-1.2.0.xsd">
+
+  <!-- Répertoire local du cache Maven -->
+  <localRepository>/var/jenkins_home/.m2/repository</localRepository>
+
+  <profiles>
+    <profile>
+      <id>smartek-build</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <!-- Timeout de connexion : 60s (défaut 20s) -->
+        <maven.wagon.connectionTimeout>60000</maven.wagon.connectionTimeout>
+        <!-- Timeout de lecture : 120s (défaut 60s) -->
+        <maven.wagon.readTimeout>120000</maven.wagon.readTimeout>
+        <!-- Nombre de retries sur échec réseau -->
+        <maven.wagon.httpconnectionManager.maxPerRoute>20</maven.wagon.httpconnectionManager.maxPerRoute>
+      </properties>
+    </profile>
+  </profiles>
+
+  <mirrors>
+    <!-- Mirror Maven Central avec fallback -->
+    <mirror>
+      <id>central-mirror</id>
+      <name>Maven Central Mirror</name>
+      <url>https://repo.maven.apache.org/maven2</url>
+      <mirrorOf>central</mirrorOf>
+    </mirror>
+  </mirrors>
+
+</settings>

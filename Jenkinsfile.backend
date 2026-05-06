@@ -6,12 +6,13 @@ pipeline {
     }
 
     triggers {
-        pollSCM('H/5 * * * *')
+        githubPush()
     }
 
     environment {
         SONAR_TOKEN = credentials('sonar-token')
-        MAVEN_OPTS  = '-Xmx512m -Xms256m'
+        MAVEN_OPTS  = '-Xmx768m -Xms256m -Dmaven.repo.local=/var/jenkins_home/.m2/repository'
+        MAVEN_REPO  = '/var/jenkins_home/.m2/repository'
     }
 
     stages {
@@ -25,8 +26,39 @@ pipeline {
                         script: "git rev-parse --short HEAD",
                         returnStdout: true
                     ).trim()
+                    env.CURRENT_BRANCH = env.BRANCH_NAME ?: sh(
+                        script: "git rev-parse --abbrev-ref HEAD",
+                        returnStdout: true
+                    ).trim()
                 }
-                echo "✅ Commit: ${env.GIT_COMMIT_SHORT}"
+                echo "✅ Branch: ${env.CURRENT_BRANCH} | Commit: ${env.GIT_COMMIT_SHORT}"
+            }
+        }
+
+        stage('🚦 Branch Guard') {
+            steps {
+                script {
+                    if (env.CURRENT_BRANCH != 'main') {
+                        currentBuild.result = 'ABORTED'
+                        error("⛔ Pipeline backend réservé à la branche 'main'. Branche actuelle : '${env.CURRENT_BRANCH}'")
+                    }
+                    echo "✅ Branche 'main' confirmée — pipeline autorisé."
+                }
+            }
+        }
+
+        stage('🧹 Purge Corrupted Maven Cache') {
+            steps {
+                sh '''
+                    echo "🧹 Suppression des artifacts Maven corrompus..."
+                    # Supprimer les fichiers .lastUpdated (marqueurs d'échec de téléchargement)
+                    find /var/jenkins_home/.m2/repository -name "*.lastUpdated" -delete 2>/dev/null || true
+                    # Supprimer les fichiers partiels
+                    find /var/jenkins_home/.m2/repository -name "*.part" -delete 2>/dev/null || true
+                    # Supprimer les JARs vides (0 octets = téléchargement interrompu)
+                    find /var/jenkins_home/.m2/repository -size 0 -name "*.jar" -delete 2>/dev/null || true
+                    echo "✅ Cache Maven nettoyé."
+                '''
             }
         }
 
@@ -106,6 +138,7 @@ pipeline {
                                         -Dsonar.sources=src/main/java \
                                         -Dsonar.exclusions="**/dto/**,**/entity/**,**/config/**,**/*Application.java" \
                                         -Dsonar.qualitygate.wait=false \
+                                        -Dmaven.repo.local=${MAVEN_REPO} \
                                         -B --no-transfer-progress \
                                         || echo "⚠️ Sonar skipped for ${service}"
                                 """
@@ -140,24 +173,34 @@ pipeline {
                   testResults: 'Backend/**/target/surefire-reports/*.xml'
         }
         success {
-            echo "✅ All Backend services built successfully! Commit: ${env.GIT_COMMIT_SHORT}"
+            echo "✅ Backend pipeline réussi sur 'main' — Commit: ${env.GIT_COMMIT_SHORT}"
         }
         failure {
-            echo "❌ Backend Pipeline failed!"
+            echo "❌ Backend pipeline échoué sur 'main' — Commit: ${env.GIT_COMMIT_SHORT}"
+        }
+        aborted {
+            echo "⛔ Pipeline annulé — branche non autorisée."
         }
     }
 }
 
-// Fonction réutilisable pour build + test
+// Fonction réutilisable pour build + test avec retry sur échec réseau
 def buildAndTest(String service) {
     dir("Backend/${service}") {
         echo "🔨 Building ${service}..."
-        sh """
-            mvn clean compile -B -DskipTests --no-transfer-progress
-        """
+        // retry(2) : relance automatiquement si le téléchargement Maven échoue
+        retry(2) {
+            sh """
+                mvn clean compile -B -DskipTests --no-transfer-progress \
+                    -s /var/jenkins_home/.m2/settings.xml \
+                    -Dmaven.repo.local=/var/jenkins_home/.m2/repository
+            """
+        }
         echo "🧪 Testing ${service}..."
         sh """
             mvn test -B --no-transfer-progress \
+                -s /var/jenkins_home/.m2/settings.xml \
+                -Dmaven.repo.local=/var/jenkins_home/.m2/repository \
                 -Dspring.cloud.config.enabled=false \
                 -Deureka.client.enabled=false \
                 -Dspring.datasource.url='jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL' \

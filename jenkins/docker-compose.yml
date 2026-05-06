@@ -14,6 +14,7 @@ services:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
       - ./jenkins-casc.yaml:/var/jenkins_home/casc_configs/jenkins.yaml:ro
+      - ./maven-settings.xml:/var/jenkins_home/.m2/settings.xml:ro
     environment:
       - JAVA_OPTS=-Djenkins.install.runSetupWizard=false -Xmx2g -Xms512m
       - CASC_JENKINS_CONFIG=/var/jenkins_home/casc_configs/jenkins.yaml
