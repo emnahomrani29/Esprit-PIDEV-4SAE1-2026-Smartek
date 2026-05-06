@@ -285,17 +285,24 @@ export class NotificationService {
 
   private generateId(): string {
     // Use crypto.randomUUID() for cryptographically secure random IDs
-    // Fallback to timestamp-based ID if crypto is not available (older browsers)
+    // Fallback to crypto.getRandomValues() if randomUUID is not available
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
       return crypto.randomUUID();
     }
-    // Fallback: Use timestamp with a counter for uniqueness
+    // Fallback: Use crypto.getRandomValues() for cryptographically secure random
     return `notif-${Date.now()}-${this.generateFallbackId()}`;
   }
 
   private generateFallbackId(): string {
-    // Simple counter-based fallback for older browsers
-    return Math.floor(Math.random() * 1000000).toString(36);
+    // Use crypto.getRandomValues() for cryptographically secure random numbers
+    // This is the recommended approach by SonarCloud
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      const array = new Uint32Array(1);
+      crypto.getRandomValues(array);
+      return array[0].toString(36);
+    }
+    // Last resort fallback for very old browsers (should never happen in modern apps)
+    return Date.now().toString(36);
   }
 
   private scheduleReminder(key: string, minutes: number): void {

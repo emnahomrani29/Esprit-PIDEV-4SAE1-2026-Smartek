@@ -65,16 +65,35 @@ private generateId(): string {
   return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
 }
 
-// APRÈS (sécurisé)
+// APRÈS (sécurisé) - Version 1
 private generateId(): string {
-  // Use crypto.randomUUID() for cryptographically secure random IDs
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
   }
-  // Fallback for older browsers
   return `notif-${Date.now()}-${this.generateFallbackId()}`;
 }
+
+private generateFallbackId(): string {
+  return Math.floor(Math.random() * 1000000).toString(36); // ❌ Encore faible
+}
+
+// APRÈS (sécurisé) - Version 2 FINALE
+private generateFallbackId(): string {
+  // Use crypto.getRandomValues() as recommended by SonarCloud
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    return array[0].toString(36);
+  }
+  // Last resort: timestamp only (no Math.random())
+  return Date.now().toString(36);
+}
 ```
+
+**Explication:**
+- ✅ Priorité 1: `crypto.randomUUID()` (le plus sécurisé)
+- ✅ Priorité 2: `crypto.getRandomValues()` (recommandé par SonarCloud)
+- ✅ Priorité 3: `Date.now()` uniquement (déterministe, pas de Math.random())
 
 ---
 
