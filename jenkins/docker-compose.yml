@@ -15,7 +15,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./jenkins-casc.yaml:/var/jenkins_home/casc_configs/jenkins.yaml:ro
     environment:
-      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false -Xmx2g -Xms512m
       - CASC_JENKINS_CONFIG=/var/jenkins_home/casc_configs/jenkins.yaml
       - DOCKER_HOST=unix:///var/run/docker.sock
     networks:

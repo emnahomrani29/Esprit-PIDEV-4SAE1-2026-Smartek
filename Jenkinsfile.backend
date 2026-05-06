@@ -10,7 +10,8 @@ pipeline {
     }
 
     environment {
-        SONAR_TOKEN  = credentials('sonar-token')
+        SONAR_TOKEN = credentials('sonar-token')
+        MAVEN_OPTS  = '-Xmx512m -Xms256m'
     }
 
     stages {
@@ -29,59 +30,55 @@ pipeline {
             }
         }
 
-        stage('🏗️ Build & Test All Services') {
-            steps {
-                script {
-                    def services = [
-                        'auth-service',
-                        'event-service',
-                        'planning-service',
-                        'training-service',
-                        'offers-service',
-                        'course-service',
-                        'exam-service',
-                        'certification-badge-service',
-                        'skiil-evidence-service',
-                        'learning',
-                        'smartek_sponsor'
-                    ]
+        stage('🏗️ Build & Test - Batch 1') {
+            parallel {
+                stage('auth-service') {
+                    steps { script { buildAndTest('auth-service') } }
+                }
+                stage('event-service') {
+                    steps { script { buildAndTest('event-service') } }
+                }
+                stage('planning-service') {
+                    steps { script { buildAndTest('planning-service') } }
+                }
+            }
+        }
 
-                    // Builder tous les services en parallèle
-                    def parallelStages = [:]
+        stage('🏗️ Build & Test - Batch 2') {
+            parallel {
+                stage('training-service') {
+                    steps { script { buildAndTest('training-service') } }
+                }
+                stage('offers-service') {
+                    steps { script { buildAndTest('offers-service') } }
+                }
+                stage('course-service') {
+                    steps { script { buildAndTest('course-service') } }
+                }
+            }
+        }
 
-                    services.each { service ->
-                        def svc = service // capture variable
-                        parallelStages[svc] = {
-                            stage("📦 ${svc}") {
-                                dir("Backend/${svc}") {
-                                    echo "🔨 Building ${svc}..."
-                                    sh '''
-                                        mvn clean compile -B \
-                                            -DskipTests \
-                                            --no-transfer-progress
-                                    '''
-                                    echo "🧪 Testing ${svc}..."
-                                    sh '''
-                                        mvn test -B \
-                                            --no-transfer-progress \
-                                            -Dspring.cloud.config.enabled=false \
-                                            -Deureka.client.enabled=false \
-                                            -Dspring.datasource.url="jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL" \
-                                            -Dspring.datasource.driver-class-name=org.h2.Driver \
-                                            -Dspring.datasource.username=sa \
-                                            -Dspring.datasource.password= \
-                                            -Dspring.jpa.database-platform=org.hibernate.dialect.H2Dialect \
-                                            -Dspring.jpa.hibernate.ddl-auto=create-drop \
-                                            -Dexcludes="**/*RepositoryTest*,**/*IntegrationTest*" \
-                                            || echo "⚠️ Some tests failed in ${svc} - continuing"
-                                    '''
-                                    echo "✅ ${svc} done"
-                                }
-                            }
-                        }
-                    }
+        stage('🏗️ Build & Test - Batch 3') {
+            parallel {
+                stage('exam-service') {
+                    steps { script { buildAndTest('exam-service') } }
+                }
+                stage('certification-badge-service') {
+                    steps { script { buildAndTest('certification-badge-service') } }
+                }
+                stage('skiil-evidence-service') {
+                    steps { script { buildAndTest('skiil-evidence-service') } }
+                }
+            }
+        }
 
-                    parallel parallelStages
+        stage('🏗️ Build & Test - Batch 4') {
+            parallel {
+                stage('learning') {
+                    steps { script { buildAndTest('learning') } }
+                }
+                stage('smartek_sponsor') {
+                    steps { script { buildAndTest('smartek_sponsor') } }
                 }
             }
         }
@@ -90,22 +87,13 @@ pipeline {
             steps {
                 script {
                     def services = [
-                        'auth-service',
-                        'event-service',
-                        'planning-service',
-                        'training-service',
-                        'offers-service',
-                        'course-service',
-                        'exam-service',
-                        'certification-badge-service',
-                        'skiil-evidence-service',
-                        'learning',
-                        'smartek_sponsor'
+                        'auth-service', 'event-service', 'planning-service',
+                        'training-service', 'offers-service', 'course-service',
+                        'exam-service', 'certification-badge-service',
+                        'skiil-evidence-service', 'learning', 'smartek_sponsor'
                     ]
-
                     services.each { service ->
                         dir("Backend/${service}") {
-                            echo "📊 SonarQube analysis for ${service}..."
                             withSonarQubeEnv('SonarCloud') {
                                 sh """
                                     mvn sonar:sonar \
@@ -119,7 +107,7 @@ pipeline {
                                         -Dsonar.exclusions="**/dto/**,**/entity/**,**/config/**,**/*Application.java" \
                                         -Dsonar.qualitygate.wait=false \
                                         -B --no-transfer-progress \
-                                        || echo "⚠️ Sonar failed for ${service} - continuing"
+                                        || echo "⚠️ Sonar skipped for ${service}"
                                 """
                             }
                         }
@@ -131,20 +119,11 @@ pipeline {
         stage('📈 Archive Artifacts') {
             steps {
                 script {
-                    def services = [
-                        'auth-service',
-                        'event-service',
-                        'planning-service',
-                        'training-service',
-                        'offers-service',
-                        'course-service',
-                        'exam-service',
-                        'certification-badge-service',
-                        'skiil-evidence-service',
-                        'learning',
-                        'smartek_sponsor'
-                    ]
-                    services.each { service ->
+                    ['auth-service', 'event-service', 'planning-service',
+                     'training-service', 'offers-service', 'course-service',
+                     'exam-service', 'certification-badge-service',
+                     'skiil-evidence-service', 'learning', 'smartek_sponsor'
+                    ].each { service ->
                         dir("Backend/${service}") {
                             archiveArtifacts artifacts: '**/target/*.jar',
                                              allowEmptyArchive: true
@@ -157,16 +136,39 @@ pipeline {
 
     post {
         always {
-            // Collecter tous les rapports de tests
             junit allowEmptyResults: true,
                   testResults: 'Backend/**/target/surefire-reports/*.xml'
         }
         success {
-            echo "✅ All Backend services built successfully!"
-            echo "🔖 Commit: ${env.GIT_COMMIT_SHORT}"
+            echo "✅ All Backend services built successfully! Commit: ${env.GIT_COMMIT_SHORT}"
         }
         failure {
             echo "❌ Backend Pipeline failed!"
         }
+    }
+}
+
+// Fonction réutilisable pour build + test
+def buildAndTest(String service) {
+    dir("Backend/${service}") {
+        echo "🔨 Building ${service}..."
+        sh """
+            mvn clean compile -B -DskipTests --no-transfer-progress
+        """
+        echo "🧪 Testing ${service}..."
+        sh """
+            mvn test -B --no-transfer-progress \
+                -Dspring.cloud.config.enabled=false \
+                -Deureka.client.enabled=false \
+                -Dspring.datasource.url='jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL' \
+                -Dspring.datasource.driver-class-name=org.h2.Driver \
+                -Dspring.datasource.username=sa \
+                -Dspring.datasource.password= \
+                -Dspring.jpa.database-platform=org.hibernate.dialect.H2Dialect \
+                -Dspring.jpa.hibernate.ddl-auto=create-drop \
+                -Dexcludes='**/*RepositoryTest*,**/*IntegrationTest*' \
+                || echo "⚠️ Some tests failed in ${service} - continuing"
+        """
+        echo "✅ ${service} done"
     }
 }

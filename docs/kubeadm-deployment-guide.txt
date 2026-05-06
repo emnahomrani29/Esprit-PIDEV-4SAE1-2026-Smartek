@@ -1,0 +1,359 @@
+================================================================================
+         GUIDE DE DEPLOIEMENT KUBERNETES AVEC KUBEADM - SMARTEK PLATFORM
+================================================================================
+
+DATE : Mai 2026
+PROJET : Smartek Platform
+OBJECTIF : Deployer l'application sur une machine virtuelle avec kubeadm
+           sans modification du code source
+
+================================================================================
+PREREQUIS - CONFIGURATION DE LA MACHINE VIRTUELLE
+================================================================================
+
+Specifications minimales requises :
+  - OS      : Ubuntu 20.04 / 22.04 LTS  (recommande)
+              ou CentOS 7 / 8
+  - RAM     : 2 GB minimum (4 GB recommande)
+  - CPU     : 2 cores minimum
+  - Disque  : 20 GB minimum
+  - Reseau  : Connexion internet stable
+
+================================================================================
+ETAPE 1 : PREPARATION DE LA MACHINE VIRTUELLE
+================================================================================
+
+-- Desactiver le swap (obligatoire pour Kubernetes) --
+
+  sudo swapoff -a
+  sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+-- Configurer les modules kernel --
+
+  cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+  overlay
+  br_netfilter
+  EOF
+
+  sudo modprobe overlay
+  sudo modprobe br_netfilter
+
+-- Configurer les parametres reseau sysctl --
+
+  cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+  net.bridge.bridge-nf-call-iptables  = 1
+  net.bridge.bridge-nf-call-ip6tables = 1
+  net.ipv4.ip_forward                 = 1
+  EOF
+
+  sudo sysctl --system
+
+================================================================================
+ETAPE 2 : INSTALLATION DE CONTAINERD (RUNTIME)
+================================================================================
+
+  sudo apt-get update
+  sudo apt-get install -y containerd
+
+-- Configurer containerd --
+
+  sudo mkdir -p /etc/containerd
+  containerd config default | sudo tee /etc/containerd/config.toml
+
+-- Activer le systemd cgroup driver --
+
+  sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+
+  sudo systemctl restart containerd
+  sudo systemctl enable containerd
+
+-- Verifier que containerd fonctionne --
+
+  sudo systemctl status containerd
+
+================================================================================
+ETAPE 3 : INSTALLATION DE KUBEADM, KUBELET ET KUBECTL
+================================================================================
+
+-- Ajouter le repository Kubernetes --
+
+  sudo apt-get update
+  sudo apt-get install -y apt-transport-https ca-certificates curl
+
+  curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | \
+    sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+  echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] \
+    https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | \
+    sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+-- Installer les composants --
+
+  sudo apt-get update
+  sudo apt-get install -y kubelet kubeadm kubectl
+
+-- Bloquer les mises a jour automatiques --
+
+  sudo apt-mark hold kubelet kubeadm kubectl
+
+-- Verifier les versions installees --
+
+  kubeadm version
+  kubectl version --client
+  kubelet --version
+
+================================================================================
+ETAPE 4 : INITIALISER LE CLUSTER KUBERNETES
+================================================================================
+
+-- Initialiser le cluster (noeud master) --
+
+  sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+
+  NOTE : Sauvegarder la commande "kubeadm join" affichee a la fin
+         si vous souhaitez ajouter des noeuds workers plus tard.
+
+-- Configurer kubectl pour l'utilisateur courant --
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+-- Verifier que le noeud est pret --
+
+  kubectl get nodes
+
+================================================================================
+ETAPE 5 : INSTALLER LE PLUGIN RESEAU (FLANNEL)
+================================================================================
+
+  kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+
+-- Attendre que tous les pods systeme soient Running --
+
+  kubectl get pods -n kube-system --watch
+
+  (Attendre que tous les pods passent au statut "Running")
+
+================================================================================
+ETAPE 6 : CONFIGURATION SINGLE-NODE (VM UNIQUE)
+================================================================================
+
+  Si vous utilisez une seule VM (master = worker), supprimer le taint
+  qui empeche le scheduling sur le noeud master :
+
+  kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+
+-- Verifier que le noeud accepte les pods --
+
+  kubectl get nodes
+  (Le statut doit etre "Ready")
+
+================================================================================
+ETAPE 7 : DEPLOYER LES MANIFESTS KUBERNETES DU PROJET
+================================================================================
+
+  Les fichiers K8s sont dans le dossier k8s/ du projet.
+  Deployer dans l'ordre suivant :
+
+-- 1. Namespace --
+
+  kubectl apply -f k8s/namespace.yml
+
+-- 2. Secrets et ConfigMaps --
+
+  kubectl apply -f k8s/secret.yml
+  kubectl apply -f k8s/configmap.yml
+
+  IMPORTANT : Verifier que les valeurs dans secret.yml sont
+              encodees en base64 avant de les appliquer.
+              Commande pour encoder : echo -n "valeur" | base64
+
+-- 3. Infrastructure (MySQL, etc.) --
+
+  kubectl apply -f k8s/infrastructure/mysql.yml
+
+  Attendre que MySQL soit pret :
+  kubectl get pods -n smartek-platform --watch
+
+-- 4. Services Backend --
+
+  kubectl apply -f k8s/01-auth-service/
+  kubectl apply -f k8s/02-course-service/
+  kubectl apply -f k8s/03-exam-service/
+  kubectl apply -f k8s/04-certification-service/
+  kubectl apply -f k8s/05-planning-service/
+  kubectl apply -f k8s/06-training-service/
+
+-- 5. Frontend --
+
+  kubectl apply -f k8s/07-frontend/frontend.yml
+
+-- 6. Ingress --
+
+  kubectl apply -f k8s/08-ingress/ingress.yml
+
+-- 7. Autoscaling (optionnel) --
+
+  kubectl apply -f k8s/10-autoscaling/hpa.yml
+
+================================================================================
+ETAPE 8 : INSTALLER L'INGRESS CONTROLLER (NGINX)
+================================================================================
+
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/baremetal/deploy.yaml
+
+-- Verifier l'installation --
+
+  kubectl get pods -n ingress-nginx
+
+================================================================================
+ETAPE 9 : VERIFICATION DU DEPLOIEMENT
+================================================================================
+
+-- Voir tous les pods --
+
+  kubectl get pods -n smartek-platform
+
+-- Voir tous les services --
+
+  kubectl get svc -n smartek-platform
+
+-- Voir tous les deployments --
+
+  kubectl get deployments -n smartek-platform
+
+-- Voir les ingress --
+
+  kubectl get ingress -n smartek-platform
+
+-- Voir l'utilisation des ressources --
+
+  kubectl top nodes
+  kubectl top pods -n smartek-platform
+
+================================================================================
+ETAPE 10 : ACCEDER A L'APPLICATION
+================================================================================
+
+-- Trouver le NodePort expose --
+
+  kubectl get svc -n smartek-platform
+
+-- Trouver l'IP de la VM --
+
+  hostname -I
+
+-- Acceder via navigateur --
+
+  http://<IP-DE-LA-VM>:<NODE-PORT>
+
+  Exemple : http://192.168.1.100:30080
+
+-- Si Ingress est configure --
+
+  Ajouter dans /etc/hosts (sur votre machine locale) :
+  <IP-DE-LA-VM>   smartek.local
+
+  Puis acceder via : http://smartek.local
+
+================================================================================
+COMMANDES UTILES - MONITORING ET DEBUG
+================================================================================
+
+-- Voir les logs d'un pod --
+
+  kubectl logs -f <nom-du-pod> -n smartek-platform
+
+-- Voir les logs du pod precedent (si crash) --
+
+  kubectl logs <nom-du-pod> -n smartek-platform --previous
+
+-- Decrire un pod (voir les erreurs) --
+
+  kubectl describe pod <nom-du-pod> -n smartek-platform
+
+-- Acceder a un pod en mode interactif --
+
+  kubectl exec -it <nom-du-pod> -n smartek-platform -- /bin/bash
+
+-- Voir les evenements du namespace --
+
+  kubectl get events -n smartek-platform --sort-by='.lastTimestamp'
+
+-- Redemarrer un deployment --
+
+  kubectl rollout restart deployment/<nom-deployment> -n smartek-platform
+
+-- Voir le statut d'un rollout --
+
+  kubectl rollout status deployment/<nom-deployment> -n smartek-platform
+
+-- Scaler un deployment --
+
+  kubectl scale deployment/<nom-deployment> --replicas=3 -n smartek-platform
+
+================================================================================
+TROUBLESHOOTING - PROBLEMES COURANTS
+================================================================================
+
+PROBLEME : Pod en etat "Pending"
+  CAUSE   : Pas assez de ressources ou taint sur le noeud
+  SOLUTION: kubectl describe pod <pod> -n smartek-platform
+            Verifier les ressources : kubectl describe node
+
+PROBLEME : Pod en etat "CrashLoopBackOff"
+  CAUSE   : Erreur dans l'application ou mauvaise configuration
+  SOLUTION: kubectl logs <pod> -n smartek-platform --previous
+            Verifier les variables d'environnement dans configmap/secret
+
+PROBLEME : Pod en etat "ImagePullBackOff"
+  CAUSE   : Image Docker inaccessible
+  SOLUTION: Verifier que l'image existe sur Docker Hub
+            kubectl describe pod <pod> -n smartek-platform
+
+PROBLEME : Service inaccessible depuis l'exterieur
+  CAUSE   : NodePort mal configure ou firewall
+  SOLUTION: Verifier le type de service (NodePort/LoadBalancer)
+            Ouvrir le port dans le firewall : sudo ufw allow <port>
+
+PROBLEME : MySQL ne demarre pas
+  CAUSE   : PersistentVolume non disponible
+  SOLUTION: kubectl get pvc -n smartek-platform
+            kubectl describe pvc <pvc-name> -n smartek-platform
+
+PROBLEME : kubeadm init echoue - "port already in use"
+  CAUSE   : Un cluster existe deja
+  SOLUTION: sudo kubeadm reset
+            sudo rm -rf /etc/kubernetes /var/lib/etcd
+            Puis relancer kubeadm init
+
+================================================================================
+REINITIALISER LE CLUSTER (SI NECESSAIRE)
+================================================================================
+
+  ATTENTION : Cette operation supprime tout le cluster !
+
+  sudo kubeadm reset
+  sudo rm -rf $HOME/.kube
+  sudo rm -rf /etc/kubernetes
+  sudo rm -rf /var/lib/etcd
+  sudo iptables -F && sudo iptables -t nat -F
+  sudo iptables -t mangle -F && sudo iptables -X
+
+================================================================================
+NOTES IMPORTANTES
+================================================================================
+
+  1. Aucune modification du code source n'est necessaire.
+  2. Les images Docker doivent etre publiees sur Docker Hub ou un registry
+     accessible depuis la VM avant le deploiement.
+  3. Les secrets Kubernetes doivent etre encodes en base64.
+  4. Pour une VM single-node, le taint du master doit etre supprime (Etape 6).
+  5. Sauvegarder la commande "kubeadm join" pour ajouter des workers plus tard.
+  6. Le fichier $HOME/.kube/config contient les credentials du cluster,
+     ne pas le partager.
+
+================================================================================
+FIN DU GUIDE
+================================================================================

@@ -6,13 +6,25 @@ datasources:
     access: proxy
     url: http://prometheus:9090
     isDefault: true
+    jsonData:
+      timeInterval: "15s"
 
   - name: Loki
     type: loki
     access: proxy
     url: http://loki:3100
+    jsonData:
+      maxLines: 1000
 
   - name: Jaeger
     type: jaeger
     access: proxy
     url: http://jaeger:16686
+
+  - name: Alertmanager
+    type: alertmanager
+    access: proxy
+    url: http://alertmanager:9093
+    jsonData:
+      handleGrafanaManagedAlerts: false
+      implementation: prometheus

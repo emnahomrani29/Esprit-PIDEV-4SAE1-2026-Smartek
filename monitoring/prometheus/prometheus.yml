@@ -5,7 +5,17 @@ global:
 rule_files:
   - "alert-rules.yml"
 
+# Alertmanager
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
 scrape_configs:
+  # ─────────────────────────────────────────
+  # MICROSERVICES SPRING BOOT
+  # ─────────────────────────────────────────
   - job_name: 'eureka-server'
     metrics_path: '/actuator/prometheus'
     static_configs:
@@ -70,3 +80,41 @@ scrape_configs:
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['certification-badge-service:8094']
+
+  # ─────────────────────────────────────────
+  # INFRASTRUCTURE
+  # ─────────────────────────────────────────
+
+  # Métriques système du host (CPU, RAM, disque)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'smartek-host'
+
+  # Métriques containers Docker
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    metric_relabel_configs:
+      # Garder seulement les containers avec un service compose
+      - source_labels: [container_label_com_docker_compose_service]
+        regex: '.+'
+        action: keep
+
+  # Métriques MySQL
+  - job_name: 'mysql'
+    static_configs:
+      - targets: ['mysql-exporter:9104']
+
+  # Alertmanager lui-même
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']
+
+  # Prometheus lui-même
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

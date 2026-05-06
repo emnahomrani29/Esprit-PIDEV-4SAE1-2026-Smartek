@@ -9,3 +9,12 @@ providers:
     updateIntervalSeconds: 30
     options:
       path: /var/lib/grafana/dashboards
+
+  - name: 'smartek-infra'
+    orgId: 1
+    folder: 'Smartek - Infrastructure'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards/infra
