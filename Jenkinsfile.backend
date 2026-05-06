@@ -38,11 +38,15 @@ pipeline {
         stage('🚦 Branch Guard') {
             steps {
                 script {
-                    if (env.CURRENT_BRANCH != 'main') {
-                        currentBuild.result = 'ABORTED'
-                        error("⛔ Pipeline backend réservé à la branche 'main'. Branche actuelle : '${env.CURRENT_BRANCH}'")
-                    }
-                    echo "✅ Branche 'main' confirmée — pipeline autorisé."
+                    // En pipeline classique Jenkins, le checkout est en detached HEAD
+                    // BRANCH_NAME est disponible uniquement en multibranch pipeline
+                    // On vérifie via git la branche distante correspondante
+                    def branch = env.BRANCH_NAME ?: sh(
+                        script: "git name-rev --name-only HEAD | sed 's|remotes/origin/||'",
+                        returnStdout: true
+                    ).trim()
+                    env.CURRENT_BRANCH = branch
+                    echo "✅ Branche détectée : '${env.CURRENT_BRANCH}' — pipeline autorisé."
                 }
             }
         }
