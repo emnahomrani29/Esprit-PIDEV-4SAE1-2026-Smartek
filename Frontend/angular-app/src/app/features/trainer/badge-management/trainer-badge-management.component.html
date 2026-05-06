@@ -205,21 +205,21 @@
     <h3 class="text-lg font-bold text-gray-900 mb-4">{{ editingBadge ? 'Modifier' : 'CrÃ©er' }} un Badge</h3>
     <form [formGroup]="badgeForm" class="space-y-4">
       <div>
-        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nom *</label>
-        <input formControlName="name" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-300" placeholder="Ex: Expert Angular">
+        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1" for="nom">Nom *</label>
+        <input formControlName="name" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-300" placeholder="Ex: Expert Angular" id="nom">
       </div>
       <div>
-        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Description *</label>
-        <textarea formControlName="description" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-300" placeholder="Description du badge..."></textarea>
+        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1" for="description">Description *</label>
+        <textarea formControlName="description" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-300" placeholder="Description du badge..." id="description"></textarea>
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Score minimum (%)</label>
-          <input type="number" formControlName="minimumScore" min="0" max="100" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-300" placeholder="75">
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1" for="scoreminimum">Score minimum (%)</label>
+          <input type="number" formControlName="minimumScore" min="0" max="100" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-300" placeholder="75" id="scoreminimum">
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Exam ID</label>
-          <input type="number" formControlName="examId" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-300" placeholder="ID de l'examen">
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1" for="examid">Exam ID</label>
+          <input type="number" formControlName="examId" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-300" placeholder="ID de l'examen" id="examid">
         </div>
       </div>
     </form>
@@ -236,12 +236,12 @@
     <h3 class="text-lg font-bold text-gray-900 mb-4">{{ editingCert ? 'Modifier' : 'CrÃ©er' }} une Certification</h3>
     <form [formGroup]="certForm" class="space-y-4">
       <div>
-        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Titre *</label>
-        <input formControlName="title" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Ex: Certification Spring Boot">
+        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1" for="titre">Titre *</label>
+        <input formControlName="title" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Ex: Certification Spring Boot" id="titre">
       </div>
       <div>
-        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Description *</label>
-        <textarea formControlName="description" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Description de la certification..."></textarea>
+        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1" for="description">Description *</label>
+        <textarea formControlName="description" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Description de la certification..." id="description"></textarea>
       </div>
     </form>
     <div class="flex gap-3 mt-5">
@@ -257,8 +257,8 @@
     <h3 class="text-lg font-bold text-gray-900 mb-1">Attribuer le Badge</h3>
     <p class="text-sm text-gray-500 mb-4">ðŸ… <strong>{{ selectedBadgeTemplate?.name }}</strong></p>
     <div>
-      <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">ID de l'apprenant *</label>
-      <input type="number" [(ngModel)]="awardLearnerId" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-300" placeholder="Ex: 42">
+      <label class="block text-xs font-semibold text-gray-500 uppercase mb-1" for="iddelapprenant">ID de l'apprenant *</label>
+      <input type="number" [(ngModel)]="awardLearnerId" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-300" placeholder="Ex: 42" id="iddelapprenant">
     </div>
     <div class="flex gap-3 mt-5">
       <button (click)="showAwardBadgeModal=false" class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm">Annuler</button>
@@ -273,8 +273,8 @@
     <h3 class="text-lg font-bold text-gray-900 mb-1">Attribuer la Certification</h3>
     <p class="text-sm text-gray-500 mb-4">ðŸŽ“ <strong>{{ selectedCertTemplate?.title }}</strong></p>
     <div>
-      <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">ID de l'apprenant *</label>
-      <input type="number" [(ngModel)]="awardCertLearnerId" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Ex: 42">
+      <label class="block text-xs font-semibold text-gray-500 uppercase mb-1" for="iddelapprenant">ID de l'apprenant *</label>
+      <input type="number" [(ngModel)]="awardCertLearnerId" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Ex: 42" id="iddelapprenant">
     </div>
     <div class="flex gap-3 mt-5">
       <button (click)="showAwardCertModal=false" class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm">Annuler</button>
@@ -292,12 +292,12 @@
     <p class="text-sm text-gray-500 mb-4">ðŸ§  <strong>{{ selectedEvidence?.title }}</strong> â€” {{ selectedEvidence?.learnerName }}</p>
     <div class="space-y-4">
       <div *ngIf="reviewAction === 'approve'">
-        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Score (0-100) *</label>
-        <input type="number" [(ngModel)]="reviewScore" min="0" max="100" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300" placeholder="85">
+        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1" for="score0100">Score (0-100) *</label>
+        <input type="number" [(ngModel)]="reviewScore" min="0" max="100" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300" placeholder="85" id="score0100">
       </div>
       <div>
-        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Commentaire {{ reviewAction === 'reject' ? '*' : '' }}</label>
-        <textarea [(ngModel)]="reviewComment" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300" placeholder="Feedback pour l'apprenant..."></textarea>
+        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1" for="commentairereviewactionreject">Commentaire {{ reviewAction === 'reject' ? '*' : '' }}</label>
+        <textarea [(ngModel)]="reviewComment" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300" placeholder="Feedback pour l'apprenant..." id="commentairereviewactionreject"></textarea>
       </div>
     </div>
     <div class="flex gap-3 mt-5">

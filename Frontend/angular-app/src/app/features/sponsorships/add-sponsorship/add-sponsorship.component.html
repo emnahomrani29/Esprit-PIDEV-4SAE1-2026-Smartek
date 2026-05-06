@@ -34,8 +34,8 @@
     <form [formGroup]="sponsorshipForm" (ngSubmit)="onSubmit()" class="space-y-4">
       <!-- Contract Selection -->
       <div>
-        <label class="block text-sm font-medium mb-2">Contract</label>
-        <select formControlName="contractId" (change)="onContractChange()" 
+        <label class="block text-sm font-medium mb-2" for="contract">Contract</label>
+        <select formControlName="contractId" (change)="onContractChange()"  id="contract"
                 class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="">Select a contract</option>
           <option *ngFor="let contract of contracts" [value]="contract.id">
@@ -46,8 +46,8 @@
 
       <!-- Sponsorship Type -->
       <div>
-        <label class="block text-sm font-medium mb-2">Sponsorship Type</label>
-        <select formControlName="sponsorshipType" 
+        <label class="block text-sm font-medium mb-2" for="sponsorshiptype">Sponsorship Type</label>
+        <select formControlName="sponsorshipType"  id="sponsorshiptype"
                 class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="">Select type</option>
           <option value="COURSE">Course</option>
@@ -59,8 +59,8 @@
 
       <!-- Target Type -->
       <div>
-        <label class="block text-sm font-medium mb-2">Target Type</label>
-        <select formControlName="targetType" 
+        <label class="block text-sm font-medium mb-2" for="targettype">Target Type</label>
+        <select formControlName="targetType"  id="targettype"
                 class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="">Select type</option>
           <option value="COURSE">Course</option>
@@ -72,16 +72,16 @@
 
       <!-- Target ID -->
       <div>
-        <label class="block text-sm font-medium mb-2">Target ID</label>
-        <input type="number" formControlName="targetId" 
+        <label class="block text-sm font-medium mb-2" for="targetid">Target ID</label>
+        <input type="number" formControlName="targetId"  id="targetid"
                class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                placeholder="Enter target ID">
       </div>
 
       <!-- Amount -->
       <div>
-        <label class="block text-sm font-medium mb-2">Amount Allocated (EUR)</label>
-        <input type="number" formControlName="amountAllocated" (input)="onAmountChange()"
+        <label class="block text-sm font-medium mb-2" for="amountallocatedeur">Amount Allocated (EUR)</label>
+        <input type="number" formControlName="amountAllocated" (input)="onAmountChange()" id="amountallocatedeur"
                class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                placeholder="Enter amount">
         <p *ngIf="suggestedTier" class="mt-1 text-sm text-blue-600">
@@ -94,8 +94,8 @@
 
       <!-- Visibility Level -->
       <div>
-        <label class="block text-sm font-medium mb-2">Visibility Level</label>
-        <select formControlName="visibilityLevel" 
+        <label class="block text-sm font-medium mb-2" for="visibilitylevel">Visibility Level</label>
+        <select formControlName="visibilityLevel"  id="visibilitylevel"
                 class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="">Select visibility</option>
           <option value="LOGO">Logo (Min: 500 EUR)</option>
@@ -106,15 +106,15 @@
 
       <!-- Start Date -->
       <div>
-        <label class="block text-sm font-medium mb-2">Start Date</label>
-        <input type="date" formControlName="startDate" 
+        <label class="block text-sm font-medium mb-2" for="startdate">Start Date</label>
+        <input type="date" formControlName="startDate"  id="startdate"
                class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
 
       <!-- End Date -->
       <div>
-        <label class="block text-sm font-medium mb-2">End Date</label>
-        <input type="date" formControlName="endDate" 
+        <label class="block text-sm font-medium mb-2" for="enddate">End Date</label>
+        <input type="date" formControlName="endDate"  id="enddate"
                class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
 

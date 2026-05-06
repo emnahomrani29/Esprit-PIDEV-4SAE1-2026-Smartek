@@ -85,7 +85,7 @@ export class CertificateViewerComponent implements OnInit {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Smartek_Certificate_${this.certification!.certificationTemplate.title.replace(/\s+/g, '_')}.pdf`;
+        a.download = `Smartek_Certificate_${this.certification!.certificationTemplate.title.replaceAll(/\s+/g, '_')}.pdf`;
         a.click();
         window.URL.revokeObjectURL(url);
         this.downloading = false;

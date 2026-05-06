@@ -141,7 +141,7 @@
         
         <!-- Training Header Card -->
         <div class="bg-white rounded-3xl shadow-2xl overflow-hidden mb-8 course-card cursor-pointer hover:shadow-3xl transition-all duration-300"
-             (click)="toggleTrainingExpansion(trainingData)">
+             (click)="toggleTrainingExpansion(trainingData)" tabindex="0" role="button" (keydown.enter)="toggleTrainingExpansion(trainingData)">
           <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-8 relative overflow-hidden">
             <!-- Decorative elements -->
             <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
@@ -545,7 +545,7 @@
         *ngIf="pdfUrl"
         [src]="pdfUrl | safe:'resourceUrl'"
         class="w-full h-full"
-        frameborder="0">
+        frameborder="0" title="Embedded content">
       </iframe>
     </div>
   </div>

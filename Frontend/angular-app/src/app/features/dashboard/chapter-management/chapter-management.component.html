@@ -76,8 +76,8 @@
   </div>
 
   <!-- Modal -->
-  <div *ngIf="showModal" class="modal-overlay" (click)="closeModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
+  <div *ngIf="showModal" class="modal-overlay" (click)="closeModal()" tabindex="0" role="button" (keydown.enter)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()" tabindex="0" role="button" (keydown.enter)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>{{ isEditMode ? 'Modifier le chapitre' : 'Nouveau chapitre' }}</h2>
         <button (click)="closeModal()" class="close-button">&times;</button>

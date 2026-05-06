@@ -175,8 +175,8 @@
 
         <!-- Description -->
         <div class="mb-6">
-          <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-          <textarea formControlName="description" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"></textarea>
+          <label class="block text-sm font-semibold text-gray-700 mb-2" for="description">Description</label>
+          <textarea formControlName="description" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary" id="description"></textarea>
         </div>
 
         <!-- Duration & Passing Score -->
@@ -198,12 +198,12 @@
         <!-- Start & End Date -->
         <div class="grid grid-cols-2 gap-4 mb-6">
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Date de début</label>
-            <input type="datetime-local" formControlName="startDate" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+            <label class="block text-sm font-semibold text-gray-700 mb-2" for="datededbut">Date de début</label>
+            <input type="datetime-local" formControlName="startDate" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary" id="datededbut">
           </div>
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Date de fin</label>
-            <input type="datetime-local" formControlName="endDate" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+            <label class="block text-sm font-semibold text-gray-700 mb-2" for="datedefin">Date de fin</label>
+            <input type="datetime-local" formControlName="endDate" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary" id="datedefin">
           </div>
         </div>
 
@@ -252,15 +252,15 @@
 
               <!-- Question Text -->
               <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Texte de la question <span class="text-red-500">*</span></label>
-                <textarea formControlName="questionText" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary" placeholder="Entrez votre question..."></textarea>
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="textedelaquestionspanclasstextred500span">Texte de la question <span class="text-red-500">*</span></label>
+                <textarea formControlName="questionText" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary" placeholder="Entrez votre question..." id="textedelaquestionspanclasstextred500span"></textarea>
               </div>
 
               <!-- Question Type & Marks -->
               <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Type <span class="text-red-500">*</span></label>
-                  <select formControlName="questionType" (change)="onQuestionTypeChange(i, question.get('questionType')?.value)" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                  <label class="block text-sm font-medium text-gray-700 mb-2" for="typespanclasstextred500span">Type <span class="text-red-500">*</span></label>
+                  <select formControlName="questionType" (change)="onQuestionTypeChange(i, question.get('questionType')?.value)" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary" id="typespanclasstextred500span">
                     <!-- Pour les QUIZ: tous les types -->
                     <ng-container *ngIf="examForm.get('examType')?.value === 'QUIZ'">
                       <option value="MULTIPLE_CHOICE">Choix multiples</option>
@@ -278,15 +278,15 @@
                   </p>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Points <span class="text-red-500">*</span></label>
-                  <input type="number" formControlName="marks" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary" min="1">
+                  <label class="block text-sm font-medium text-gray-700 mb-2" for="pointsspanclasstextred500span">Points <span class="text-red-500">*</span></label>
+                  <input type="number" formControlName="marks" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary" min="1" id="pointsspanclasstextred500span">
                 </div>
               </div>
 
               <!-- Options (pour MULTIPLE_CHOICE et TRUE_FALSE) -->
               <div *ngIf="question.get('questionType')?.value === 'MULTIPLE_CHOICE' || question.get('questionType')?.value === 'TRUE_FALSE'" class="mb-4">
                 <div class="flex justify-between items-center mb-2">
-                  <label class="block text-sm font-medium text-gray-700">Options de réponse</label>
+                  <label class="block text-sm font-medium text-gray-700" for="optionsderponse">Options de réponse</label>
                   <button *ngIf="question.get('questionType')?.value === 'MULTIPLE_CHOICE'" type="button" (click)="addOption(i)" class="text-blue-500 hover:text-blue-700 text-sm flex items-center gap-1">
                     <span class="material-icons text-sm">add</span>
                     Ajouter option
@@ -294,7 +294,7 @@
                 </div>
                 <div formArrayName="options" class="space-y-2">
                   <div *ngFor="let option of getQuestionOptions(i).controls; let j = index" [formGroupName]="j" class="flex items-center gap-2">
-                    <input type="text" formControlName="optionText" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary" placeholder="Texte de l'option">
+                    <input type="text" formControlName="optionText" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary" placeholder="Texte de l'option" id="optionsderponse">
                     <label class="flex items-center gap-1 px-3 py-2 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
                       <input type="checkbox" formControlName="isCorrect" class="w-4 h-4 text-green-500">
                       <span class="text-xs text-gray-600">Correcte</span>
@@ -308,8 +308,8 @@
 
               <!-- Correct Answer (pour SHORT_ANSWER) -->
               <div *ngIf="question.get('questionType')?.value === 'SHORT_ANSWER'" class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Réponse correcte</label>
-                <input type="text" formControlName="correctAnswer" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary" placeholder="Entrez la réponse attendue">
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="rponsecorrecte">Réponse correcte</label>
+                <input type="text" formControlName="correctAnswer" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary" placeholder="Entrez la réponse attendue" id="rponsecorrecte">
               </div>
             </div>
 

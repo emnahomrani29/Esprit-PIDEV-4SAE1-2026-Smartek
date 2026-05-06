@@ -96,7 +96,7 @@
         [class.border-red-400]="p.status === 'ABANDONNE'">
 
         <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div class="flex-1 cursor-pointer" (click)="openDetailModal(p)">
+          <div class="flex-1 cursor-pointer" (click)="openDetailModal(p)" tabindex="0" role="button" (keydown.enter)="openDetailModal(p)">
             <div class="flex items-center gap-3 mb-2 flex-wrap">
               <h3 class="text-xl font-bold text-gray-800">{{ p.title }}</h3>
               <span [class]="'px-3 py-0.5 rounded-full text-xs font-semibold ' + getStatusColor(p.status)">
@@ -111,7 +111,7 @@
           </div>
 
           <!-- Right actions -->
-          <div class="flex flex-col gap-2 min-w-[130px]" (click)="$event.stopPropagation()">
+          <div class="flex flex-col gap-2 min-w-[130px]" (click)="$event.stopPropagation()" tabindex="0" role="button" (keydown.enter)="$event.stopPropagation()">
             <button (click)="openEditModal(p)"
               class="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition flex items-center justify-center gap-1 text-sm font-medium">
               <span class="material-icons text-sm">edit</span> Modifier
@@ -124,7 +124,7 @@
         </div>
 
         <!-- Quick progress update -->
-        <div class="mt-3 pt-3 border-t border-gray-100" (click)="$event.stopPropagation()">
+        <div class="mt-3 pt-3 border-t border-gray-100" (click)="$event.stopPropagation()" tabindex="0" role="button" (keydown.enter)="$event.stopPropagation()">
           <div class="flex items-center justify-between mb-1">
             <span class="text-xs font-semibold text-gray-600">Progression rapide</span>
             <span class="text-sm font-bold text-blue-600">{{ quickProgressMap[p.pathId] !== undefined ? quickProgressMap[p.pathId] : p.progress }}%</span>
@@ -166,8 +166,8 @@
 </div>
 
 <!-- Add/Edit Modal -->
-<div *ngIf="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4" (click)="closeModal()">
-  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+<div *ngIf="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4" (click)="closeModal()" tabindex="0" role="button" (keydown.enter)="closeModal()">
+  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()" tabindex="0" role="button" (keydown.enter)="$event.stopPropagation()">
     <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-lg">
       <div class="flex justify-between items-center">
         <h2 class="text-2xl font-bold">{{ isEditMode ? 'Modifier le parcours' : 'Nouveau parcours' }}</h2>
@@ -179,15 +179,15 @@
       <div *ngIf="errorMessage" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">{{ errorMessage }}</div>
       <form (ngSubmit)="savePath()" class="space-y-4">
         <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-2">Titre <span class="text-red-500">*</span></label>
-          <input type="text" [(ngModel)]="form.title" name="title"
+          <label class="block text-sm font-semibold text-gray-700 mb-2" for="titrespanclasstextred500span">Titre <span class="text-red-500">*</span></label>
+          <input type="text" [(ngModel)]="form.title" name="title" id="titrespanclasstextred500span"
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
             placeholder="Ex: Maîtriser Angular..." required>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Statut</label>
-            <select [(ngModel)]="form.status" name="status"
+            <label class="block text-sm font-semibold text-gray-700 mb-2" for="statut">Statut</label>
+            <select [(ngModel)]="form.status" name="status" id="statut"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
               <option value="PLANIFIE">Planifié</option>
               <option value="EN_COURS">En cours</option>
@@ -196,26 +196,26 @@
             </select>
           </div>
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Progression (%)</label>
-            <input type="number" [(ngModel)]="form.progress" name="progress" min="0" max="100"
+            <label class="block text-sm font-semibold text-gray-700 mb-2" for="progression">Progression (%)</label>
+            <input type="number" [(ngModel)]="form.progress" name="progress" min="0" max="100" id="progression"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
           </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Date de début <span class="text-red-500">*</span></label>
-            <input type="date" [(ngModel)]="form.startDate" name="startDate"
+            <label class="block text-sm font-semibold text-gray-700 mb-2" for="datededbutspanclasstextred500span">Date de début <span class="text-red-500">*</span></label>
+            <input type="date" [(ngModel)]="form.startDate" name="startDate" id="datededbutspanclasstextred500span"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
           </div>
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Date de fin (optionnel)</label>
-            <input type="date" [(ngModel)]="form.endDate" name="endDate"
+            <label class="block text-sm font-semibold text-gray-700 mb-2" for="datedefinoptionnel">Date de fin (optionnel)</label>
+            <input type="date" [(ngModel)]="form.endDate" name="endDate" id="datedefinoptionnel"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
           </div>
         </div>
         <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-2">Description (optionnel)</label>
-          <textarea [(ngModel)]="form.description" name="description" rows="3"
+          <label class="block text-sm font-semibold text-gray-700 mb-2" for="descriptionoptionnel">Description (optionnel)</label>
+          <textarea [(ngModel)]="form.description" name="description" rows="3" id="descriptionoptionnel"
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
             placeholder="Décrivez votre parcours..."></textarea>
         </div>
@@ -233,8 +233,8 @@
 </div>
 
 <!-- Detail Modal -->
-<div *ngIf="showDetailModal && selectedPath" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4" (click)="closeDetailModal()">
-  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+<div *ngIf="showDetailModal && selectedPath" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4" (click)="closeDetailModal()" tabindex="0" role="button" (keydown.enter)="closeDetailModal()">
+  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()" tabindex="0" role="button" (keydown.enter)="$event.stopPropagation()">
     <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-lg">
       <div class="flex justify-between items-start">
         <div>

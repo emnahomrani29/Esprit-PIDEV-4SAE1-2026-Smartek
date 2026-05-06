@@ -72,7 +72,7 @@
     <h2 class="text-2xl font-bold text-gray-900 mb-4">Candidatures par Offre</h2>
     <div class="space-y-4">
       <div *ngFor="let offer of offers" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50" (click)="viewApplications(offer)">
+        <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50" (click)="viewApplications(offer)" tabindex="0" role="button" (keydown.enter)="viewApplications(offer)">
           <div class="flex items-center gap-3">
             <span class="text-2xl">&#128188;</span>
             <div>
@@ -256,33 +256,33 @@
 
       <!-- Titre -->
       <div>
-        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Titre <span class="text-red-500">*</span></label>
-        <input [(ngModel)]="offerForm.title" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Ex: Développeur Full Stack Senior">
+        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="titrespanclasstextred500span">Titre <span class="text-red-500">*</span></label>
+        <input [(ngModel)]="offerForm.title" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Ex: Développeur Full Stack Senior" id="titrespanclasstextred500span">
       </div>
 
       <!-- Company Name + Location -->
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Entreprise <span class="text-red-500">*</span></label>
-          <input [(ngModel)]="offerForm.companyName" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Nom de l'entreprise">
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="entreprisespanclasstextred500span">Entreprise <span class="text-red-500">*</span></label>
+          <input [(ngModel)]="offerForm.companyName" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Nom de l'entreprise" id="entreprisespanclasstextred500span">
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Localisation <span class="text-red-500">*</span></label>
-          <input [(ngModel)]="offerForm.location" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Paris, Lyon, Remote...">
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="localisationspanclasstextred500span">Localisation <span class="text-red-500">*</span></label>
+          <input [(ngModel)]="offerForm.location" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Paris, Lyon, Remote..." id="localisationspanclasstextred500span">
         </div>
       </div>
 
       <!-- Contract Type + Domain -->
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Type de contrat</label>
-          <select [(ngModel)]="offerForm.contractType" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="typedecontrat">Type de contrat</label>
+          <select [(ngModel)]="offerForm.contractType" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" id="typedecontrat">
             <option *ngFor="let c of contractTypes" [value]="c">{{ c }}</option>
           </select>
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Domaine</label>
-          <select [(ngModel)]="offerForm.domain" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="domaine">Domaine</label>
+          <select [(ngModel)]="offerForm.domain" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" id="domaine">
             <option value="">-- Sélectionner --</option>
             <option *ngFor="let d of domains" [value]="d">{{ d }}</option>
           </select>
@@ -292,22 +292,22 @@
       <!-- Experience Level + Positions -->
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Niveau d'expérience</label>
-          <select [(ngModel)]="offerForm.experienceLevel" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="niveaudexprience">Niveau d'expérience</label>
+          <select [(ngModel)]="offerForm.experienceLevel" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" id="niveaudexprience">
             <option *ngFor="let e of experienceLevels" [value]="e">{{ e }}</option>
           </select>
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Nombre de postes</label>
-          <input type="number" [(ngModel)]="offerForm.positions" min="1" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="1">
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="nombredepostes">Nombre de postes</label>
+          <input type="number" [(ngModel)]="offerForm.positions" min="1" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="1" id="nombredepostes">
         </div>
       </div>
 
       <!-- Salary (text) + Remote -->
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Salaire (texte)</label>
-          <input [(ngModel)]="offerForm.salary" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Ex: 35-45k€ / an">
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="salairetexte">Salaire (texte)</label>
+          <input [(ngModel)]="offerForm.salary" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Ex: 35-45k€ / an" id="salairetexte">
         </div>
         <div class="flex flex-col justify-end pb-1">
           <label class="flex items-center gap-2 cursor-pointer">
@@ -320,33 +320,33 @@
       <!-- Salary Min + Salary Max -->
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Salaire min (€)</label>
-          <input type="number" [(ngModel)]="offerForm.salaryMin" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="30000">
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="salairemin">Salaire min (€)</label>
+          <input type="number" [(ngModel)]="offerForm.salaryMin" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="30000" id="salairemin">
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Salaire max (€)</label>
-          <input type="number" [(ngModel)]="offerForm.salaryMax" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="50000">
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="salairemax">Salaire max (€)</label>
+          <input type="number" [(ngModel)]="offerForm.salaryMax" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="50000" id="salairemax">
         </div>
       </div>
 
       <!-- Status + Expires At -->
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Statut</label>
-          <select [(ngModel)]="offerForm.status" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="statut">Statut</label>
+          <select [(ngModel)]="offerForm.status" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" id="statut">
             <option *ngFor="let s of statusTypes" [value]="s">{{ s }}</option>
           </select>
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Date d'expiration</label>
-          <input type="datetime-local" [(ngModel)]="offerForm.expiresAt" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="datedexpiration">Date d'expiration</label>
+          <input type="datetime-local" [(ngModel)]="offerForm.expiresAt" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" id="datedexpiration">
         </div>
       </div>
 
       <!-- Description -->
       <div>
-        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Description <span class="text-red-500">*</span></label>
-        <textarea [(ngModel)]="offerForm.description" rows="4" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Décrivez le poste, les missions, le profil recherché..."></textarea>
+        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="descriptionspanclasstextred500span">Description <span class="text-red-500">*</span></label>
+        <textarea [(ngModel)]="offerForm.description" rows="4" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Décrivez le poste, les missions, le profil recherché..." id="descriptionspanclasstextred500span"></textarea>
       </div>
 
     </div>
@@ -369,16 +369,16 @@
       <p *ngIf="selectedApplication" class="text-sm text-gray-500 mb-4">Candidat : <span class="font-medium text-gray-900">{{ selectedApplication.learnerName }}</span></p>
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Date et heure *</label>
-          <input type="datetime-local" [(ngModel)]="interviewForm.interviewDate" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+          <label class="block text-sm font-medium text-gray-700 mb-1" for="dateetheure">Date et heure *</label>
+          <input type="datetime-local" [(ngModel)]="interviewForm.interviewDate" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" id="dateetheure">
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Lien de réunion *</label>
-          <input [(ngModel)]="interviewForm.meetingLink" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="https://meet.google.com/...">
+          <label class="block text-sm font-medium text-gray-700 mb-1" for="lienderunion">Lien de réunion *</label>
+          <input [(ngModel)]="interviewForm.meetingLink" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="https://meet.google.com/..." id="lienderunion">
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-          <textarea [(ngModel)]="interviewForm.notes" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"></textarea>
+          <label class="block text-sm font-medium text-gray-700 mb-1" for="notes">Notes</label>
+          <textarea [(ngModel)]="interviewForm.notes" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" id="notes"></textarea>
         </div>
       </div>
       <div class="flex gap-3 mt-6">
@@ -396,7 +396,7 @@
       <h3 class="text-xl font-bold text-gray-900 mb-5">Feedback Entretien</h3>
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Note globale</label>
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="noteglobale">Note globale</label>
           <div class="flex gap-2">
             <button *ngFor="let n of [1,2,3,4,5]" (click)="feedbackForm.rating=n"
               [class]="feedbackForm.rating>=n ? 'text-yellow-400' : 'text-gray-300'"
@@ -405,20 +405,20 @@
           </div>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Points forts</label>
-          <textarea [(ngModel)]="feedbackForm.strengths" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"></textarea>
+          <label class="block text-sm font-medium text-gray-700 mb-1" for="pointsforts">Points forts</label>
+          <textarea [(ngModel)]="feedbackForm.strengths" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" id="pointsforts"></textarea>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Points faibles</label>
-          <textarea [(ngModel)]="feedbackForm.weaknesses" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"></textarea>
+          <label class="block text-sm font-medium text-gray-700 mb-1" for="pointsfaibles">Points faibles</label>
+          <textarea [(ngModel)]="feedbackForm.weaknesses" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" id="pointsfaibles"></textarea>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Commentaire général</label>
-          <textarea [(ngModel)]="feedbackForm.generalComment" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"></textarea>
+          <label class="block text-sm font-medium text-gray-700 mb-1" for="commentairegnral">Commentaire général</label>
+          <textarea [(ngModel)]="feedbackForm.generalComment" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" id="commentairegnral"></textarea>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Décision finale *</label>
-          <select [(ngModel)]="feedbackForm.decision" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+          <label class="block text-sm font-medium text-gray-700 mb-1" for="dcisionfinale">Décision finale *</label>
+          <select [(ngModel)]="feedbackForm.decision" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" id="dcisionfinale">
             <option value="PENDING">⏳ En attente</option>
             <option value="HIRED">✅ Embauché</option>
             <option value="REJECTED">❌ Rejeté</option>

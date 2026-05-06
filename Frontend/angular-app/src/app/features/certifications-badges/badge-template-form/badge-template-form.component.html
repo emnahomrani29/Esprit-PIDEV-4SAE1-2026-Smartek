@@ -9,8 +9,8 @@
 
   <form [formGroup]="badgeForm" (ngSubmit)="onSubmit()" class="bg-white rounded-lg shadow-md p-6">
     <div class="mb-4">
-      <label class="block text-gray-700 font-semibold mb-2">Badge Name *</label>
-      <input type="text" formControlName="name" 
+      <label class="block text-gray-700 font-semibold mb-2" for="badgename">Badge Name *</label>
+      <input type="text" formControlName="name"  id="badgename"
              class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
              placeholder="Enter badge name">
       <div *ngIf="badgeForm.get('name')?.invalid && badgeForm.get('name')?.touched" 
@@ -20,8 +20,8 @@
     </div>
 
     <div class="mb-6">
-      <label class="block text-gray-700 font-semibold mb-2">Description *</label>
-      <textarea formControlName="description" rows="4"
+      <label class="block text-gray-700 font-semibold mb-2" for="description">Description *</label>
+      <textarea formControlName="description" rows="4" id="description"
                 class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 placeholder="Enter badge description"></textarea>
       <div *ngIf="badgeForm.get('description')?.invalid && badgeForm.get('description')?.touched" 

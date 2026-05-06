@@ -182,7 +182,7 @@ export class RhCompanyOffersComponent implements OnInit {
     if (!app.cvBase64 || !app.cvFileName) return;
     const bytes = atob(app.cvBase64);
     const arr = new Uint8Array(bytes.length);
-    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.codePointAt(i)!;
     const blob = new Blob([arr], { type: 'application/pdf' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);

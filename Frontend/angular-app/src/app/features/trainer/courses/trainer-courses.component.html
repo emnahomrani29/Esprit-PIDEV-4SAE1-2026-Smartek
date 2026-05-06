@@ -664,8 +664,8 @@
 
         <!-- Description -->
         <div class="mb-4">
-          <label class="block text-sm font-bold text-gray-700 mb-2">Description</label>
-          <textarea 
+          <label class="block text-sm font-bold text-gray-700 mb-2" for="description">Description</label>
+          <textarea  id="description"
             [(ngModel)]="sessionForm.description"
             name="sessionDescription"
             rows="2"
@@ -702,8 +702,8 @@
 
         <!-- Max Participants -->
         <div class="mb-4">
-          <label class="block text-sm font-bold text-gray-700 mb-2">Participants max</label>
-          <input 
+          <label class="block text-sm font-bold text-gray-700 mb-2" for="participantsmax">Participants max</label>
+          <input  id="participantsmax"
             type="number" 
             [(ngModel)]="sessionForm.maxParticipants"
             name="sessionMaxParticipants"

@@ -204,8 +204,8 @@
 </div>
 
 <!-- PDF Modal -->
-<div *ngIf="showPdfModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4" style="z-index: 9999;" (click)="closePdfModal()">
-  <div class="bg-white rounded-xl shadow-2xl w-full h-full max-w-7xl max-h-[95vh] flex flex-col" (click)="$event.stopPropagation()">
+<div *ngIf="showPdfModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4" style="z-index: 9999;" (click)="closePdfModal()" tabindex="0" role="button" (keydown.enter)="closePdfModal()">
+  <div class="bg-white rounded-xl shadow-2xl w-full h-full max-w-7xl max-h-[95vh] flex flex-col" (click)="$event.stopPropagation()" tabindex="0" role="button" (keydown.enter)="$event.stopPropagation()">
     <!-- Modal Header -->
     <div class="p-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-primary to-accent text-white rounded-t-xl flex-shrink-0">
       <div class="flex items-center gap-3">

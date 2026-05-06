@@ -201,46 +201,46 @@
 
     <form [formGroup]="eventForm" (ngSubmit)="onSubmit()" class="p-6 space-y-5">
       <div>
-        <label class="block text-sm font-bold text-gray-700 mb-2">Titre <span class="text-red-500">*</span></label>
-        <input type="text" formControlName="title" placeholder="Titre de l'événement"
+        <label class="block text-sm font-bold text-gray-700 mb-2" for="titrespanclasstextred500span">Titre <span class="text-red-500">*</span></label>
+        <input type="text" formControlName="title" placeholder="Titre de l'événement" id="titrespanclasstextred500span"
           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none">
       </div>
 
       <div>
-        <label class="block text-sm font-bold text-gray-700 mb-2">Description</label>
-        <textarea formControlName="description" rows="3" placeholder="Description..."
+        <label class="block text-sm font-bold text-gray-700 mb-2" for="description">Description</label>
+        <textarea formControlName="description" rows="3" placeholder="Description..." id="description"
           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none resize-none"></textarea>
       </div>
 
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-bold text-gray-700 mb-2">Date début <span class="text-red-500">*</span></label>
-          <input type="datetime-local" formControlName="startDate" [min]="getMinDate()"
+          <label class="block text-sm font-bold text-gray-700 mb-2" for="datedbutspanclasstextred500span">Date début <span class="text-red-500">*</span></label>
+          <input type="datetime-local" formControlName="startDate" [min]="getMinDate()" id="datedbutspanclasstextred500span"
             class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none">
         </div>
         <div>
-          <label class="block text-sm font-bold text-gray-700 mb-2">Date fin <span class="text-red-500">*</span></label>
-          <input type="datetime-local" formControlName="endDate"
+          <label class="block text-sm font-bold text-gray-700 mb-2" for="datefinspanclasstextred500span">Date fin <span class="text-red-500">*</span></label>
+          <input type="datetime-local" formControlName="endDate" id="datefinspanclasstextred500span"
             class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none">
         </div>
       </div>
 
       <div>
-        <label class="block text-sm font-bold text-gray-700 mb-2">Lieu <span class="text-red-500">*</span></label>
-        <input type="text" formControlName="location" placeholder="Salle, lien Zoom..."
+        <label class="block text-sm font-bold text-gray-700 mb-2" for="lieuspanclasstextred500span">Lieu <span class="text-red-500">*</span></label>
+        <input type="text" formControlName="location" placeholder="Salle, lien Zoom..." id="lieuspanclasstextred500span"
           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none">
       </div>
 
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-bold text-gray-700 mb-2">Mode <span class="text-red-500">*</span></label>
-          <select formControlName="mode" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 bg-white">
+          <label class="block text-sm font-bold text-gray-700 mb-2" for="modespanclasstextred500span">Mode <span class="text-red-500">*</span></label>
+          <select formControlName="mode" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 bg-white" id="modespanclasstextred500span">
             <option *ngFor="let m of eventModes" [value]="m.value">{{ m.icon }} {{ m.label }}</option>
           </select>
         </div>
         <div>
-          <label class="block text-sm font-bold text-gray-700 mb-2">Participants max <span class="text-red-500">*</span></label>
-          <input type="number" formControlName="maxParticipations" min="1"
+          <label class="block text-sm font-bold text-gray-700 mb-2" for="participantsmaxspanclasstextred500span">Participants max <span class="text-red-500">*</span></label>
+          <input type="number" formControlName="maxParticipations" min="1" id="participantsmaxspanclasstextred500span"
             class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none">
         </div>
       </div>

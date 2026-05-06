@@ -11,8 +11,8 @@
 
   <form [formGroup]="awardForm" (ngSubmit)="onSubmit()" class="bg-white rounded-lg shadow-md p-6">
     <div class="mb-4">
-      <label class="block text-gray-700 font-semibold mb-2">Select Badge *</label>
-      <select formControlName="badgeTemplateId" 
+      <label class="block text-gray-700 font-semibold mb-2" for="selectbadge">Select Badge *</label>
+      <select formControlName="badgeTemplateId"  id="selectbadge"
               class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500">
         <option value="">-- Select a badge --</option>
         <option *ngFor="let badge of badges" [value]="badge.id">{{ badge.name }}</option>
@@ -24,8 +24,8 @@
     </div>
 
     <div class="mb-6">
-      <label class="block text-gray-700 font-semibold mb-2">Learner ID *</label>
-      <input type="number" formControlName="learnerId" 
+      <label class="block text-gray-700 font-semibold mb-2" for="learnerid">Learner ID *</label>
+      <input type="number" formControlName="learnerId"  id="learnerid"
              class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
              placeholder="Enter learner ID">
       <div *ngIf="awardForm.get('learnerId')?.invalid && awardForm.get('learnerId')?.touched" 

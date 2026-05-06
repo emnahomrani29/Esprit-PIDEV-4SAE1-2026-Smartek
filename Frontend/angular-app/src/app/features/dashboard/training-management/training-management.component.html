@@ -331,7 +331,7 @@
              [class.border-purple-500]="isCourseSelected(course.courseId!)"
              [class.bg-purple-50]="isCourseSelected(course.courseId!)"
              [class.border-gray-300]="!isCourseSelected(course.courseId!)"
-             [class.hover:border-purple-300]="!isCourseSelected(course.courseId!)">
+             [class.hover:border-purple-300]="!isCourseSelected(course.courseId!)" tabindex="0" role="button" (keydown.enter)="toggleCourseSelection(course.courseId!)">
           <div class="flex items-start gap-3">
             <div class="flex-shrink-0 mt-1">
               <div class="w-5 h-5 rounded border-2 flex items-center justify-center"

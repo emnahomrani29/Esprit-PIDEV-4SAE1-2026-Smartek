@@ -245,10 +245,10 @@
 
       <!-- Mode de participation (si hybride) -->
       <div *ngIf="selectedEvent?.mode === 'HYBRID'" class="mb-5">
-        <label class="block text-sm font-bold text-gray-700 mb-3">Mode de participation</label>
+        <label class="block text-sm font-bold text-gray-700 mb-3" for="modedeparticipation">Mode de participation</label>
         <div class="grid grid-cols-2 gap-3">
           <label class="cursor-pointer">
-            <input type="radio" [(ngModel)]="selectedMode" value="PHYSICAL" class="sr-only peer">
+            <input type="radio" [(ngModel)]="selectedMode" value="PHYSICAL" class="sr-only peer" id="modedeparticipation">
             <div class="p-3 border-2 border-gray-200 rounded-xl peer-checked:border-purple-500 peer-checked:bg-purple-50 transition-all text-center">
               <div class="text-2xl mb-1">🏢</div>
               <div class="font-semibold text-sm">Présentiel</div>

@@ -43,8 +43,8 @@
 
     <div class="flex flex-wrap gap-4">
       <div class="flex-1 min-w-[200px]">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Status</label>
-        <select [(ngModel)]="selectedStatus" (ngModelChange)="filterEvidences()"
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="filterbystatus">Filter by Status</label>
+        <select [(ngModel)]="selectedStatus" (ngModelChange)="filterEvidences()" id="filterbystatus"
           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
           <option value="">All Statuses</option>
           <option value="PENDING">Pending</option>
@@ -53,8 +53,8 @@
         </select>
       </div>
       <div class="flex-1 min-w-[200px]">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Category</label>
-        <select [(ngModel)]="selectedCategory" (ngModelChange)="filterEvidences()"
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="filterbycategory">Filter by Category</label>
+        <select [(ngModel)]="selectedCategory" (ngModelChange)="filterEvidences()" id="filterbycategory"
           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
           <option value="">All Categories</option>
           <option value="PROGRAMMING">Programming</option>
@@ -244,9 +244,9 @@
 
       <!-- Score Slider -->
       <div class="mb-6">
-        <label class="block text-sm font-semibold text-gray-700 mb-2">Score (0-100)</label>
+        <label class="block text-sm font-semibold text-gray-700 mb-2" for="score0100">Score (0-100)</label>
         <div class="flex items-center space-x-4">
-          <input type="range" [(ngModel)]="reviewScore" min="0" max="100"
+          <input type="range" [(ngModel)]="reviewScore" min="0" max="100" id="score0100"
             class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider">
           <span class="text-2xl font-bold text-blue-600 w-16 text-center">{{ reviewScore }}</span>
         </div>

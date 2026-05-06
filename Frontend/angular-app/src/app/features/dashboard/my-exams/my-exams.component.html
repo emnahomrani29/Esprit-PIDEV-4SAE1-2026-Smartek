@@ -312,12 +312,12 @@
                 <div *ngFor="let option of getCurrentQuestion().options; let i = index"
                      (click)="toggleOption(i)"
                      [class]="'p-4 border-2 rounded-lg cursor-pointer transition-all ' + 
-                              (isOptionSelected(i) ? 'border-primary bg-primary bg-opacity-10' : 'border-gray-300 hover:border-primary hover:bg-gray-50')">
+                              (isOptionSelected(i) ? 'border-primary bg-primary bg-opacity-10' : 'border-gray-300 hover:border-primary hover:bg-gray-50')" tabindex="0" role="button" (keydown.enter)="toggleOption(i)">
                   <label class="flex items-center gap-3 cursor-pointer">
                     <input type="checkbox" 
                            [checked]="isOptionSelected(i)"
                            class="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary"
-                           (click)="$event.stopPropagation()">
+                           (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()">
                     <span class="text-gray-800 font-medium">{{ option.optionText }}</span>
                   </label>
                 </div>
