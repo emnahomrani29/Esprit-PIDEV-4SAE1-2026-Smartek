@@ -69,7 +69,8 @@ export class RhCompanyDashboardComponent implements OnInit {
           location: o.location,
           applicationCount: o.applicationCount || 0,
           status: o.status,
-          completion: Math.floor(Math.random() * 60) + 20
+          // Use actual completion data from backend if available, otherwise calculate based on application count
+          completion: o.completion || this.calculateOfferCompletion(o.applicationCount || 0)
         }));
       },
       error: () => {
@@ -80,6 +81,16 @@ export class RhCompanyDashboardComponent implements OnInit {
         ];
       }
     });
+  }
+
+  /**
+   * Calculate offer completion percentage based on application count
+   * This provides a deterministic value instead of using random numbers
+   */
+  private calculateOfferCompletion(applicationCount: number): number {
+    // Simple heuristic: more applications = higher completion
+    // Cap at 80% to indicate there's always room for more candidates
+    return Math.min(80, applicationCount * 5);
   }
 
   loadRecentActivities() {

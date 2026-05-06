@@ -284,7 +284,18 @@ export class NotificationService {
   }
 
   private generateId(): string {
-    return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+    // Use crypto.randomUUID() for cryptographically secure random IDs
+    // Fallback to timestamp-based ID if crypto is not available (older browsers)
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    // Fallback: Use timestamp with a counter for uniqueness
+    return `notif-${Date.now()}-${this.generateFallbackId()}`;
+  }
+
+  private generateFallbackId(): string {
+    // Simple counter-based fallback for older browsers
+    return Math.floor(Math.random() * 1000000).toString(36);
   }
 
   private scheduleReminder(key: string, minutes: number): void {

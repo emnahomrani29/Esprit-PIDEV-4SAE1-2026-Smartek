@@ -42,7 +42,7 @@ export class SignUpComponent {
       password: ['', [
         Validators.required,
         Validators.minLength(8),
-        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/)
       ]],
       confirmPassword: ['', Validators.required]
     }, { validators: this.passwordMatchValidator });
@@ -118,7 +118,11 @@ export class SignUpComponent {
     const password = this.step2Form.get('password')?.value || '';
     if (password.length === 0) return '';
     if (password.length < 8) return 'weak';
-    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) return 'medium';
+    // Use simple checks instead of complex regex to avoid ReDoS
+    const hasLower = /[a-z]/.test(password);
+    const hasUpper = /[A-Z]/.test(password);
+    const hasDigit = /\d/.test(password);
+    if (!hasLower || !hasUpper || !hasDigit) return 'medium';
     return 'strong';
   }
 

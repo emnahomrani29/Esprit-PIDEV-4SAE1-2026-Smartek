@@ -3,6 +3,8 @@ package com.smartek.sponsor.controller;
 import com.smartek.sponsor.dto.PlatformStatsDTO;
 import com.smartek.sponsor.dto.TopSponsorDTO;
 import com.smartek.sponsor.service.AdminService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +16,8 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class AdminController {
 
+    private static final Logger logger = LoggerFactory.getLogger(AdminController.class);
+
     @Autowired
     private AdminService adminService;
 
@@ -23,8 +27,8 @@ public class AdminController {
             PlatformStatsDTO stats = adminService.getPlatformStats();
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
-            System.err.println("Error getting platform stats: " + e.getMessage());
-            e.printStackTrace();
+            // Use proper logging instead of System.err and printStackTrace
+            logger.error("Error getting platform stats: {}", e.getMessage(), e);
             // Return empty stats on error - no fake data
             PlatformStatsDTO emptyStats = new PlatformStatsDTO();
             emptyStats.setTotalBudget(0.0);
@@ -47,6 +51,7 @@ public class AdminController {
             List<TopSponsorDTO> topSponsors = adminService.getTopSponsors();
             return ResponseEntity.ok(topSponsors);
         } catch (Exception e) {
+            logger.error("Error getting top sponsors: {}", e.getMessage(), e);
             // Return empty list on error
             return ResponseEntity.ok(List.of());
         }
