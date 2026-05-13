@@ -1,0 +1,147 @@
+pipeline {
+    agent any
+
+    environment {
+        SERVICE_NAME   = 'config-server'
+        IMAGE_NAME     = "wafachabbi/${SERVICE_NAME}"
+        IMAGE_TAG      = "${BUILD_NUMBER}"
+        CONTAINER_PORT = '8888'
+        SONAR_URL      = 'http://192.168.100.138:9000'
+        SONAR_TOKEN    = 'squ_c9036cd8db019186d870601f11f32229205d13a2'
+        SONAR_PROJECT  = 'config-server'
+        NEXUS_URL      = 'http://192.168.100.138:8089'
+        NEXUS_REPO     = 'maven-snapshots'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+    }
+
+    stages {
+        stage('Detect Changes') {
+            steps {
+                script {
+                    def changedFiles = sh(script: "git diff --name-only HEAD~1 HEAD 2>/dev/null || echo 'ALL'", returnStdout: true).trim()
+                    echo "Fichiers modifiés :\n${changedFiles}"
+                    if (changedFiles == 'ALL' || changedFiles.isEmpty()) {
+                        echo "✅ Pas de repo Git détecté — pipeline lancé complet."
+                    } else {
+                        def serviceChanged = changedFiles.split('\n').any { f -> f.startsWith('Backend/config-server/') }
+                        if (!serviceChanged && env.GIT_BRANCH != 'main' && env.GIT_BRANCH != 'develop') {
+                            echo "⏭️  Aucun changement dans config-server — pipeline ignoré."
+                            currentBuild.result = 'NOT_BUILT'
+                            error("Skipping: no changes in config-server")
+                        } else {
+                            echo "✅ Changements détectés dans config-server — pipeline lancé."
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                dir('Backend/config-server') {
+                    sh 'mvn clean package -DskipTests --no-transfer-progress'
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                dir('Backend/config-server') {
+                    sh 'mvn test --no-transfer-progress'
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true,
+                          testResults: 'Backend/config-server/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                dir('Backend/config-server') {
+                    catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                        sh """
+                            mvn sonar:sonar \
+                                -Dsonar.projectKey=${SONAR_PROJECT} \
+                                -Dsonar.projectName=${SONAR_PROJECT} \
+                                -Dsonar.host.url=${SONAR_URL} \
+                                -Dsonar.token=${SONAR_TOKEN} \
+                                --no-transfer-progress
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Push to Nexus') {
+            options {
+                timeout(time: 10, unit: 'MINUTES')
+            }
+            steps {
+                retry(2) {
+                    dir('Backend/config-server') {
+                        sh """
+                            mvn deploy -DskipTests \
+                                -s /home/wafa/.jenkins/maven-settings.xml \
+                                -DaltDeploymentRepository=nexus::http://192.168.100.138:8089/repository/maven-snapshots/ \
+                                --no-transfer-progress
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                dir('Backend/config-server') {
+                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:latest ."
+                }
+            }
+        }
+
+        stage('Trivy Scan') {
+            steps {
+                sh """
+                    /usr/bin/trivy image --exit-code 0 --severity HIGH,CRITICAL \
+                        --no-progress --format table \
+                        --timeout 30m \
+                        --scanners vuln \
+                        ${IMAGE_NAME}:${IMAGE_TAG} || true
+                """
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                sh """
+                    echo \$DOCKERHUB_CREDENTIALS_PSW | docker login -u \$DOCKERHUB_CREDENTIALS_USR --password-stdin
+                    docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                    docker push ${IMAGE_NAME}:latest
+                    docker logout
+                """
+            }
+        }
+
+        stage('Sign Docker Image') {
+            steps {
+                sh """
+                    echo \$DOCKERHUB_CREDENTIALS_PSW | docker login -u \$DOCKERHUB_CREDENTIALS_USR --password-stdin
+                    COSIGN_PASSWORD='2525' /usr/local/bin/cosign sign --key /home/wafa/cosign.key \
+                        --yes docker.io/${IMAGE_NAME}:${IMAGE_TAG} || true
+                    docker logout
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline ${SERVICE_NAME} terminé avec succès - image: ${IMAGE_NAME}:${IMAGE_TAG}"
+        }
+        failure {
+            echo "Pipeline ${SERVICE_NAME} échoué - vérifier les logs"
+        }
+    }
+}
