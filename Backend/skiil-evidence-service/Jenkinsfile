@@ -18,18 +18,26 @@ pipeline {
         stage('Detect Changes') {
             steps {
                 script {
-                    def changedFiles = sh(script: "git diff --name-only HEAD~1 HEAD 2>/dev/null || echo 'ALL'", returnStdout: true).trim()
-                    echo "Fichiers modifiés :\n${changedFiles}"
-                    if (changedFiles == 'ALL' || changedFiles.isEmpty()) {
-                        echo "✅ Pas de repo Git détecté — pipeline lancé complet."
+                    def isManual = currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause) != null
+                    if (isManual) {
+                        echo "✅ Build déclenché manuellement — pipeline lancé complet."
                     } else {
-                        def serviceChanged = changedFiles.split('\n').any { f -> f.startsWith('Backend/skiil-evidence-service/') }
-                        if (!serviceChanged && env.GIT_BRANCH != 'main' && env.GIT_BRANCH != 'develop') {
-                            echo "⏭️  Aucun changement dans skill-evidence-service — pipeline ignoré."
-                            currentBuild.result = 'NOT_BUILT'
-                            error("Skipping: no changes in skill-evidence-service")
+                        def changedFiles = sh(script: "git diff --name-only HEAD~1 HEAD 2>/dev/null || echo 'ALL'", returnStdout: true).trim()
+                        echo "Fichiers modifiés :\n${changedFiles}"
+                        if (changedFiles == 'ALL' || changedFiles.isEmpty()) {
+                            echo "✅ Pas de repo Git détecté — pipeline lancé complet."
                         } else {
-                            echo "✅ Changements détectés dans skill-evidence-service — pipeline lancé."
+                            def serviceChanged = changedFiles.split('\n').any { f ->
+                                f.startsWith('Backend/skiil-evidence-service/') ||
+                                f.startsWith('k8s/skill-evidence-service')
+                            }
+                            if (!serviceChanged) {
+                                echo "⏭️  Aucun changement dans skill-evidence-service — pipeline ignoré."
+                                currentBuild.result = 'NOT_BUILT'
+                                error("Skipping: no changes in skill-evidence-service")
+                            } else {
+                                echo "✅ Changements détectés dans skill-evidence-service — pipeline lancé."
+                            }
                         }
                     }
                 }
