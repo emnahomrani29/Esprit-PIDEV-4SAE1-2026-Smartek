@@ -6,9 +6,10 @@ PASSWORD="2525"
 REPO_URL="https://github.com/emnahomrani29/Esprit-PIDEV-4SAE1-2026-Smartek"
 BRANCH="*/skill-evidence-learning-service"
 
-# Get crumb
-CRUMB=$(curl -s -u "$USER:$PASSWORD" "$JENKINS_URL/crumbIssuer/api/json" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['crumb'])")
-CRUMB_FIELD=$(curl -s -u "$USER:$PASSWORD" "$JENKINS_URL/crumbIssuer/api/json" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['crumbRequestField'])")
+# Get crumb + session cookie
+CRUMB_JSON=$(curl -s -c /tmp/jenkins-cookie.txt -u "$USER:$PASSWORD" "$JENKINS_URL/crumbIssuer/api/json")
+CRUMB=$(echo "$CRUMB_JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['crumb'])")
+CRUMB_FIELD=$(echo "$CRUMB_JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['crumbRequestField'])")
 echo "Crumb: $CRUMB"
 
 create_job() {
@@ -46,7 +47,9 @@ create_job() {
 </flow-definition>"
 
   echo "Creating job: $JOB_NAME ..."
-  HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -u "$USER:$PASSWORD" \
+  HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+    -b /tmp/jenkins-cookie.txt \
+    -u "$USER:$PASSWORD" \
     -H "$CRUMB_FIELD: $CRUMB" \
     -H "Content-Type: application/xml" \
     -X POST "$JENKINS_URL/createItem?name=$JOB_NAME" \
