@@ -8,7 +8,7 @@ spec:
   ports:
   - port: 8084
     targetPort: 8084
-    nodePort: 30084
+    nodePort: 30184
     protocol: TCP
   selector:
     app: training-service
