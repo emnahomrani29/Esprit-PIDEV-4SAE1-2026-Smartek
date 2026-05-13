@@ -139,7 +139,7 @@ pipeline {
             steps {
                 sh """
                     kubectl apply -f k8s/namespace.yml
-                    kubectl apply -f k8s/04-microservices/event-service.yaml
+                    kubectl apply -f k8s/event-service.yml
                     kubectl set image deployment/event-service \
                         event-service=${IMAGE_NAME}:${IMAGE_TAG} \
                         -n smartek

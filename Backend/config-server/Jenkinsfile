@@ -134,6 +134,21 @@ pipeline {
                 """
             }
         }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh """
+                    kubectl apply -f k8s/namespace.yml
+                    kubectl apply -f k8s/config-server.yml
+                    kubectl set image deployment/config-server \
+                        config-server=${IMAGE_NAME}:${IMAGE_TAG} \
+                        -n smartek
+                    kubectl rollout status deployment/config-server \
+                        -n smartek --timeout=10m || true
+                    kubectl get pods -n smartek -l app=config-server
+                """
+            }
+        }
     }
 
     post {
