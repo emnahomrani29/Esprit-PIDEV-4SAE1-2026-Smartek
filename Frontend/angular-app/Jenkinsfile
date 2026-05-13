@@ -86,7 +86,7 @@ pipeline {
             steps {
                 sh """
                     kubectl apply -f k8s/namespace.yml
-                    kubectl apply -f k8s/04-microservices/gateway-frontend.yaml
+                    kubectl apply -f k8s/gateway-frontend.yml
                     kubectl set image deployment/frontend \
                         frontend=${IMAGE_NAME}:${IMAGE_TAG} \
                         -n smartek
