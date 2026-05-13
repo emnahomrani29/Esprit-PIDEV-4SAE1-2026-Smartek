@@ -25,6 +25,10 @@ spring:
           uri: lb://learning
           predicates:
             - Path=/api/learning-paths/**
+        - id: recommendations-service
+          uri: lb://learning
+          predicates:
+            - Path=/api/recommendations/**
         - id: skill-evidence-service
           uri: lb://skill-evidence-service
           predicates:

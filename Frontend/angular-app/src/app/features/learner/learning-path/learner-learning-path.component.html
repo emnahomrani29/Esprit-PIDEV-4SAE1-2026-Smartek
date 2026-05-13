@@ -35,6 +35,12 @@
       </div>
     </div>
 
+    <!-- ML Recommendations + Learning Style tips (2 colonnes) -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;" class="mb-6">
+
+      <!-- Parcours list (2/3) -->
+      <div>
+
     <!-- Recommendations banner -->
     <div *ngIf="learningStyle" class="bg-white rounded-lg shadow p-5 mb-6 border-l-4 border-indigo-500">
       <div class="flex items-start gap-4">
@@ -161,6 +167,15 @@
         Créer un parcours
       </button>
     </div>
+
+      </div><!-- end lg:col-span-2 -->
+
+      <!-- Sidebar droite : Recommandations ML (1/3) -->
+      <div>
+        <app-recommendations [learnerId]="learnerId"></app-recommendations>
+      </div>
+
+    </div><!-- end grid -->
 
   </div>
 </div>

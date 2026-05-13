@@ -6,11 +6,12 @@ import { LearningStyleService } from '../../../core/services/learning-style.serv
 import { AuthService } from '../../../core/services/auth.service';
 import { LearningPathResponse, LearningPathStatus } from '../../../core/models/learning-path.model';
 import { LearningStylePreferenceResponse, LearningStyleType } from '../../../core/models/learning-style.model';
+import { RecommendationsComponent } from './recommendations/recommendations.component';
 
 @Component({
   selector: 'app-learner-learning-path',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RecommendationsComponent],
   templateUrl: './learner-learning-path.component.html',
   styleUrl: './learner-learning-path.component.scss'
 })
@@ -45,7 +46,11 @@ export class LearnerLearningPathComponent implements OnInit {
     progress: number;
   } = { title: '', description: '', status: 'PLANIFIE', startDate: '', endDate: '', progress: 0 };
 
-  private currentUser: any = null;
+  currentUser: any = null;
+
+  get learnerId(): number | null {
+    return this.currentUser?.userId ?? this.currentUser?.id ?? null;
+  }
 
   // Recommendations based on learning style
   readonly styleRecommendations: Record<LearningStyleType, { icon: string; tips: string[] }> = {
@@ -100,7 +105,10 @@ export class LearnerLearningPathComponent implements OnInit {
     private learningPathService: LearningPathService,
     private learningStyleService: LearningStyleService,
     private authService: AuthService
-  ) {}
+  ) {
+    // Initialiser ici pour que currentUser soit disponible dès le premier rendu du template
+    this.currentUser = this.authService.getUserInfo();
+  }
 
   ngOnInit(): void {
     this.currentUser = this.authService.getUserInfo();

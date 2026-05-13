@@ -13,7 +13,7 @@ pipeline {
         stage('Detect Changes') {
             steps {
                 script {
-                    def isManual = currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause) != null
+                    def isManual = currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause').size() > 0
                     if (isManual) {
                         echo "✅ Build déclenché manuellement — pipeline lancé complet."
                     } else {

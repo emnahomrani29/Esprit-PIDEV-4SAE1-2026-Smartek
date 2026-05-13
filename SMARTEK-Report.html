@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SMARTEK — Final Advancement Report</title>
+<style>
+  /* ── Global ── */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Calibri", "Segoe UI", Arial, sans-serif;
+    font-size: 11pt;
+    color: #222;
+    background: #fff;
+    line-height: 1.55;
+  }
+  /* ── Page wrapper ── */
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    padding: 22mm 20mm 20mm 20mm;
+    page-break-after: always;
+  }
+  @media print {
+    .page { margin: 0; padding: 22mm 20mm 20mm 20mm; }
+    body { background: #fff; }
+  }
+  /* ── Header / Footer ── */
+  .report-header {
+    font-size: 8.5pt;
+    color: #888;
+    text-align: right;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 4px;
+    margin-bottom: 18px;
+    font-style: italic;
+  }
+  .page-footer {
+    font-size: 8.5pt;
+    color: #888;
+    text-align: center;
+    border-top: 1px solid #ddd;
+    padding-top: 6px;
+    margin-top: 30px;
+  }
+  /* ── Cover page ── */
+  .cover {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 250mm;
+    text-align: center;
+  }
+  .cover h1 {
+    font-size: 32pt;
+    font-weight: 700;
+    color: #1a5fa8;
+    margin-bottom: 10px;
+  }
+  .cover h2 {
+    font-size: 14pt;
+    font-weight: 600;
+    color: #1a5fa8;
+    margin-bottom: 30px;
+    line-height: 1.4;
+  }
+  .cover .subtitle {
+    font-size: 12pt;
+    font-style: italic;
+    color: #444;
+    margin-bottom: 8px;
+  }
+  .cover .sprints {
+    font-size: 11pt;
+    color: #555;
+    margin-bottom: 4px;
+  }
+  .cover .topics {
+    font-size: 9.5pt;
+    color: #777;
+    margin-bottom: 50px;
+  }
+  .cover .institution {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 4px;
+  }
+  .cover .meta {
+    font-size: 9.5pt;
+    color: #555;
+    margin-bottom: 4px;
+  }
+  .cover .supervisor {
+    font-size: 10pt;
+    color: #444;
+    margin-top: 20px;
+    margin-bottom: 4px;
+  }
+  .cover .team {
+    font-size: 9.5pt;
+    color: #555;
+    margin-bottom: 30px;
+  }
+  .cover .date {
+    font-size: 10pt;
+    font-style: italic;
+    color: #444;
+  }
+  /* ── Headings ── */
+  h1.section {
+    font-size: 16pt;
+    font-weight: 700;
+    color: #1a5fa8;
+    border-bottom: 2px solid #1a5fa8;
+    padding-bottom: 4px;
+    margin-top: 28px;
+    margin-bottom: 12px;
+  }
+  h2.subsection {
+    font-size: 12pt;
+    font-weight: 700;
+    color: #1a5fa8;
+    margin-top: 20px;
+    margin-bottom: 8px;
+  }
+  h3.subsubsection {
+    font-size: 10.5pt;
+    font-weight: 700;
+    color: #333;
+    margin-top: 14px;
+    margin-bottom: 6px;
+  }
+  /* ── Paragraphs ── */
+  p { margin-bottom: 8px; }
+  ul { margin-left: 20px; margin-bottom: 8px; }
+  ul li { margin-bottom: 3px; }
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 14px;
+    font-size: 9.5pt;
+  }
+  th {
+    background: #1a5fa8;
+    color: #fff;
+    padding: 6px 8px;
+    text-align: left;
+    font-weight: 600;
+  }
+  td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #ddd;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #f5f8fd; }
+  /* ── Figure placeholder ── */
+  .figure-box {
+    border: 2px dashed #1a5fa8;
+    background: #f0f5ff;
+    border-radius: 6px;
+    padding: 30px 20px;
+    text-align: center;
+    margin: 18px 0;
+  }
+  .figure-box .fig-label {
+    font-size: 10pt;
+    font-weight: 700;
+    font-style: italic;
+    color: #1a5fa8;
+    margin-bottom: 4px;
+  }
+  .figure-box .fig-caption {
+    font-size: 9.5pt;
+    font-style: italic;
+    color: #555;
+  }
+  .figure-box .fig-placeholder {
+    font-size: 9pt;
+    color: #aaa;
+    margin-top: 6px;
+  }
+  /* ── TOC ── */
+  .toc-entry {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+    font-size: 10pt;
+  }
+  .toc-entry.level1 { font-weight: 700; margin-top: 6px; }
+  .toc-entry.level2 { padding-left: 20px; }
+  .toc-entry.level3 { padding-left: 40px; font-size: 9.5pt; }
+  .toc-dots {
+    flex: 1;
+    border-bottom: 1px dotted #aaa;
+    margin: 0 6px 3px 6px;
+  }
+  /* ── Badges / chips ── */
+  .badge-green { background:#d4edda; color:#155724; border-radius:4px; padding:1px 6px; font-size:9pt; font-weight:600; }
+  .badge-blue  { background:#cce5ff; color:#004085; border-radius:4px; padding:1px 6px; font-size:9pt; font-weight:600; }
+  /* ── Divider ── */
+  hr { border: none; border-top: 1px solid #ddd; margin: 16px 0; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 1 — COVER
+     ═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="cover">
+    <h1>SMARTEK Platform</h1>
+    <h2>Intelligent Web Application for Learning Management,<br>Skill Development &amp; Career Matching</h2>
+    <p class="subtitle">Project Advancement Report — Full Recap</p>
+    <p class="sprints">Sprints 0 &bull; 1 &bull; 2 &bull; 3 + DevOps &amp; Monitoring</p>
+    <p class="topics">Analysis &bull; Microservices &bull; Advanced Features &bull; DevOps, Cloud &amp; Monitoring &bull; Security</p>
+
+    <p class="institution">ESPRIT — School of Engineering</p>
+    <p class="meta">PIDEV — 4SAE1 &bull; Group: [Your Group Name] &bull; Academic Year 2025 – 2026</p>
+    <p class="meta">Option SAE — Software Architecture Engineering</p>
+
+    <p class="supervisor">Supervisor: [Supervisor Name]</p>
+    <p class="team">Team: [Member 1] &bull; [Member 2] &bull; [Member 3] &bull; [Member 4] &bull; [Member 5] &bull; [Member 6]</p>
+
+    <p class="date"><em>May 2026 — Final Evaluation</em></p>
+  </div>
+  <div class="page-footer">Page 1 of 32</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 2 — TABLE OF CONTENTS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="report-header">SMARTEK — 4SAE1 — Final Advancement Report</div>
+  <h1 class="section" style="border:none;color:#1a5fa8;font-size:18pt;">Table of Contents</h1>
+
+  <div class="toc-entry level1"><span>Table of Contents</span><span class="toc-dots"></span><span>2</span></div>
+  <div class="toc-entry level1"><span>1. Executive Summary</span><span class="toc-dots"></span><span>4</span></div>
+  <div class="toc-entry level1"><span>2. Project Context and Scope</span><span class="toc-dots"></span><span>4</span></div>
+  <div class="toc-entry level2"><span>2.1 Vision and Motivation</span><span class="toc-dots"></span><span>4</span></div>
+  <div class="toc-entry level2"><span>2.2 Functional Axes</span><span class="toc-dots"></span><span>5</span></div>
+  <div class="toc-entry level2"><span>2.3 Team, Roles and Methodology</span><span class="toc-dots"></span><span>5</span></div>
+  <div class="toc-entry level2"><span>2.4 Logical Architecture</span><span class="toc-dots"></span><span>6</span></div>
+  <div class="toc-entry level1"><span>3. Sprint 0 — Analysis and Foundation</span><span class="toc-dots"></span><span>6</span></div>
+  <div class="toc-entry level2"><span>3.1 Sprint 0 Objectives</span><span class="toc-dots"></span><span>6</span></div>
+  <div class="toc-entry level2"><span>3.2 Deliverables Produced</span><span class="toc-dots"></span><span>7</span></div>
+  <div class="toc-entry level2"><span>3.3 Requirements Captured</span><span class="toc-dots"></span><span>7</span></div>
+  <div class="toc-entry level1"><span>4. Sprint 1 — Core Microservices Implementation</span><span class="toc-dots"></span><span>8</span></div>
+  <div class="toc-entry level2"><span>4.1 Sprint 1 Objectives</span><span class="toc-dots"></span><span>8</span></div>
+  <div class="toc-entry level2"><span>4.2 Infrastructure Platform Stand-Up</span><span class="toc-dots"></span><span>8</span></div>
+  <div class="toc-entry level2"><span>4.3 Core Business Microservices</span><span class="toc-dots"></span><span>9</span></div>
+  <div class="toc-entry level2"><span>4.4 Identity and Security Foundation</span><span class="toc-dots"></span><span>10</span></div>
+  <div class="toc-entry level1"><span>5. Sprint 2 — Advanced Features, Security &amp; Automated Testing</span><span class="toc-dots"></span><span>11</span></div>
+  <div class="toc-entry level2"><span>5.1 Sprint 2 Objectives</span><span class="toc-dots"></span><span>11</span></div>
+  <div class="toc-entry level2"><span>5.2 Module 2 Advanced Features per Microservice</span><span class="toc-dots"></span><span>11</span></div>
+  <div class="toc-entry level2"><span>5.3 Inter-Service Communication</span><span class="toc-dots"></span><span>13</span></div>
+  <div class="toc-entry level2"><span>5.4 Security Hardening (JWT, RBAC)</span><span class="toc-dots"></span><span>13</span></div>
+  <div class="toc-entry level2"><span>5.5 Automated Testing Strategy</span><span class="toc-dots"></span><span>14</span></div>
+  <div class="toc-entry level1"><span>6. Sprint 3 — DevOps, CI/CD, Cloud Deployment &amp; Monitoring</span><span class="toc-dots"></span><span>15</span></div>
+  <div class="toc-entry level2"><span>6.1 CI/CD Architecture Overview</span><span class="toc-dots"></span><span>15</span></div>
+  <div class="toc-entry level2"><span>6.2 Infrastructure &amp; Kubernetes Cluster</span><span class="toc-dots"></span><span>16</span></div>
+  <div class="toc-entry level2"><span>6.3 Per-Service Pipeline Matrix</span><span class="toc-dots"></span><span>17</span></div>
+  <div class="toc-entry level2"><span>6.4 Pipeline Stages in Detail</span><span class="toc-dots"></span><span>18</span></div>
+  <div class="toc-entry level3"><span>6.4.1 Build &amp; Test stage (Maven + JUnit)</span><span class="toc-dots"></span><span>18</span></div>
+  <div class="toc-entry level3"><span>6.4.2 SonarQube Analysis stage</span><span class="toc-dots"></span><span>18</span></div>
+  <div class="toc-entry level3"><span>6.4.3 Nexus publish stage</span><span class="toc-dots"></span><span>19</span></div>
+  <div class="toc-entry level3"><span>6.4.4 Docker Build, Trivy Scan &amp; Push</span><span class="toc-dots"></span><span>19</span></div>
+  <div class="toc-entry level3"><span>6.4.5 Image Signing with Cosign</span><span class="toc-dots"></span><span>20</span></div>
+  <div class="toc-entry level3"><span>6.4.6 Deploy stage &amp; Smoke Test</span><span class="toc-dots"></span><span>20</span></div>
+  <div class="toc-entry level3"><span>6.4.7 Frontend pipeline specifics</span><span class="toc-dots"></span><span>21</span></div>
+  <div class="toc-entry level2"><span>6.5 Monitoring Stack — Prometheus + Grafana</span><span class="toc-dots"></span><span>22</span></div>
+  <div class="toc-entry level1"><span>7. End-of-Project System Snapshot</span><span class="toc-dots"></span><span>23</span></div>
+  <div class="toc-entry level2"><span>7.1 Updated System Topology</span><span class="toc-dots"></span><span>23</span></div>
+  <div class="toc-entry level2"><span>7.2 Microservice Status Matrix</span><span class="toc-dots"></span><span>24</span></div>
+  <div class="toc-entry level2"><span>7.3 Cross-Cutting Capabilities</span><span class="toc-dots"></span><span>25</span></div>
+  <div class="toc-entry level2"><span>7.4 Frontend Walk-Through</span><span class="toc-dots"></span><span>26</span></div>
+  <div class="toc-entry level1"><span>8. Conclusion</span><span class="toc-dots"></span><span>28</span></div>
+
+  <div class="page-footer">Page 2 of 32</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 3 — LIST OF FIGURES
+     ═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="report-header">SMARTEK — 4SAE1 — Final Advancement Report</div>
+  <h1 class="section" style="border:none;color:#1a5fa8;font-size:18pt;">List of Figures</h1>
+
+  <table style="font-size:10pt; border:none;">
+    <tr><td style="border:none; width:80px;">Figure 2.1</td><td style="border:none;">SMARTEK logical architecture ............................ 6</td></tr>
+    <tr><td style="border:none;">Figure 6.1</td><td style="border:none;">Jenkins pipeline overview — all stages green ............. 17</td></tr>
+    <tr><td style="border:none;">Figure 6.2</td><td style="border:none;">All pods running in the smartek namespace ................ 16</td></tr>
+    <tr><td style="border:none;">Figure 6.3</td><td style="border:none;">SonarQube analysis stage in Jenkins ...................... 18</td></tr>
+    <tr><td style="border:none;">Figure 6.4</td><td style="border:none;">Nexus Maven repositories ................................. 19</td></tr>
+    <tr><td style="border:none;">Figure 6.5</td><td style="border:none;">Docker Hub — published images ............................ 20</td></tr>
+    <tr><td style="border:none;">Figure 6.6</td><td style="border:none;">Trivy vulnerability scan output .......................... 20</td></tr>
+    <tr><td style="border:none;">Figure 6.7</td><td style="border:none;">Jenkins Deploy stage — kubectl rollout ................... 21</td></tr>
+    <tr><td style="border:none;">Figure 6.8</td><td style="border:none;">Grafana — Kubernetes pod resource dashboard .............. 22</td></tr>
+    <tr><td style="border:none;">Figure 7.1</td><td style="border:none;">SMARTEK physical architecture on Kubernetes .............. 23</td></tr>
+    <tr><td style="border:none;">Figure 7.2</td><td style="border:none;">Angular landing page ..................................... 26</td></tr>
+    <tr><td style="border:none;">Figure 7.3</td><td style="border:none;">Learner dashboard — learning paths &amp; courses ............. 27</td></tr>
+    <tr><td style="border:none;">Figure 7.4</td><td style="border:none;">Trainer dashboard — exam &amp; training management ........... 27</td></tr>
+    <tr><td style="border:none;">Figure 7.5</td><td style="border:none;">Admin dashboard — user management &amp; analytics ............ 28</td></tr>
+  </table>
+
+  <div class="page-footer">Page 3 of 32</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 4 — EXECUTIVE SUMMARY + PROJECT CONTEXT
+     ═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="report-header">SMARTEK — 4SAE1 — Final Advancement Report</div>
+
+  <h1 class="section">1. Executive Summary</h1>
+  <p>
+    SMARTEK is an intelligent web platform developed at ESPRIT (PIDEV 4SAE1, 2025–2026) for managing
+    learning paths, skill development, professional certifications and career matching. It unites Learners,
+    Trainers, HR personnel, Administrators and Partners in a single ecosystem built on Spring Boot 3.2
+    microservices, an Angular 18 front-end, a MySQL database layer, JWT-based security and a complete
+    DevOps pipeline.
+  </p>
+  <p>
+    This report documents the full project advancement: Sprint 0 (analysis and foundations), Sprint 1
+    (Module 1 of every axis — core microservices and infrastructure), Sprint 2 (Module 2 of every axis —
+    advanced features, security and automated testing), and Sprint 3 (DevOps, CI/CD, Kubernetes
+    deployment and observability).
+  </p>
+  <p>
+    By the end of Sprint 3, SMARTEK runs as a production-shaped platform on a local Kubernetes cluster
+    with automated Jenkins pipelines, SonarQube quality gates, Nexus artefact storage, Docker Hub image
+    registry, Trivy vulnerability scanning, Cosign image signing and Prometheus/Grafana observability.
+  </p>
+
+  <p><strong>Key figures at the end of the project:</strong></p>
+  <ul>
+    <li>13 microservices (10 Spring Boot business services + API Gateway + Config Server + Eureka) orchestrated on Kubernetes.</li>
+    <li>13 Jenkins pipelines automating detect-changes, build, test, scan, publish and deploy across the monorepo.</li>
+    <li>Docker images on Docker Hub (wafachabbi/*) and versioned Maven artefacts on Nexus.</li>
+    <li>Prometheus + Grafana observability with alerting rules for service-down, high memory and high error rate.</li>
+    <li>Angular 18 front-end with Tailwind CSS, 6 role modules, feature-complete across all functional axes.</li>
+    <li>Trivy image scanning and Cosign image signing for supply-chain security on every pipeline.</li>
+  </ul>
+
+  <h1 class="section">2. Project Context and Scope</h1>
+
+  <h2 class="subsection">2.1 Vision and Motivation</h2>
+  <p>
+    The modern professional landscape demands continuous upskilling, yet existing platforms are fragmented —
+    learning management systems ignore career matching, skill-tracking tools lack certification workflows,
+    and HR platforms rarely integrate training analytics or exam management.
+  </p>
+  <p>
+    SMARTEK unifies these needs into a single platform combining learning path management, skill evidence
+    collection, course delivery, training programs, exam management, job offer matching, event planning,
+    professional certification and community engagement.
+  </p>
+
+  <div class="page-footer">Page 4 of 32</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 5 — FUNCTIONAL AXES + TEAM
+     ═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="report-header">SMARTEK — 4SAE1 — Final Advancement Report</div>
+
+  <h2 class="subsection">2.2 Functional Axes</h2>
+  <p>
+    The scope defined in Sprint 0 is structured around six primary axes, each handled by one or two
+    microservices, plus cross-cutting infrastructure services:
+  </p>
+
+  <table>
+    <tr><th>Axis</th><th>Functional Domain</th><th>Microservice(s)</th></tr>
+    <tr><td>Axis 1</td><td>Authentication &amp; User Management</td><td>auth-service (Port 8081)</td></tr>
+    <tr><td>Axis 2</td><td>Learning Paths &amp; Style Preferences</td><td>learning (Port 8092)</td></tr>
+    <tr><td>Axis 3</td><td>Skill Evidence &amp; Notifications</td><td>skill-evidence-service (Port 8091)</td></tr>
+    <tr><td>Axis 4</td><td>Course, Training &amp; Exam Management</td><td>course-service (8086), training-service (8084), exam-service (8087)</td></tr>
+    <tr><td>Axis 5</td><td>Job Offers, Applications &amp; Interviews</td><td>offers-service (Port 8085)</td></tr>
+    <tr><td>Axis 6</td><td>Events, Planning &amp; Certification Badges</td><td>event-service (8082), planning-service (8083), certification-badge-service (8089)</td></tr>
+    <tr><td>Cross-cutting</td><td>Service Discovery, Config &amp; Gateway</td><td>eureka-server (8761), config-server (8888), api-gateway (8090)</td></tr>
+  </table>
+
+  <h2 class="subsection">2.3 Team, Roles and Methodology</h2>
+  <p>
+    The project is delivered by a team of six students, each owning one functional axis, under the
+    supervision of [Supervisor Name]. The team follows an agile, sprint-based delivery cadence aligned
+    with the SAE option schedule. Work is tracked in Jira, code is hosted in a monorepo following a
+    feature-branch Git Flow, reviewed through pull requests and built by Jenkins pipelines that deploy
+    directly to the Kubernetes cluster.
+  </p>
+
+  <table>
+    <tr><th>Role</th><th>Responsibilities</th></tr>
+    <tr><td>ADMIN</td><td>System supervision, user management, notification campaign configuration, analytics dashboards, Kubernetes monitoring.</td></tr>
+    <tr><td>TRAINER</td><td>Course creation, training program management, exam authoring, performance analytics, learner progress tracking.</td></tr>
+    <tr><td>RH_COMPANY</td><td>Job offer publication, application review, interview scheduling, candidate management.</td></tr>
+    <tr><td>RH_SMARTEK</td><td>Internal HR operations, partner management, certification oversight, platform-wide analytics.</td></tr>
+    <tr><td>LEARNER</td><td>Learning path enrollment, course access, exam participation, skill evidence submission, job applications, community engagement.</td></tr>
+    <tr><td>PARTNER</td><td>External collaboration, offer co-publication, certification badge issuance, event co-organisation.</td></tr>
+  </table>
+
+  <h2 class="subsection">2.4 Logical Architecture</h2>
+  <p>
+    The logical architecture has three tiers. Frontend: Angular 18 SPA with role-aware modules (Admin,
+    Trainer, RH_Company, RH_Smartek, Learner, Partner). Backend: microservices exposing REST APIs through
+    a Spring Cloud Gateway (port 8090), with Eureka discovery, Config Server and JWT-based stateless
+    security. Data: one MySQL database per service (database-per-service pattern). External integrations
+    include Mailtrap SMTP for email notifications and Cloudinary for file/image storage.
+  </p>
+
+  <div class="figure-box">
+    <div class="fig-label">[ Figure 2.1 ]</div>
+    <div class="fig-caption">SMARTEK logical architecture</div>
+    <div class="fig-placeholder">— Insert logical architecture diagram here —</div>
+  </div>
+
+  <div class="page-footer">Page 5 of 32</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 6 — SPRINT 0
+     ═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="report-header">SMARTEK — 4SAE1 — Final Advancement Report</div>
+
+  <h1 class="section">3. Sprint 0 — Analysis and Foundation</h1>
+
+  <h2 class="subsection">3.1 Sprint 0 Objectives</h2>
+  <p>
+    Sprint 0 was dedicated to framing the project, producing the analysis artefacts, defining requirements
+    and setting up the code repository. The outcome of this sprint was the Sprint 0 Deliverables document
+    already submitted; this section recaps its essentials so that the current report is self-contained.
+  </p>
+
+  <h2 class="subsection">3.2 Deliverables Produced</h2>
+
+  <table>
+    <tr><th>Deliverable</th><th>Content</th></tr>
+    <tr><td>Project introduction</td><td>Context, objective, scope (6 axes), team and tech stack.</td></tr>
+    <tr><td>Study of existing solutions</td><td>Analysis of LMS platforms, skill-tracking tools, HR platforms and certification systems; positioning of SMARTEK as a holistic solution.</td></tr>
+    <tr><td>Functional requirements</td><td>Consolidated per-axis requirement list referencing the Fiche_Fonctionnalites document.</td></tr>
+    <tr><td>Non-functional requirements</td><td>Performance (API &lt; 500 ms on 95%, page load &lt; 3 s); security (JWT + RBAC, HTTPS/TLS, OWASP baseline); maintainability (Swagger/OpenAPI, Prometheus/Grafana, Docker, Jenkins CI/CD with SonarQube).</td></tr>
+    <tr><td>Use-case and class diagrams</td><td>Global use-case actors (Admin, Trainer, RH_Company, RH_Smartek, Learner, Partner); analysis classes organised per package.</td></tr>
+    <tr><td>Physical and logical architecture</td><td>Layered microservices with Spring Cloud Gateway, JWT SSO, MySQL and external services (Mailtrap, Cloudinary).</td></tr>
+    <tr><td>Git configuration</td><td>Monorepo, Git Flow branching strategy, commit convention, PR + review workflow, Maven + JUnit + SonarQube + Docker CI/CD pipeline.</td></tr>
+    <tr><td>Project tracking</td><td>Jira board with sprint backlog, user stories per module and task assignment to team members.</td></tr>
+  </table>
+
+  <h2 class="subsection">3.3 Requirements Captured</h2>
+
+  <h3 class="subsubsection">Performance &amp; scalability:</h3>
+  <p>
+    Performance optimization targeting API response times under 500 ms for 95% of requests and initial
+    page load under 3 s through microservice architecture, lazy loading, database optimization, and
+    scalable cloud-native deployment.
+  </p>
+
+  <h3 class="subsubsection">Security &amp; compliance:</h3>
+  <p>
+    JWT-based stateless authentication with 24-hour token expiration, RBAC-based access control with
+    six distinct roles, OWASP-oriented security protections, BCrypt password hashing, and CORS
+    configuration for allowed origins.
+  </p>
+
+  <h3 class="subsubsection">Maintainability:</h3>
+  <p>
+    Swagger/OpenAPI documentation, Spring Boot Actuator health endpoints, Prometheus/Grafana monitoring,
+    Dockerized services, and automated CI/CD pipelines with Jenkins, SonarQube and Nexus integration.
+  </p>
+
+  <div class="page-footer">Page 6 of 32</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 7 — SPRINT 1
+     ═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="report-header">SMARTEK — 4SAE1 — Final Advancement Report</div>
+
+  <h1 class="section">4. Sprint 1 — Core Microservices Implementation</h1>
+
+  <h2 class="subsection">4.1 Sprint 1 Objectives</h2>
+  <p>
+    Sprint 1 delivered Module 1 for every student. Each team member owns one functional axis composed
+    of two modules. During Sprint 1 every student implemented their first module as an independent
+    Spring Boot microservice: entity design, repository layer, REST controllers, database connection
+    and Postman validation. The common infrastructure (Eureka, API Gateway, Config Server, MySQL) was
+    also stood up so that every Module 1 service could register and route.
+  </p>
+
+  <h2 class="subsection">4.2 Infrastructure Platform Stand-Up</h2>
+  <p>
+    Four infrastructure services form the runtime backbone used by every microservice. All of them were
+    containerised and integrated during Sprint 1 and have been running in the default Docker Compose
+    profile ever since.
+  </p>
+
+  <table>
+    <tr><th>Component</th><th>Port</th><th>Responsibilities</th></tr>
+    <tr><td>eureka-server</td><td>8761</td><td>Service registry and health checks (heartbeat every 30 s). Self-preservation enabled. NodePort 30761 in K8s.</td></tr>
+    <tr><td>config-server</td><td>8888</td><td>Centralised configuration with native file backend. Hot reload through Spring refresh endpoint.</td></tr>
+    <tr><td>api-gateway</td><td>8090</td><td>Spring Cloud Gateway. Central routing, JWT validation, CORS handling, load balancing via Eureka discovery. NodePort 30090 in K8s.</td></tr>
+    <tr><td>mysql</td><td>3306</td><td>MySQL 8.0 shared database engine. One schema per service (database-per-service pattern). StatefulSet with PVC in K8s.</td></tr>
+  </table>
+
+  <p>
+    The Sprint 0 specification recommended a single shared database. During Sprint 1 the team adopted
+    a database-per-service strategy: each microservice owns its own MySQL schema
+    (smartek_db, learning-db, skill-db, course_db, training_db, exam_db, smartek_events,
+    smartek_planning, offers_db), respecting domain isolation without introducing multiple database
+    engines.
+  </p>
+
+  <h2 class="subsection">4.3 Core Business Microservices</h2>
+  <p>
+    The following table summarises the Module 1 deliverable for each axis at the end of Sprint 1.
+  </p>
+
+  <table>
+    <tr><th>Microservice</th><th>Port</th><th>Initial Capabilities Delivered in Sprint 1</th></tr>
+    <tr><td>auth-service</td><td>8081</td><td>User registration &amp; login; JWT token generation; BCrypt password hashing; 6-role RBAC (LEARNER, ADMIN, TRAINER, RH_COMPANY, RH_SMARTEK, PARTNER); MySQL schema smartek_db.</td></tr>
+    <tr><td>learning</td><td>8092</td><td>Learning path CRUD; learning style preference management; MySQL schema learning-db; Prometheus metrics exposed.</td></tr>
+    <tr><td>skill-evidence-service</td><td>8091</td><td>Skill evidence CRUD; notification store; analytics endpoints; MySQL schema skill-db; Prometheus metrics exposed.</td></tr>
+    <tr><td>course-service</td><td>8086</td><td>Course management; PDF upload (50 MB max, UUID-named); MySQL schema course_db; Prometheus metrics.</td></tr>
+    <tr><td>training-service</td><td>8084</td><td>Training program CRUD; enrollment management; performance tracking; MySQL schema training_db.</td></tr>
+    <tr><td>exam-service</td><td>8087</td><td>Exam creation; draft support; enrollment; result tracking; trainer analytics; MySQL schema exam_db.</td></tr>
+    <tr><td>offers-service</td><td>8085</td><td>Job offer publication; application management; interview scheduling; MySQL schema offers_db.</td></tr>
+    <tr><td>event-service</td><td>8082</td><td>Event management and scheduling; MySQL schema smartek_events; Prometheus metrics.</td></tr>
+    <tr><td>planning-service</td><td>8083</td><td>Planning and scheduling functionality; MySQL schema smartek_planning; Prometheus metrics.</td></tr>
+    <tr><td>certification-badge-service</td><td>8089</td><td>Digital certificate generation; keystore-based signing (smartek-keystore.p12); email notifications via Mailtrap SMTP; certificate verification endpoint; Feign client to auth-service.</td></tr>
+  </table>
+
+  <p>
+    Every Sprint 1 microservice was validated end-to-end with Postman before the Angular front-end
+    consumed it. Each student maintained a Postman collection covering their module's CRUD endpoints,
+    authentication headers and error scenarios.
+  </p>
+
+  <div class="page-footer">Page 7 of 32</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 8 — SPRINT 1 CONTINUED + SPRINT 2
+     ═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="report-header">SMARTEK — 4SAE1 — Final Advancement Report</div>
+
+  <h2 class="subsection">4.4 Identity and Security Foundation</h2>
+  <p>
+    Sprint 1 introduced the end-to-end authentication flow still in use: the auth-service issues JWT
+    access tokens (24-hour expiration); the Angular SPA routes through the Gateway (port 8090), which
+    validates the JWT and enforces RBAC; downstream services trust the pre-validated JWT via a shared
+    JwtAuthFilter registered before UsernamePasswordAuthenticationFilter.
+  </p>
+  <p>
+    Roles (LEARNER, ADMIN, TRAINER, RH_COMPANY, RH_SMARTEK, PARTNER) are defined in the auth-service
+    RoleType enum and embedded in the JWT claims (username, userId, role). All services share the same
+    JWT secret key, enabling stateless cross-service token validation without a central identity provider.
+  </p>
+  <p>
+    By the end of Sprint 1 the Angular 18 application skeleton was initialised with standalone
+    components and Tailwind CSS. The front-end successfully performed its first authenticated CRUD
+    flows through the Gateway (login → token acquisition → routed request to auth-service), proving
+    that the Frontend → Gateway → Microservice chain was functional before Sprint 2 advanced
+    development began.
+  </p>
+
+  <h1 class="section">5. Sprint 2 — Advanced Features, Security &amp; Automated Testing</h1>
+
+  <h2 class="subsection">5.1 Sprint 2 Objectives</h2>
+  <p>
+    Sprint 2 spans sessions S8, S9 and S10. The objectives are to deliver the advanced Module 2
+    features of every axis, implement inter-microservice communication through OpenFeign, secure
+    sensitive endpoints with Spring Security method-level annotations, and prove the quality of the
+    code with unit and integration tests.
+  </p>
+
+  <h2 class="subsection">5.2 Module 2 Advanced Features per Microservice</h2>
+
+  <h3 class="subsubsection">5.2.1 Auth Service (cross-cutting)</h3>
+  <ul>
+    <li>Email verification workflow added to the registration flow.</li>
+    <li>Profile picture upload via Cloudinary integration.</li>
+    <li>Experience points system (gamification baseline) added to the User entity.</li>
+    <li>Last-login tracking and account active/inactive status management.</li>
+    <li>Admin APIs for user listing, role assignment and account activation/deactivation.</li>
+  </ul>
+
+  <h3 class="subsubsection">5.2.2 Learning Service (Axis 2)</h3>
+  <ul>
+    <li>Learning style assessment module with adaptive recommendation engine.</li>
+    <li>Learning path progress tracking with completion percentage and milestone events.</li>
+    <li>Feign client to skill-evidence-service for cross-axis skill gap analysis.</li>
+    <li>Prometheus metrics exposed via <code>/actuator/prometheus</code> for Grafana dashboards.</li>
+  </ul>
+
+  <h3 class="subsubsection">5.2.3 Skill Evidence Service (Axis 3)</h3>
+  <ul>
+    <li>Skill endorsement workflow — peers and managers can validate skill evidence submissions.</li>
+    <li>Notification system with retry scheduler (60 s) and multi-channel delivery (in-app, email).</li>
+    <li>Analytics endpoints (<code>/api/skill-evidence/analytics/**</code>) publicly accessible for dashboards.</li>
+    <li>Feign client to auth-service for user profile enrichment in evidence records.</li>
+  </ul>
+
+  <h3 class="subsubsection">5.2.4 Course, Training &amp; Exam Services (Axis 4)</h3>
+  <ul>
+    <li>Course enrollment workflow with capacity management and waitlist support.</li>
+    <li>Training performance analytics — trainer-specific dashboards via <code>/api/analytics/trainer/**</code>.</li>
+    <li>Exam draft system — trainers can save, preview and publish exams in stages.</li>
+    <li>Exam result analytics with score distribution and pass/fail statistics.</li>
+    <li>Feign client from exam-service to certification-badge-service for automatic badge issuance on exam pass.</li>
+  </ul>
+
+  <h3 class="subsubsection">5.2.5 Offers Service (Axis 5)</h3>
+  <ul>
+    <li>Full application lifecycle: SUBMITTED → REVIEWED → SHORTLISTED → REJECTED / ACCEPTED.</li>
+    <li>Interview scheduling with calendar integration and status tracking.</li>
+    <li>Offer matching algorithm based on learner skill evidence and learning path completion.</li>
+  </ul>
+
+  <h3 class="subsubsection">5.2.6 Event, Planning &amp; Certification Badge Services (Axis 6)</h3>
+  <ul>
+    <li>Event registration system with capacity enforcement and cancellation workflow.</li>
+    <li>Planning service with recurring schedule support and conflict detection.</li>
+    <li>Certification badge service: digital certificate generation with keystore-based signing, email delivery via Mailtrap SMTP, and a public verification endpoint.</li>
+    <li>Internal API key authentication for service-to-service calls (exam-service → certification-badge-service).</li>
+  </ul>
+
+  <div class="page-footer">Page 8 of 32</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 9 — INTER-SERVICE COMM + SECURITY + TESTING
+     ═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="report-header">SMARTEK — 4SAE1 — Final Advancement Report</div>
+
+  <h2 class="subsection">5.3 Inter-Service Communication (OpenFeign + REST)</h2>
+  <p>
+    SMARTEK uses synchronous OpenFeign calls for cross-service data enrichment:
+  </p>
+
+  <table>
+    <tr><th>Consumer</th><th>Provider</th><th>Communication Pattern</th></tr>
+    <tr><td>skill-evidence-service</td><td>auth-service</td><td>Feign: enrich evidence records with user profile data.</td></tr>
+    <tr><td>learning</td><td>skill-evidence-service</td><td>Feign: fetch skill gaps for adaptive learning path recommendations.</td></tr>
+    <tr><td>exam-service</td><td>certification-badge-service</td><td>REST (internal API key): trigger badge issuance on exam pass.</td></tr>
+    <tr><td>certification-badge-service</td><td>auth-service</td><td>Feign: resolve user email for certificate delivery.</td></tr>
+    <tr><td>notification-service</td><td>auth-service</td><td>WebClient: resolve target users by role for notification campaigns.</td></tr>
+    <tr><td>api-gateway</td><td>eureka-server</td><td>Load-balanced routing via Eureka service registry (lb:// URIs).</td></tr>
+  </table>
+
+  <h2 class="subsection">5.4 Security Hardening (JWT, RBAC)</h2>
+  <ul>
+    <li>Gateway validates every JWT and enforces route-level RBAC before forwarding requests.</li>
+    <li>All downstream services register a <code>JwtAuthFilter</code> as a Spring Security filter chain, enabling method-level security (<code>@EnableMethodSecurity</code>).</li>
+    <li>Session management set to STATELESS across all services — no server-side session state.</li>
+    <li>CSRF disabled (stateless JWT architecture); CORS configured per service with allowed origins for the Angular client.</li>
+    <li>Actuator endpoints (<code>/actuator/**</code>) permitted without authentication for Prometheus scraping and Kubernetes health probes.</li>
+    <li>Analytics endpoints in skill-evidence-service permitted without authentication for public dashboard access.</li>
+    <li>Passwords hashed with BCrypt; JWT secret shared across services via Config Server.</li>
+  </ul>
+
+  <h2 class="subsection">5.5 Automated Testing Strategy</h2>
+  <p>
+    The testing strategy is homogeneous across services. The service layer is validated with JUnit 5
+    and Mockito. The REST layer is validated with Spring Boot Test and MockMvc. Every service ships
+    a Dockerfile, a Swagger UI (<code>/swagger-ui.html</code>) and an Actuator health endpoint,
+    producing reports that the CI/CD pipeline picks up in Sprint 3.
+  </p>
+
+  <table>
+    <tr><th>Microservice</th><th>Tests</th><th>Scope</th></tr>
+    <tr><td>auth-service</td><td>Unit + integration</td><td>Registration, login, JWT generation, role assignment, health endpoint.</td></tr>
+    <tr><td>learning</td><td>Unit + integration</td><td>Learning path CRUD, style preference management, Feign client mocks.</td></tr>
+    <tr><td>skill-evidence-service</td><td>Unit + integration</td><td>Evidence CRUD, endorsement workflow, notification retry, analytics endpoints.</td></tr>
+    <tr><td>course-service</td><td>Unit + integration</td><td>Course CRUD, file upload, enrollment management.</td></tr>
+    <tr><td>training-service</td><td>Unit + integration</td><td>Training CRUD, enrollment, performance analytics.</td></tr>
+    <tr><td>exam-service</td><td>Unit + integration</td><td>Exam lifecycle, draft management, result tracking, badge trigger.</td></tr>
+    <tr><td>offers-service</td><td>Unit + integration</td><td>Offer CRUD, application lifecycle, interview scheduling.</td></tr>
+    <tr><td>event-service</td><td>Unit + integration</td><td>Event CRUD, registration, capacity enforcement.</td></tr>
+    <tr><td>planning-service</td><td>Unit + integration</td><td>Schedule CRUD, conflict detection, recurring events.</td></tr>
+    <tr><td>certification-badge-service</td><td>Unit + integration</td><td>Certificate generation, keystore signing, email delivery, verification endpoint.</td></tr>
+  </table>
+
+  <div class="page-footer">Page 9 of 32</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE 10 — SPRINT 3 DEVOPS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="report-header">SMARTEK — 4SAE1 — Final Advancement Report</div>
+
+  <h1 class="section">6. Sprint 3 — DevOps, CI/CD, Cloud Deployment &amp; Monitoring</h1>
+  <p>
+    Sprint 3 industrialised the SMARTEK platform: every Spring Boot microservice and the Angular
+    front-end are now built, scanned for code quality, scanned for vulnerabilities, signed, published
+    and deployed automatically by Jenkins pipelines targeting a Kubernetes cluster. This section
+    describes the architecture that was put in place, the per-service pipelines, the registry strategy
+    and the monitoring stack.
+  </p>
+
+  <h2 class="subsection">6.1 CI/CD Architecture Overview</h2>
+  <p>
+    The CI/CD topology promotes the Sprint 2 monorepo without any architectural rewrite. A push to
+    the repository triggers Jenkins polling; each pipeline uses a smart change-detection stage that
+    analyses <code>git diff --name-only HEAD~1 HEAD</code> and skips the pipeline entirely if no
+    files in the service's folder were modified, so unaffected services finish in seconds. Every
+    pipeline reuses the same multi-stage skeleton:
+  </p>
+  <ul>
+    <li><strong>Stage 1 — Detect Changes:</strong> Git diff analysis; skip if no changes in service folder (unless branch is main/develop).</li>
+    <li><strong>Stage 2 — Build:</strong> <code>mvn clean package -DskipTests</code> — fast compilation and packaging.</li>
+    <li><strong>Stage 3 — Test:</strong> <code>mvn test</code> with JUnit XML report published to Jenkins.</li>
+    <li><strong>Stage 4 — SonarQube Analysis:</strong> <code>mvn sonar:sonar</code> with project key, host URL and token; quality gate enforced.</li>
+    <li><strong>Stage 5 — Push to Nexus:</strong> <code>mvn deploy</code> with ad-hoc settings.xml using nexus-creds; snapshots stored at <code>http://192.168.100.138:8089/repository/maven-snapshots/</code>.</li>
+    <li><strong>Stage 6 — Docker Build:</strong> <code>docker build</code> producing two tags — <code>:BUILD_NUMBER</code> and <code>:latest</code>.</li>
+    <li><strong>Stage 7 — Trivy Scan:</strong> <code>trivy image --severity HIGH,CRITICAL</code> — vulnerability scan on the built image.</li>
+    <li><strong>Stage 8 — Docker Push:</strong> Push both tags to Docker Hub (<code>wafachabbi/&lt;service&gt;</code>).</li>
+    <li><strong>Stage 9 — Sign Docker Image:</strong> <code>cosign sign --key cosign.key</code> — supply-chain security via image signing.</li>
+    <li><strong>Stage 10 — Deploy to Kubernetes:</strong> <code>kubectl apply</code> + <code>kubectl set image</code> + <code>kubectl rollout status --timeout=10m</code>.</li>
+    <li><strong>Stage 11 — Smoke Test:</strong> HTTP health check via <code>curl</code> against the NodePort endpoint.</li>
+    <li><strong>Stage 12 — Verify Prometheus:</strong> Query Prometheus API to confirm metrics scraping is active for the deployed service.</li>
+  </ul>
+
+  <h2 class="subsection">6.2 Infrastructure &amp; Kubernetes Cluster</h2>
+  <p>
+    SMARTEK runs on a local Kubernetes cluster (Docker Desktop or Minikube) with the following
+    specifications. The cluster is also cloud-ready for deployment on AWS EKS, Azure AKS or Google GKE.
+  </p>
+
+  <table>
+    <tr><th>Component</th><th>Details</th></tr>
+    <tr><td>Kubernetes version</td><td>1.29+ (kubeadm / Docker Desktop)</td></tr>
+    <tr><td>Namespace</td><td>smartek</td></tr>
+    <tr><td>Networking</td><td>Flannel CNI; MetalLB for LoadBalancer IPs; nginx-ingress for HTTPS routing</td></tr>
+    <tr><td>Ingress</td><td>smartek.local — TLS via cert-manager (letsencrypt-prod); routes / → frontend, /api → api-gateway, /eureka → eureka-server</td></tr>
+    <tr><td>Database</td><td>MySQL 8.0 StatefulSet with 2Gi PersistentVolumeClaim</td></tr>
+    <tr><td>Manifests</td><td>24 YAML manifests in k8s/ managed by Kustomize; deployment scripts for bash (deploy.sh) and PowerShell (deploy.ps1)</td></tr>
+    <tr><td>Dev server IP</td><td>192.168.100.138 (Jenkins, SonarQube, Nexus)</td></tr>
+  </table>
+
+  <p>
+    Every Spring Boot deployment follows the same template: Deployment with one replica, ConfigMap
+    for non-secret env vars, Secret for credentials, ClusterIP Service exposing the application port,
+    startup/readiness/liveness probes on the Actuator health endpoint.
+  </p>
+
+  <div class="figure-box">
+    <div class="fig-label">[ Figure 6.1 ]</div>
+    <div class="fig-caption">All pods running in the smartek namespace</div>
+    <div class="fig-placeholder">— Insert kubectl get pods -n smartek screenshot here —</div>
+  </div>
+
+  <div class="page-footer">Page 10 of 32</div>
+</div>
+
+<!-- PAGE 11 — PIPELINE MATRIX -->
+<div class="page">
+  <div class="report-header">SMARTEK — 4SAE1 — Final Advancement Report</div>
+
+  <h2 class="subsection">6.3 Per-Service Pipeline Matrix</h2>
+  <p>
+    Thirteen Jenkins jobs are configured on the Jenkins master running at
+    <code>http://192.168.100.138:8080</code>. Each job watches its service folder so changing only
+    the auth-service code triggers only pipeline-auth; the rest of the pipelines short-circuit in
+    seconds. Every pipeline has been executed end-to-end at least once during Sprint 3 stabilisation:
+  </p>
+
+  <table>
+    <tr><th>Jenkins Job</th><th>Watches Folder</th><th>K8s Deployment</th><th>Last Build Status</th></tr>
+    <tr><td>pipeline-eureka</td><td>Backend/eureka-server/**</td><td>eureka-server</td><td><span class="badge-green">✅ green</span></td></tr>
+    <tr><td>pipeline-config</td><td>Backend/config-server/**</td><td>config-server</td><td><span class="badge-green">✅ green</span></td></tr>
+    <tr><td>pipeline-gateway</td><td>Backend/api-gateway/**</td><td>api-gateway</td><td><span class="badge-green">✅ green</span></td></tr>
+    <tr><td>pipeline-auth</td><td>Backend/auth-service/**</td><td>auth-service</td><td><span class="badge-green">✅ green</span></td></tr>
+    <tr><td>pipeline-learning</td><td>Backend/learning/**</td><td>learning-service</td><td><span class="badge-green">✅ green</span></td></tr>
+    <tr><td>pipeline-skill-evidence</td><td>Backend/skiil-evidence-service/**</td><td>skill-evidence-service</td><td><span class="badge-green">✅ green</span></td></tr>
+    <tr><td>pipeline-course</td><td>Backend/course-service/**</td><td>course-service</td><td><span class="badge-green">✅ green</span></td></tr>
+    <tr><td>pipeline-training</td><td>Backend/training-service/**</td><td>training-service</td><td><span class="badge-green">✅ green</span></td></tr>
+    <tr><td>pipeline-exam</td><td>Backend/exam-service/**</td><td>exam-service</td><td><span class="badge-green">✅ green</span></td></tr>
+    <tr><td>pipeline-offers</td><td>Backend/offers-service/**</td><td>offers-service</td><td><span class="badge-green">✅ green</span></td></tr>
+    <tr><td>pipeline-event</td><td>Backend/event-service/**</td><td>event-service</td><td><span class="badge-green">✅ green</span></td></tr>
+    <tr><td>pipeline-planning</td><td>Backend/planning-service/**</td><td>planning-service</td><td><span class="badge-green">✅ green</span></td></tr>
+    <tr><td>pipeline-certification</td><td>Backend/certification-badge-service/**</td><td>certification-badge-service</td><td><span class="badge-green">✅ green</span></td></tr>
+    <tr><td>pipeline-frontend</td><td>Frontend/angular-app/**</td><td>frontend</td><td><span class="badge-green">✅ green</span></td></tr>
+  </table>
+
+  <div class="figure-box">
+    <div class="fig-label">[ Figure 6.2 ]</div>
+    <div class="fig-caption">Jenkins pipeline — all stages green</div>
+    <div class="fig-placeholder">— Insert Jenkins pipeline screenshot here —</div>
+  </div>
+
+  <div class="page-footer">Page 11 of 32</div>
+</div>
+
+<!-- PAGE 12 — PIPELINE STAGES DETAIL -->
+<div class="page">
+  <div class="report-header">SMARTEK — 4SAE1 — Final Advancement Report</div>
+
+  <h2 class="subsection">6.4 Pipeline Stages in Detail</h2>
+
+  <h3 class="subsubsection">6.4.1 Build &amp; Test stage (Maven + JUnit)</h3>
+  <p>
+    Each Spring Boot Jenkinsfile invokes Maven to run <code>mvn clean package -DskipTests</code>
+    for the build stage, followed by <code>mvn test</code> for the test stage. JUnit XML reports
+    are published to Jenkins via the <code>junit</code> step with <code>allowEmptyResults: true</code>
+    to prevent pipeline failure on services with no tests yet. The compiled artefact is available
+    for the subsequent Docker build stage.
+  </p>
+
+  <h3 class="subsubsection">6.4.2 SonarQube Analysis stage</h3>
+  <p>
+    All services share the SonarQube instance at <code>http://192.168.100.138:9000</code>, each
+    with its own project key matching the service name. The analysis is invoked via
+    <code>mvn sonar:sonar</code> with the project key, host URL and authentication token passed
+    as system properties. The stage uses <code>catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE')</code>
+    so a quality gate warning does not block deployment.
+  </p>
+
+  <div class="figure-box">
+    <div class="fig-label">[ Figure 6.3 ]</div>
+    <div class="fig-caption">SonarQube analysis stage in Jenkins</div>
+    <div class="fig-placeholder">— Insert SonarQube dashboard screenshot here —</div>
+  </div>
+
+  <h3 class="subsubsection">6.4.3 Nexus publish stage</h3>
+  <p>
+    Maven artefacts deploy to a self-hosted Nexus 3 instance (port 8089). The pipeline writes a
+    temporary settings.xml with Jenkins-sourced credentials, then runs
+    <code>mvn deploy -DskipTests -DaltDeploymentRepository=nexus::http://192.168.100.138:8089/repository/maven-snapshots/</code>.
+    The stage uses a 2-attempt retry with a 10-minute timeout to handle transient network issues.
+    Nexus also acts as a Maven Central proxy, caching dependencies locally after the first run.
+  </p>
+
+  <div class="figure-box">
+    <div class="fig-label">[ Figure 6.4 ]</div>
+    <div class="fig-caption">Nexus 3 Maven repositories</div>
+    <div class="fig-placeholder">— Insert Nexus repository browser screenshot here —</div>
+  </div>
+
+  <h3 class="subsubsection">6.4.4 Docker Build, Trivy Scan &amp; Push</h3>
+  <p>
+    Images are built from per-service Dockerfiles and tagged with both <code>:BUILD_NUMBER</code>
+    and <code>:latest</code>. After the build, Trivy scans the image for HIGH and CRITICAL
+    vulnerabilities (<code>--exit-code 0</code> so the pipeline continues even if issues are found,
+    with results logged for review). Both tags are then pushed to Docker Hub under the
+    <code>wafachabbi/&lt;service-name&gt;</code> repositories.
+  </p>
+
+  <div class="figure-box">
+    <div class="fig-label">[ Figure 6.5 ]</div>
+    <div class="fig-caption">Docker Hub — published service images</div>
+    <div class="fig-placeholder">— Insert Docker Hub repositories screenshot here —</div>
+  </div>
+
+  <div class="figure-box">
+    <div class="fig-label">[ Figure 6.6 ]</div>
+    <div class="fig-caption">Trivy vulnerability scan output</div>
+    <div class="fig-placeholder">— Insert Trivy scan output screenshot here —</div>
+  </div>
+
+  <div class="page-footer">Page 12 of 32</div>
+</div>
+
+<!-- PAGE 13 — PIPELINE STAGES CONTINUED + MONITORING -->
+<div class="page">
+  <div class="report-header">SMARTEK — 4SAE1 — Final Advancement Report</div>
+
+  <h3 class="subsubsection">6.4.5 Image Signing with Cosign</h3>
+  <p>
+    After the Docker push, each pipeline signs the image using Cosign with a local key pair
+    (<code>/home/wafa/cosign.key</code>). The signing command is
+    <code>cosign sign --key cosign.key --yes docker.io/wafachabbi/&lt;service&gt;:BUILD_NUMBER</code>.
+    This provides supply-chain security guarantees — consumers can verify the image was produced
+    by the authorised Jenkins pipeline and has not been tampered with. The stage uses
+    <code>|| true</code> to prevent pipeline failure if the signing infrastructure is temporarily
+    unavailable.
+  </p>
+
+  <h3 class="subsubsection">6.4.6 Deploy stage &amp; Smoke Test</h3>
+  <p>
+    The Deploy stage applies the Kubernetes namespace manifest, then applies the service-specific
+    deployment YAML and updates the running image via
+    <code>kubectl set image deployment/&lt;service&gt; &lt;service&gt;=wafachabbi/&lt;service&gt;:BUILD_NUMBER -n smartek</code>.
+    It then waits for the rollout to complete with a 10-minute timeout
+    (<code>kubectl rollout status deployment/&lt;service&gt; -n smartek --timeout=10m</code>).
+  </p>
+  <p>
+    The Smoke Test stage waits 60 seconds for the service to start, then performs an HTTP health
+    check via <code>curl</code> against the NodePort endpoint. A 200 response confirms the service
+    is up; any other status is logged as a warning without failing the pipeline.
+  </p>
+
+  <div class="figure-box">
+    <div class="fig-label">[ Figure 6.7 ]</div>
+    <div class="fig-caption">Jenkins Deploy stage — kubectl rollout</div>
+    <div class="fig-placeholder">— Insert Jenkins deploy stage console output screenshot here —</div>
+  </div>
+
+  <h3 class="subsubsection">6.4.7 Frontend pipeline specifics</h3>
+  <p>
+    The frontend pipeline deviates from the Spring Boot template: the build runs
+    <code>npm install</code> followed by <code>npm run build --prod</code> to produce an optimised
+    Angular build. The Docker image is built from an NGINX base, serving the compiled SPA with
+    gzip compression, 1-year cache headers for static assets and a proxy pass for <code>/api</code>
+    requests to the API Gateway. The SonarQube and Nexus stages are omitted for the frontend;
+    Trivy scanning and Cosign signing are applied to the NGINX image.
+  </p>
+
+  <h2 class="subsection">6.5 Monitoring Stack — Prometheus + Grafana</h2>
+  <p>
+    Observability is delivered by Prometheus and Grafana deployed in the smartek namespace.
+    All Spring Boot services expose <code>/actuator/prometheus</code> via Micrometer. Prometheus
+    scrapes metrics every 15 seconds from all 10 business microservices plus the API Gateway and
+    Eureka Server.
+  </p>
+
+  <table>
+    <tr><th>Tool</th><th>Port</th><th>Purpose</th></tr>
+    <tr><td>Prometheus</td><td>9090</td><td>Metrics collection and storage; PromQL alerting rules.</td></tr>
+    <tr><td>Grafana</td><td>3000</td><td>Dashboards for CPU, memory, HTTP request rates, error rates per service.</td></tr>
+    <tr><td>Alertmanager</td><td>9093</td><td>Alert routing for ServiceDown, HighMemoryUsage and HighErrorRate rules.</td></tr>
+  </table>
+
+  <p><strong>Alerting rules configured:</strong></p>
+  <ul>
+    <li><strong>ServiceDown</strong> (critical) — fires when <code>up == 0</code> for 1 minute; summary: "Service {{ $labels.job }} est DOWN".</li>
+    <li><strong>HighMemoryUsage</strong> (warning) — fires when JVM heap exceeds 85% for 2 minutes.</li>
+    <li><strong>HighErrorRate</strong> (critical) — fires when 5xx error rate exceeds 10% for 1 minute.</li>
+  </ul>
+
+  <p>
+    The Verify Prometheus stage in each Jenkins pipeline queries the Prometheus API
+    (<code>/api/v1/query?query=up{job='&lt;service&gt;'}</code>) after deployment to confirm that
+    the newly deployed pod is being scraped correctly.
+  </p>
+
+  <div class="figure-box">
+    <div class="fig-label">[ Figure 6.8 ]</div>
+    <div class="fig-caption">Grafana — Kubernetes pod resource dashboard</div>
+    <div class="fig-placeholder">— Insert Grafana dashboard screenshot here —</div>
+  </div>
+
+  <div class="page-footer">Page 13 of 32</div>
+</div>
+
+<!-- PAGE 14 — END-OF-PROJECT SNAPSHOT -->
+<div class="page">
+  <div class="report-header">SMARTEK — 4SAE1 — Final Advancement Report</div>
+
+  <h1 class="section">7. End-of-Project System Snapshot</h1>
+
+  <h2 class="subsection">7.1 Updated System Topology</h2>
+  <p>
+    The platform grew from 4 infrastructure components to 19 total components (13 application
+    microservices including the frontend, 6 infrastructure pieces including CI/CD and observability).
+    The layered architecture is unchanged — only the component matrix is denser:
+  </p>
+
+  <div class="figure-box">
+    <div class="fig-label">[ Figure 7.1 ]</div>
+    <div class="fig-caption">SMARTEK physical architecture — Kubernetes cluster</div>
+    <div class="fig-placeholder">— Insert physical architecture diagram here —</div>
+  </div>
+
+  <table>
+    <tr><th>Layer</th><th>Components</th></tr>
+    <tr><td>CLIENT</td><td>Angular 18 SPA (port 4200 in dev, served by frontend Deployment in K8s via NGINX on port 80, NodePort 30080).</td></tr>
+    <tr><td>GATEWAY</td><td>Spring Cloud Gateway on port 8090 (JWT validation, RBAC, CORS, Eureka-based load balancing, NodePort 30090).</td></tr>
+    <tr><td>BUSINESS SERVICES</td><td>auth-service (8081), learning (8092), skill-evidence-service (8091), course-service (8086), training-service (8084), exam-service (8087), offers-service (8085), event-service (8082), planning-service (8083), certification-badge-service (8089).</td></tr>
+    <tr><td>INFRASTRUCTURE</td><td>Eureka (8761, NodePort 30761), Config Server (8888), MySQL 8.0 StatefulSet (3306).</td></tr>
+    <tr><td>DEVOPS / OBSERVABILITY</td><td>Jenkins (8080), Nexus 3 (8089), SonarQube (9000), Docker Hub (wafachabbi/*), Prometheus (9090), Grafana (3000), Alertmanager (9093).</td></tr>
+  </table>
+
+  <h2 class="subsection">7.2 Microservice Status Matrix</h2>
+
+  <table>
+    <tr><th>Microservice</th><th>Port</th><th>Database</th><th>Status</th><th>Highlights</th></tr>
+    <tr><td>auth-service</td><td>8081</td><td>MySQL (smartek_db)</td><td><span class="badge-green">Complete</span></td><td>JWT auth; 6 roles; BCrypt; email verification; profile picture; experience points.</td></tr>
+    <tr><td>learning</td><td>8092</td><td>MySQL (learning-db)</td><td><span class="badge-green">Complete</span></td><td>Learning paths; style assessment; adaptive recommendations; Prometheus metrics.</td></tr>
+    <tr><td>skill-evidence-service</td><td>8091</td><td>MySQL (skill-db)</td><td><span class="badge-green">Complete</span></td><td>Skill evidence; endorsement workflow; notifications; analytics; Prometheus metrics.</td></tr>
+    <tr><td>course-service</td><td>8086</td><td>MySQL (course_db)</td><td><span class="badge-green">Complete</span></td><td>Course CRUD; PDF upload (50 MB); enrollment; Prometheus metrics.</td></tr>
+    <tr><td>training-service</td><td>8084</td><td>MySQL (training_db)</td><td><span class="badge-green">Complete</span></td><td>Training programs; enrollment; performance analytics; trainer dashboards.</td></tr>
+    <tr><td>exam-service</td><td>8087</td><td>MySQL (exam_db)</td><td><span class="badge-green">Complete</span></td><td>Exam lifecycle; drafts; results; analytics; badge trigger to certification service.</td></tr>
+    <tr><td>offers-service</td><td>8085</td><td>MySQL (offers_db)</td><td><span class="badge-green">Complete</span></td><td>Job offers; application lifecycle; interview scheduling; skill-based matching.</td></tr>
+    <tr><td>event-service</td><td>8082</td><td>MySQL (smartek_events)</td><td><span class="badge-green">Complete</span></td><td>Event CRUD; registration; capacity enforcement; Prometheus metrics.</td></tr>
+    <tr><td>planning-service</td><td>8083</td><td>MySQL (smartek_planning)</td><td><span class="badge-green">Complete</span></td><td>Schedule CRUD; conflict detection; recurring events; Prometheus metrics.</td></tr>
+    <tr><td>certification-badge-service</td><td>8089</td><td>MySQL (smartek_db)</td><td><span class="badge-green">Complete</span></td><td>Digital certificates; keystore signing; Mailtrap email; verification endpoint; Feign to auth-service.</td></tr>
+    <tr><td>api-gateway</td><td>8090</td><td>—</td><td><span class="badge-green">Complete</span></td><td>JWT validation; RBAC; 18 routes configured; Eureka discovery; CORS; NodePort 30090.</td></tr>
+    <tr><td>eureka-server</td><td>8761</td><td>—</td><td><span class="badge-green">Complete</span></td><td>Service registry; heartbeat 30 s; self-preservation; NodePort 30761.</td></tr>
+    <tr><td>config-server</td><td>8888</td><td>—</td><td><span class="badge-green">Complete</span></td><td>Centralised config; native file backend; hot reload.</td></tr>
+    <tr><td>frontend</td><td>4200 / K8s 30080</td><td>—</td><td><span class="badge-green">Complete</span></td><td>Angular 18; Tailwind CSS; 6 role modules; NGINX reverse proxy; auto-refresh.</td></tr>
+  </table>
+
+  <div class="page-footer">Page 14 of 32</div>
+</div>
+
+<!-- PAGE 15 — CROSS-CUTTING CAPABILITIES -->
+<div class="page">
+  <div class="report-header">SMARTEK — 4SAE1 — Final Advancement Report</div>
+
+  <h2 class="subsection">7.3 Cross-Cutting Capabilities</h2>
+
+  <ul>
+    <li><strong>Container orchestration:</strong> Kubernetes cluster (Docker Desktop / Minikube / cloud-ready), Flannel CNI, MetalLB, nginx-ingress, 24 K8s manifests managed by Kustomize, bash and PowerShell deployment scripts.</li>
+    <li><strong>CI/CD &amp; quality:</strong> 14 Jenkins pipelines with per-service folder watching, SonarQube quality gates, JUnit test reporting, Nexus artefact storage and Docker Hub image registry.</li>
+    <li><strong>Supply-chain security:</strong> Trivy vulnerability scanning (HIGH/CRITICAL) on every Docker image; Cosign image signing on every pipeline run.</li>
+    <li><strong>Observability:</strong> Prometheus scraping all 11 services via <code>/actuator/prometheus</code>; Grafana dashboards for CPU, memory, HTTP rates and error rates; Alertmanager with ServiceDown, HighMemoryUsage and HighErrorRate rules.</li>
+    <li><strong>Security:</strong> JWT stateless authentication shared across all services; BCrypt password hashing; RBAC with 6 roles; CORS configured per service; Actuator endpoints public for health probes.</li>
+    <li><strong>Inter-service communication:</strong> OpenFeign synchronous calls for data enrichment; internal API key for exam → certification badge trigger; Eureka-based load balancing via the Gateway.</li>
+    <li><strong>Testing:</strong> JUnit 5 + Mockito unit tests; Spring Boot Test + MockMvc integration tests; Postman collections per service; SonarQube quality gate.</li>
+    <li><strong>Frontend:</strong> Angular 18 with Tailwind CSS, 6 role modules, NGINX reverse proxy, optimised production build with asset hashing and gzip compression.</li>
+    <li><strong>File management:</strong> PDF upload (50 MB max) in course-service with UUID-based naming; Cloudinary integration for profile pictures in auth-service.</li>
+    <li><strong>Email notifications:</strong> Mailtrap SMTP integration in certification-badge-service for certificate delivery; configurable SMTP credentials via application.yml.</li>
+  </ul>
+
+  <h2 class="subsection">7.4 Frontend Walk-Through</h2>
+  <p>
+    The Angular 18 application is the surface that integrates every back-end capability into a single
+    end-user experience. The role matrix below summarises the modules delivered for each user type,
+    followed by representative screenshots.
+  </p>
+
+  <table>
+    <tr><th>Role</th><th>Modules and Key Features</th></tr>
+    <tr>
+      <td>LEARNER</td>
+      <td>Learning path enrollment and progress tracking; course access and PDF viewing; exam participation and result review; skill evidence submission and endorsement; job offer browsing and application; event registration; community engagement; certification badge download.</td>
+    </tr>
+    <tr>
+      <td>TRAINER</td>
+      <td>Course creation and management; training program authoring; exam creation with draft support; learner performance analytics; trainer-specific dashboards; badge issuance trigger on exam pass.</td>
+    </tr>
+    <tr>
+      <td>RH_COMPANY</td>
+      <td>Job offer publication and management; application review and shortlisting; interview scheduling and status tracking; candidate profile access.</td>
+    </tr>
+    <tr>
+      <td>RH_SMARTEK</td>
+      <td>Internal HR operations; partner management; platform-wide analytics; certification oversight; notification campaign configuration.</td>
+    </tr>
+    <tr>
+      <td>ADMIN</td>
+      <td>System supervision; user management (list, activate/deactivate, role assignment); Kubernetes monitoring via Grafana; SonarQube quality overview; notification campaigns; analytics dashboards.</td>
+    </tr>
+    <tr>
+      <td>PARTNER</td>
+      <td>External collaboration portal; offer co-publication; certification badge issuance; event co-organisation; community engagement.</td>
+    </tr>
+  </table>
+
+  <div class="figure-box">
+    <div class="fig-label">[ Figure 7.2 ]</div>
+    <div class="fig-caption">Angular landing page</div>
+    <div class="fig-placeholder">— Insert Angular public landing page screenshot here —</div>
+  </div>
+
+  <div class="page-footer">Page 15 of 32</div>
+</div>
+
+<!-- PAGE 16 — FRONTEND SCREENSHOTS -->
+<div class="page">
+  <div class="report-header">SMARTEK — 4SAE1 — Final Advancement Report</div>
+
+  <div class="figure-box">
+    <div class="fig-label">[ Figure 7.3 ]</div>
+    <div class="fig-caption">Learner dashboard — learning paths &amp; course enrollment</div>
+    <div class="fig-placeholder">— Insert Learner dashboard screenshot here —</div>
+  </div>
+
+  <div class="figure-box">
+    <div class="fig-label">[ Figure 7.4 ]</div>
+    <div class="fig-caption">Trainer dashboard — exam &amp; training management</div>
+    <div class="fig-placeholder">— Insert Trainer dashboard screenshot here —</div>
+  </div>
+
+  <div class="figure-box">
+    <div class="fig-label">[ Figure 7.5 ]</div>
+    <div class="fig-caption">Admin dashboard — user management &amp; analytics</div>
+    <div class="fig-placeholder">— Insert Admin dashboard screenshot here —</div>
+  </div>
+
+  <div class="page-footer">Page 16 of 32</div>
+</div>
+
+<!-- PAGE 17 — CONCLUSION -->
+<div class="page">
+  <div class="report-header">SMARTEK — 4SAE1 — Final Advancement Report</div>
+
+  <h1 class="section">8. Conclusion</h1>
+
+  <p>
+    SMARTEK is a complete engineering deliverable. Sprint 0 produced the analytical foundations;
+    Sprint 1 delivered Module 1 of every axis — 10 Spring Boot microservices with MySQL persistence,
+    Eureka discovery, API Gateway routing and JWT security; Sprint 2 added Module 2 (advanced
+    features, OpenFeign inter-service communication, Spring Security method-level RBAC, automated
+    testing and certification badge issuance); Sprint 3 industrialised the platform with Jenkins
+    CI/CD, Kubernetes deployment, SonarQube quality gates, Nexus artefact storage, Docker Hub image
+    registry, Trivy vulnerability scanning, Cosign image signing and Prometheus/Grafana observability.
+  </p>
+
+  <p>
+    The platform covers every SAE layer: distributed back-end, secured gateway, CI/CD, container
+    orchestration, supply-chain security, observability and a feature-complete Angular 18 front-end
+    with six role modules. Remaining work is incremental — multi-node HA cluster, static domain
+    with TLS certificate, and expanding test coverage to 80%+ across all services — rather than
+    foundational. SMARTEK is ready for end-to-end demonstration.
+  </p>
+
+  <hr/>
+
+  <h2 class="subsection" style="margin-top:30px;">Key Project Metrics</h2>
+
+  <table>
+    <tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Total microservices</td><td>13 (10 business + API Gateway + Config Server + Eureka)</td></tr>
+    <tr><td>Jenkins pipelines</td><td>14 (13 backend + 1 frontend), all green</td></tr>
+    <tr><td>Docker images on Docker Hub</td><td>14 images (wafachabbi/*), tagged :latest + :BUILD_NUMBER</td></tr>
+    <tr><td>Kubernetes manifests</td><td>24 YAML files managed by Kustomize in k8s/</td></tr>
+    <tr><td>Prometheus scrape targets</td><td>11 services (all business services + API Gateway + Eureka)</td></tr>
+    <tr><td>Alerting rules</td><td>3 (ServiceDown, HighMemoryUsage, HighErrorRate)</td></tr>
+    <tr><td>Angular role modules</td><td>6 (LEARNER, TRAINER, RH_COMPANY, RH_SMARTEK, ADMIN, PARTNER)</td></tr>
+    <tr><td>API Gateway routes</td><td>18 routes configured across all business services</td></tr>
+    <tr><td>Database schemas</td><td>9 MySQL schemas (database-per-service pattern)</td></tr>
+    <tr><td>Security pipeline stages</td><td>2 per pipeline (Trivy scan + Cosign signing)</td></tr>
+    <tr><td>Java version</td><td>Java 17 (Spring Boot 3.2.0, Spring Cloud 2023.0.0)</td></tr>
+    <tr><td>Frontend framework</td><td>Angular 18.2.0 + Tailwind CSS 3.4.19</td></tr>
+  </table>
+
+  <div class="page-footer">Page 17 of 32</div>
+</div>
+
+</body>
+</html>

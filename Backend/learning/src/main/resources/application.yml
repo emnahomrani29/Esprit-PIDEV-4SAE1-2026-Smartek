@@ -33,6 +33,11 @@ eureka:
   instance:
     prefer-ip-address: true
 
+# Recommendation ML service
+recommendation:
+  service:
+    url: http://recommendation-service:8095
+
 # JWT (same secret as auth-service)
 jwt:
   secret: smartek-secret-key-for-jwt-token-generation-2024-very-secure

@@ -1,0 +1,89 @@
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+
+  <!-- Header -->
+  <div class="flex items-center gap-3 mb-5">
+    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-lg">
+      🤖
+    </div>
+    <div>
+      <h3 class="font-semibold text-gray-800 text-base">Recommandations IA</h3>
+      <p class="text-xs text-gray-500">Parcours suggérés selon votre profil</p>
+    </div>
+    <button
+      (click)="load()"
+      [disabled]="isLoading"
+      class="ml-auto text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 disabled:opacity-50">
+      🔄 Actualiser
+    </button>
+  </div>
+
+  <!-- Loading skeleton -->
+  <div *ngIf="isLoading" class="space-y-3">
+    <div *ngFor="let i of [1,2,3]" class="animate-pulse">
+      <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+      <div class="h-3 bg-gray-100 rounded w-1/2"></div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error && !isLoading" class="text-center py-6 text-gray-400">
+    <div class="text-3xl mb-2">⚠️</div>
+    <p class="text-sm">{{ error }}</p>
+    <button (click)="load()" class="mt-2 text-xs text-indigo-600 hover:underline">Réessayer</button>
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="!isLoading && !error && recommendations.length === 0" class="text-center py-6 text-gray-400">
+    <div class="text-3xl mb-2">🎯</div>
+    <p class="text-sm">Complétez des parcours pour obtenir des recommandations personnalisées.</p>
+  </div>
+
+  <!-- Recommendations list -->
+  <div *ngIf="!isLoading && recommendations.length > 0" class="space-y-3">
+    <div
+      *ngFor="let item of recommendations; let i = index"
+      class="p-4 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50 transition-all">
+
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-start gap-3 flex-1 min-w-0">
+          <span class="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center">
+            {{ i + 1 }}
+          </span>
+          <div class="min-w-0">
+            <p class="font-medium text-gray-800 text-sm">{{ item.title }}</p>
+            <p class="text-xs text-gray-500 mt-0.5">{{ item.reason }}</p>
+          </div>
+        </div>
+
+        <!-- Score badge -->
+        <span *ngIf="item.score >= 0.6" class="flex-shrink-0 text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+          Très pertinent
+        </span>
+        <span *ngIf="item.score >= 0.3 && item.score < 0.6" class="flex-shrink-0 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+          Pertinent
+        </span>
+        <span *ngIf="item.score < 0.3" class="flex-shrink-0 text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+          Suggéré
+        </span>
+      </div>
+
+      <!-- Score bar -->
+      <div class="mt-3 flex items-center gap-2">
+        <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            class="h-full rounded-full transition-all duration-500"
+            [class.bg-green-500]="item.score >= 0.6"
+            [class.bg-blue-500]="item.score >= 0.3 && item.score < 0.6"
+            [class.bg-gray-400]="item.score < 0.3"
+            [style.width.%]="getScorePercent(item.score)">
+          </div>
+        </div>
+        <span class="text-xs text-gray-400 w-8 text-right">{{ getScorePercent(item.score) }}%</span>
+      </div>
+    </div>
+  </div>
+
+  <p *ngIf="recommendations.length > 0" class="text-xs text-gray-400 mt-4 text-center">
+    Basé sur vos parcours complétés, compétences et style d'apprentissage
+  </p>
+</div>
