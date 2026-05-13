@@ -2,7 +2,7 @@
 
 JENKINS_URL="http://192.168.100.138:8080"
 USER="wafa"
-PASSWORD='WAFAch12#'
+PASSWORD="2525"
 REPO_URL="https://github.com/emnahomrani29/Esprit-PIDEV-4SAE1-2026-Smartek"
 BRANCH="*/skill-evidence-learning-service"
 
