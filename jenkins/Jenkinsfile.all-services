@@ -187,7 +187,7 @@ pipeline {
                     sh "docker rmi ${DOCKER_REGISTRY}/${svc}:${TAG} || true"
                 }
             }
-            cleanWs()
+            deleteDir()
         }
         success {
             echo """
@@ -215,7 +215,7 @@ pipeline {
 def buildService(String serviceName, String servicePath, boolean skipTests = false) {
     def skipTestsFlag = (params.SKIP_TESTS || skipTests) ? '-DskipTests' : '-Pcoverage'
     dir(servicePath) {
-        sh "mvn clean package ${skipTestsFlag} --no-transfer-progress"
+        sh "/usr/share/maven/bin/mvn clean package ${skipTestsFlag} --no-transfer-progress"
     }
     sh """
         docker build \\

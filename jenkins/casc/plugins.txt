@@ -1,0 +1,47 @@
+# ============================================================
+# Liste des plugins Jenkins à installer
+# Utilisé par le Dockerfile Jenkins custom
+# ============================================================
+
+# Pipeline
+workflow-aggregator
+pipeline-stage-view
+pipeline-graph-analysis
+blueocean
+
+# Git & GitHub
+git
+github
+github-branch-source
+
+# Docker
+docker-workflow
+docker-plugin
+
+# Build Tools
+maven-plugin
+nodejs
+
+# Code Quality
+sonar
+jacoco
+junit
+htmlpublisher
+
+# Credentials & Security
+credentials-binding
+plain-credentials
+ssh-credentials
+
+# Configuration as Code
+configuration-as-code
+
+# Notifications
+email-ext
+mailer
+
+# Utilitaires
+timestamper
+ansicolor
+build-timeout
+ws-cleanup

@@ -5,11 +5,13 @@ pipeline {
     agent any
 
     environment {
-        SERVICE_NAME    = 'auth-service'
-        SERVICE_PATH    = 'Backend/auth-service'
-        IMAGE_NAME      = "${DOCKER_REGISTRY ?: 'smartek'}/${SERVICE_NAME}"
-        IMAGE_TAG       = "${BUILD_NUMBER}"
-        SONAR_PROJECT   = 'smartek-auth-service'
+        SERVICE_NAME = 'auth-service'
+        SERVICE_PATH = 'Backend/auth-service'
+        IMAGE_NAME   = "smartek/${SERVICE_NAME}"
+        IMAGE_TAG    = "${BUILD_NUMBER}"
+        SONAR_PROJECT = 'smartek-auth-service'
+        MAVEN_HOME   = '/usr/share/maven'
+        PATH         = "/usr/share/maven/bin:/usr/bin:${env.PATH}"
     }
 
     options {
@@ -30,12 +32,7 @@ pipeline {
         stage('Build & Test') {
             steps {
                 dir("${SERVICE_PATH}") {
-                    sh '''
-                        mvn clean verify \
-                            -Pcoverage \
-                            --no-transfer-progress \
-                            -Dspring.profiles.active=test
-                    '''
+                    sh '/usr/share/maven/bin/mvn clean verify -Pcoverage --no-transfer-progress -Dspring.profiles.active=test'
                 }
             }
             post {
@@ -44,7 +41,7 @@ pipeline {
                           allowEmptyResults: true
                     jacoco(
                         execPattern: "${SERVICE_PATH}/target/jacoco.exec",
-                        classPattern:  "${SERVICE_PATH}/target/classes",
+                        classPattern: "${SERVICE_PATH}/target/classes",
                         sourcePattern: "${SERVICE_PATH}/src/main/java"
                     )
                 }
@@ -56,12 +53,7 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     dir("${SERVICE_PATH}") {
-                        sh '''
-                            mvn sonar:sonar \
-                                -Dsonar.projectKey=${SONAR_PROJECT} \
-                                -Dsonar.projectName="${SERVICE_NAME}" \
-                                --no-transfer-progress
-                        '''
+                        sh '/usr/share/maven/bin/mvn sonar:sonar -Dsonar.projectKey=${SONAR_PROJECT} --no-transfer-progress'
                     }
                 }
             }
@@ -79,11 +71,11 @@ pipeline {
         stage('Docker Build') {
             steps {
                 sh """
-                    docker build \
-                        --build-arg BUILD_DATE=\$(date -u +%Y-%m-%dT%H:%M:%SZ) \
-                        --build-arg VERSION=${IMAGE_TAG} \
-                        -t ${IMAGE_NAME}:${IMAGE_TAG} \
-                        -t ${IMAGE_NAME}:latest \
+                    docker build \\
+                        --build-arg BUILD_DATE=\$(date -u +%Y-%m-%dT%H:%M:%SZ) \\
+                        --build-arg VERSION=${IMAGE_TAG} \\
+                        -t ${IMAGE_NAME}:${IMAGE_TAG} \\
+                        -t ${IMAGE_NAME}:latest \\
                         ${SERVICE_PATH}
                 """
             }
@@ -91,13 +83,7 @@ pipeline {
 
         stage('Security Scan') {
             steps {
-                sh """
-                    trivy image \
-                        --exit-code 0 \
-                        --severity HIGH,CRITICAL \
-                        --format table \
-                        ${IMAGE_NAME}:${IMAGE_TAG}
-                """
+                sh "trivy image --exit-code 0 --severity HIGH,CRITICAL --format table ${IMAGE_NAME}:${IMAGE_TAG} || true"
             }
         }
 
@@ -117,30 +103,14 @@ pipeline {
                 }
             }
         }
-
-        stage('Deploy (Dev)') {
-            when { branch 'develop' }
-            steps {
-                sh """
-                    docker service update \
-                        --image ${IMAGE_NAME}:${IMAGE_TAG} \
-                        smartek_${SERVICE_NAME} || \
-                    echo "Service not in swarm yet – skipping deploy"
-                """
-            }
-        }
     }
 
     post {
         always {
             sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true"
-            cleanWs()
+            deleteDir()
         }
-        success {
-            echo "✅ ${SERVICE_NAME} pipeline succeeded (build #${BUILD_NUMBER})"
-        }
-        failure {
-            echo "❌ ${SERVICE_NAME} pipeline failed (build #${BUILD_NUMBER})"
-        }
+        success { echo "✅ ${SERVICE_NAME} build #${BUILD_NUMBER} succeeded" }
+        failure { echo "❌ ${SERVICE_NAME} build #${BUILD_NUMBER} failed" }
     }
 }

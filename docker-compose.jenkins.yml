@@ -1,0 +1,111 @@
+###############################################################################
+# Docker Compose - Stack DevOps Smartek
+# Jenkins + SonarQube + PostgreSQL
+#
+# Démarrer :  docker compose -f docker-compose.jenkins.yml up -d
+# Arrêter  :  docker compose -f docker-compose.jenkins.yml down
+# Logs     :  docker compose -f docker-compose.jenkins.yml logs -f jenkins
+###############################################################################
+
+name: smartek-devops
+
+services:
+
+  # ─────────────────────────────────────────────────────────
+  # JENKINS  →  http://localhost:8090
+  # ─────────────────────────────────────────────────────────
+  jenkins:
+    image: jenkins/jenkins:lts-jdk17
+    container_name: smartek-jenkins
+    restart: unless-stopped
+    user: root
+    ports:
+      - "8090:8080"    # UI Jenkins
+      - "50000:50000"  # Agents JNLP
+    environment:
+      JAVA_OPTS: "-Djenkins.install.runSetupWizard=false -Xmx1g"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - //var/run/docker.sock:/var/run/docker.sock   # Docker socket (Windows)
+    networks:
+      - devops-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/login || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  # ─────────────────────────────────────────────────────────
+  # POSTGRESQL  (base SonarQube)
+  # ─────────────────────────────────────────────────────────
+  sonarqube-db:
+    image: postgres:15-alpine
+    container_name: smartek-sonarqube-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonarqube
+    volumes:
+      - sonarqube_db_data:/var/lib/postgresql/data
+    networks:
+      - devops-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sonar -d sonarqube"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────────────────────
+  # SONARQUBE  →  http://localhost:9000
+  # Login : admin / admin  (changer au premier accès)
+  # ─────────────────────────────────────────────────────────
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: smartek-sonarqube
+    restart: unless-stopped
+    depends_on:
+      sonarqube-db:
+        condition: service_healthy
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/sonarqube
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
+    networks:
+      - devops-network
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/api/system/status | grep -q UP || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+# ─────────────────────────────────────────────────────────
+volumes:
+  jenkins_home:
+    name: jenkins_jenkins_home    # réutilise le volume existant
+  sonarqube_db_data:
+    name: jenkins_sonarqube_db
+  sonarqube_data:
+    name: jenkins_sonarqube_data
+  sonarqube_logs:
+    name: jenkins_sonarqube_logs
+  sonarqube_extensions:
+    name: jenkins_sonarqube_extensions
+
+networks:
+  devops-network:
+    name: smartek-devops-network
+    driver: bridge

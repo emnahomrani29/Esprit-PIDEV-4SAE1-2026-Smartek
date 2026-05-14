@@ -5,6 +5,8 @@ pipeline {
     agent any
 
     environment {
+        MAVEN_HOME   = '/usr/share/maven'
+        PATH         = "/usr/share/maven/bin:/usr/bin:${env.PATH}"
         SERVICE_NAME    = 'training-service'
         SERVICE_PATH    = 'Backend/training-service'
         IMAGE_NAME      = "${DOCKER_REGISTRY ?: 'smartek'}/${SERVICE_NAME}"
@@ -30,7 +32,7 @@ pipeline {
         stage('Build & Test') {
             steps {
                 dir("${SERVICE_PATH}") {
-                    sh 'mvn clean verify -Pcoverage --no-transfer-progress -Dspring.profiles.active=test'
+                    sh '/usr/share/maven/bin/mvn clean verify -Pcoverage --no-transfer-progress -Dspring.profiles.active=test'
                 }
             }
             post {
@@ -48,7 +50,7 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     dir("${SERVICE_PATH}") {
-                        sh 'mvn sonar:sonar -Dsonar.projectKey=${SONAR_PROJECT} --no-transfer-progress'
+                        sh '/usr/share/maven/bin/mvn sonar:sonar -Dsonar.projectKey=${SONAR_PROJECT} --no-transfer-progress'
                     }
                 }
             }
@@ -106,7 +108,7 @@ pipeline {
     post {
         always {
             sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true"
-            cleanWs()
+            deleteDir()
         }
         success { echo "✅ ${SERVICE_NAME} pipeline succeeded (build #${BUILD_NUMBER})" }
         failure { echo "❌ ${SERVICE_NAME} pipeline failed (build #${BUILD_NUMBER})" }

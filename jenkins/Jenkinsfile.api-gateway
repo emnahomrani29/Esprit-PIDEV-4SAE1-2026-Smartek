@@ -5,6 +5,8 @@ pipeline {
     agent any
 
     environment {
+        MAVEN_HOME   = '/usr/share/maven'
+        PATH         = "/usr/share/maven/bin:/usr/bin:${env.PATH}"
         SERVICE_NAME    = 'api-gateway'
         SERVICE_PATH    = 'Backend/api-gateway'
         IMAGE_NAME      = "${DOCKER_REGISTRY ?: 'smartek'}/${SERVICE_NAME}"
@@ -134,7 +136,7 @@ pipeline {
     post {
         always {
             sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true"
-            cleanWs()
+            deleteDir()
         }
         success { echo "✅ ${SERVICE_NAME} pipeline succeeded (build #${BUILD_NUMBER})" }
         failure { echo "❌ ${SERVICE_NAME} pipeline failed (build #${BUILD_NUMBER})" }

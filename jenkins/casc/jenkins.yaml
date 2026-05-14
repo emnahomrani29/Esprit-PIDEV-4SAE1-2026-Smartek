@@ -1,0 +1,124 @@
+###############################################################################
+# Jenkins Configuration as Code (JCasC)
+# Fichier chargé automatiquement au démarrage de Jenkins
+# Plugin requis : Configuration as Code (casc)
+###############################################################################
+
+jenkins:
+  systemMessage: "🚀 Smartek Platform - Jenkins CI/CD"
+  numExecutors: 4
+  mode: NORMAL
+  scmCheckoutRetryCount: 2
+
+  # ── Sécurité ──────────────────────────────────────────────
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "${JENKINS_ADMIN_PASSWORD:-admin123}"
+          properties:
+            - mailer:
+                emailAddress: "admin@smartek.com"
+
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+  # ── Outils globaux ────────────────────────────────────────
+  globalNodeProperties:
+    - envVars:
+        env:
+          - key: "DOCKER_REGISTRY"
+            value: "smartek"
+          - key: "MAVEN_OPTS"
+            value: "-Xmx1024m -XX:MaxMetaspaceSize=512m"
+
+tool:
+  jdk:
+    installations:
+      - name: "JDK-17"
+        home: ""
+        properties:
+          - installSource:
+              installers:
+                - adoptOpenJdkInstaller:
+                    id: "jdk-17.0.9+9"
+
+  maven:
+    installations:
+      - name: "Maven-3.9"
+        home: ""
+        properties:
+          - installSource:
+              installers:
+                - maven:
+                    id: "3.9.6"
+
+  nodejs:
+    installations:
+      - name: "NodeJS-18"
+        home: ""
+        properties:
+          - installSource:
+              installers:
+                - nodeJSInstaller:
+                    id: "18.20.4"
+                    npmPackagesRefreshHours: 72
+                    globalPackages: "@angular/cli"
+
+  sonarRunnerInstallation:
+    installations:
+      - name: "SonarScanner"
+        home: ""
+        properties:
+          - installSource:
+              installers:
+                - sonarRunnerInstaller:
+                    id: "5.0.1.3006"
+
+# ── SonarQube Server ──────────────────────────────────────
+unclassified:
+  sonarGlobalConfiguration:
+    buildWrapperEnabled: true
+    installations:
+      - name: "SonarQube"
+        serverUrl: "http://sonarqube:9000"
+        credentialsId: "sonar-token"
+        webhookSecretId: ""
+
+  # ── Localisation ──────────────────────────────────────────
+  location:
+    url: "http://localhost:8090/"
+    adminAddress: "admin@smartek.com"
+
+  # ── Timeout global ────────────────────────────────────────
+  globalDefaultFlowDurabilityLevel:
+    durabilityHint: PERFORMANCE_OPTIMIZED
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          # Docker Hub / Registry
+          - usernamePassword:
+              scope: GLOBAL
+              id: "docker-registry-credentials"
+              description: "Docker Registry (Hub ou privé)"
+              username: "${DOCKER_USERNAME:-changeme}"
+              password: "${DOCKER_PASSWORD:-changeme}"
+
+          # SonarQube Token
+          - string:
+              scope: GLOBAL
+              id: "sonar-token"
+              description: "SonarQube Authentication Token"
+              secret: "${SONAR_TOKEN:-changeme}"
+
+          # GitHub (si repo privé)
+          - usernamePassword:
+              scope: GLOBAL
+              id: "github-credentials"
+              description: "GitHub Personal Access Token"
+              username: "${GITHUB_USERNAME:-changeme}"
+              password: "${GITHUB_TOKEN:-changeme}"
