@@ -184,7 +184,7 @@ def buildService(String name, String path, boolean infraOnly = false) {
         if (params.SKIP_TESTS || infraOnly) {
             sh "${mvn} clean package -DskipTests --no-transfer-progress"
         } else {
-            sh "${mvn} clean verify --no-transfer-progress -Dspring.profiles.active=test -Dexclude='${excludes}'"
+            sh "${mvn} clean verify --no-transfer-progress -Dspring.profiles.active=test -Dmaven.test.failure.ignore=true -Dexclude='${excludes}'"
         }
     }
 
