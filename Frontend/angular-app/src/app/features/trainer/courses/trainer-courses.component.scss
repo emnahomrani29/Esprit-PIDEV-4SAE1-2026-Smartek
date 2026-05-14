@@ -1,0 +1,162 @@
+// Course Management Custom Styles
+
+// Smooth animations
+.animate-fade-in-down {
+  animation: fadeInDown 0.3s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Card hover effects
+.group:hover {
+  .group-hover\:text-primary {
+    transition: color 0.3s ease;
+  }
+}
+
+// Loading spinner
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Smooth transitions for all interactive elements
+button, input, textarea, select {
+  transition: all 0.3s ease;
+}
+
+// Custom scrollbar for modals
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #F25C2B #f3f4f6;
+  
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 10px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #F25C2B 0%, #2563EB 100%);
+    border-radius: 10px;
+    
+    &:hover {
+      background: linear-gradient(180deg, #D94A1F 0%, #1D4ED8 100%);
+    }
+  }
+}
+
+// Backdrop blur effect
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+}
+
+// Line clamp utility
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// Gradient text effect
+.gradient-text {
+  background: linear-gradient(135deg, #F25C2B 0%, #2563EB 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// Pulse animation for loading states
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+// Scale on hover
+.hover\:scale-105:hover {
+  transform: scale(1.05);
+}
+
+// Rotate arrow icon
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+// Focus ring for accessibility
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(242, 92, 43, 0.1);
+}
+
+// Disabled state
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  
+  &:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
+
+// Material icons alignment
+.material-icons {
+  vertical-align: middle;
+  user-select: none;
+}
+
+// Card shadow on hover
+.hover\:shadow-card-hover:hover {
+  box-shadow: 0 20px 25px -5px rgba(242, 92, 43, 0.1), 0 10px 10px -5px rgba(242, 92, 43, 0.04);
+}
+
+// Smooth border transitions
+.border {
+  transition: border-color 0.3s ease;
+}
+
+// Gradient border effect
+.gradient-border {
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(135deg, #F25C2B, #2563EB);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+}

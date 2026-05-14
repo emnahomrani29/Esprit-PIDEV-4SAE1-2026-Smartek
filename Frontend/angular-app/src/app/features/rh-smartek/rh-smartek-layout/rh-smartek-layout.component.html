@@ -1,0 +1,136 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200 shadow-sm">
+    <div class="container mx-auto px-4 flex items-center justify-between h-14">
+      <span class="font-bold text-purple-700 text-lg">SMARTEK — RH Interne</span>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-gray-500">{{ userName }}</span>
+        <button (click)="logout()" class="text-sm text-red-500 hover:text-red-700 font-medium">Déconnexion</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav class="bg-white border-b border-gray-200">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center space-x-1 overflow-x-auto">
+
+        <!-- Utilisateurs -->
+        <a
+          routerLink="/rh-smartek/users"
+          routerLinkActive="border-b-4 border-purple-600 text-purple-600"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="flex items-center gap-2 px-5 py-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 transition-colors border-b-4 border-transparent whitespace-nowrap">
+          <span class="text-xl">👥</span>
+          <span class="font-medium">Utilisateurs</span>
+        </a>
+
+        <!-- Skill Validation -->
+        <a
+          routerLink="/rh-smartek/skill-validation"
+          routerLinkActive="border-b-4 border-purple-600 text-purple-600"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="flex items-center gap-2 px-5 py-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 transition-colors border-b-4 border-transparent whitespace-nowrap">
+          <span class="text-xl">✅</span>
+          <span class="font-medium">Validation Compétences</span>
+        </a>
+
+        <!-- Certifications -->
+        <a
+          routerLink="/rh-smartek/certifications"
+          routerLinkActive="border-b-4 border-purple-600 text-purple-600"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="flex items-center gap-2 px-5 py-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 transition-colors border-b-4 border-transparent whitespace-nowrap">
+          <span class="text-xl">🎓</span>
+          <span class="font-medium">Certifications</span>
+        </a>
+
+        <!-- Formations -->
+        <a
+          routerLink="/rh-smartek/training"
+          routerLinkActive="border-b-4 border-purple-600 text-purple-600"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="flex items-center gap-2 px-5 py-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 transition-colors border-b-4 border-transparent whitespace-nowrap">
+          <span class="text-xl">📚</span>
+          <span class="font-medium">Formations</span>
+        </a>
+
+        <!-- Cours -->
+        <a
+          routerLink="/rh-smartek/courses"
+          routerLinkActive="border-b-4 border-purple-600 text-purple-600"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="flex items-center gap-2 px-5 py-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 transition-colors border-b-4 border-transparent whitespace-nowrap">
+          <span class="text-xl">�</span>
+          <span class="font-medium">Cours</span>
+        </a>
+
+        <!-- Examens -->
+        <a
+          routerLink="/rh-smartek/exams"
+          routerLinkActive="border-b-4 border-purple-600 text-purple-600"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="flex items-center gap-2 px-5 py-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 transition-colors border-b-4 border-transparent whitespace-nowrap">
+          <span class="text-xl">📝</span>
+          <span class="font-medium">Examens</span>
+        </a>
+
+        <!-- Entretiens -->
+        <a
+          routerLink="/rh-smartek/interviews"
+          routerLinkActive="border-b-4 border-purple-600 text-purple-600"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="flex items-center gap-2 px-5 py-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 transition-colors border-b-4 border-transparent whitespace-nowrap">
+          <span class="text-xl">🎤</span>
+          <span class="font-medium">Entretiens</span>
+        </a>
+
+        <!-- Planning -->
+        <a
+          routerLink="/rh-smartek/schedule"
+          routerLinkActive="border-b-4 border-purple-600 text-purple-600"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="flex items-center gap-2 px-5 py-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 transition-colors border-b-4 border-transparent whitespace-nowrap">
+          <span class="text-xl">📅</span>
+          <span class="font-medium">Planning</span>
+        </a>
+
+        <!-- Événements -->
+        <a
+          routerLink="/rh-smartek/events"
+          routerLinkActive="border-b-4 border-purple-600 text-purple-600"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="flex items-center gap-2 px-5 py-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 transition-colors border-b-4 border-transparent whitespace-nowrap">
+          <span class="text-xl">🎯</span>
+          <span class="font-medium">Événements</span>
+        </a>
+
+        <!-- Offres d'emploi -->
+        <a
+          routerLink="/rh-smartek/offers"
+          routerLinkActive="border-b-4 border-purple-600 text-purple-600"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="flex items-center gap-2 px-5 py-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 transition-colors border-b-4 border-transparent whitespace-nowrap">
+          <span class="text-xl">💼</span>
+          <span class="font-medium">Offres d'emploi</span>
+        </a>
+
+        <!-- Pending Approvals (partagé avec dashboard) -->
+        <a
+          routerLink="/dashboard/admin-approvals"
+          routerLinkActive="border-b-4 border-purple-600 text-purple-600"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="flex items-center gap-2 px-5 py-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 transition-colors border-b-4 border-transparent whitespace-nowrap">
+          <span class="text-xl">⏳</span>
+          <span class="font-medium">Approbations</span>
+        </a>
+
+      </div>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <main class="container mx-auto px-4 py-6">
+    <router-outlet></router-outlet>
+  </main>
+</div>

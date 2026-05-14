@@ -1,0 +1,78 @@
+﻿spring:
+  application:
+    name: certification-badge-service-test
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/testdb?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
+    hikari:
+      maximum-pool-size: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  # Disable Flyway — DDL handled by Hibernate in tests
+  flyway:
+    enabled: false
+
+  # Disable Spring Cloud Config
+  cloud:
+    config:
+      enabled: false
+
+  # Disable mail — no SMTP server on CI
+  mail:
+    host: localhost
+    port: 25
+    username:
+    password:
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+# Disable Eureka — no service registry on CI
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+# JWT config required by JwtService
+jwt:
+  secret: test-secret-key-for-ci-only-not-production-use
+  expiration: 86400000
+
+# Internal API key
+internal:
+  api-key: test-api-key
+
+# PDF signing — use dummy values, PDF tests are not run in unit/integration tests
+pdf:
+  signing:
+    keystore-path: classpath:smartek-keystore.p12
+    keystore-password: smartek-dev-2024
+    key-alias: smartek
+
+app:
+  base-url: http://localhost:4200
+
+# Logging — keep quiet on CI
+logging:
+  level:
+    com.smartek: INFO
+    org.springframework.security: WARN
+    org.springframework.cloud: WARN

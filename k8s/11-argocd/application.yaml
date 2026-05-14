@@ -1,0 +1,61 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: smartek-platform
+  namespace: argocd
+spec:
+  project: default
+  
+  source:
+    repoURL: https://github.com/VOTRE-ORG/VOTRE-REPO.git
+    targetRevision: main
+    path: k8s
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: smartek
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+    - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  
+  ignoreDifferences:
+  - group: apps
+    kind: Deployment
+    jsonPointers:
+    - /spec/replicas
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: smartek
+  namespace: argocd
+spec:
+  description: Smartek Platform Project
+  
+  sourceRepos:
+  - '*'
+  
+  destinations:
+  - namespace: smartek
+    server: https://kubernetes.default.svc
+  - namespace: argocd
+    server: https://kubernetes.default.svc
+  
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  
+  namespaceResourceWhitelist:
+  - group: '*'
+    kind: '*'

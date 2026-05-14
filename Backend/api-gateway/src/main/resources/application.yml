@@ -1,0 +1,87 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    config:
+      enabled: false
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: auth-service
+          uri: http://auth-service:8081
+          predicates:
+            - Path=/api/auth/**
+
+        - id: training-service
+          uri: http://training-service:8084
+          predicates:
+            - Path=/api/trainings/**,/api/training/**,/api/performance/**,/api/analytics/**
+
+        - id: course-service
+          uri: http://course-service:8086
+          predicates:
+            - Path=/api/courses/**
+
+        - id: exam-service
+          uri: http://exam-service:8087
+          predicates:
+            - Path=/api/exams/**,/api/exam-enrollments/**,/api/exam-results/**
+
+        - id: event-service
+          uri: http://event-service:8082
+          predicates:
+            - Path=/api/events/**
+
+        - id: planning-service
+          uri: http://planning-service:8083
+          predicates:
+            - Path=/api/plannings/**
+
+        - id: offers-service
+          uri: http://offers-service:8085
+          predicates:
+            - Path=/api/offers/**,/api/applications/**,/api/interviews/**,/api/saved-offers/**
+
+        - id: skill-evidence-service
+          uri: http://skill-evidence-service:8091
+          predicates:
+            - Path=/api/skill-evidence/**,/api/notifications/**
+
+        - id: learning-service
+          uri: http://learning:8092
+          predicates:
+            - Path=/api/learning-paths/**,/api/learning-style-preferences/**
+
+        - id: certification-badge-service
+          uri: http://certification-badge-service:8094
+          predicates:
+            - Path=/api/certifications-badges/**,/api/certifications/**
+
+        - id: sponsor-service
+          uri: http://sponsor-service:8093
+          predicates:
+            - Path=/api/v1/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+
+jwt:
+  secret: smartek-secret-key-for-jwt-token-generation-2024-very-secure
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway

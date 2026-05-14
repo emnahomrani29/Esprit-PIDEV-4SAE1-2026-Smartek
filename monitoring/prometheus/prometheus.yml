@@ -1,0 +1,120 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert-rules.yml"
+
+# Alertmanager
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+scrape_configs:
+  # ─────────────────────────────────────────
+  # MICROSERVICES SPRING BOOT
+  # ─────────────────────────────────────────
+  - job_name: 'eureka-server'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['eureka-server:8761']
+
+  - job_name: 'api-gateway'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['api-gateway:8080']
+
+  - job_name: 'auth-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['auth-service:8081']
+
+  - job_name: 'event-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['event-service:8082']
+
+  - job_name: 'planning-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['planning-service:8083']
+
+  - job_name: 'training-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['training-service:8084']
+
+  - job_name: 'offers-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['offers-service:8085']
+
+  - job_name: 'course-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['course-service:8086']
+
+  - job_name: 'exam-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['exam-service:8087']
+
+  - job_name: 'skill-evidence-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['skill-evidence-service:8091']
+
+  - job_name: 'learning-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['learning:8092']
+
+  - job_name: 'sponsor-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['sponsor-service:8093']
+
+  - job_name: 'certification-badge-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['certification-badge-service:8094']
+
+  # ─────────────────────────────────────────
+  # INFRASTRUCTURE
+  # ─────────────────────────────────────────
+
+  # Métriques système du host (CPU, RAM, disque)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'smartek-host'
+
+  # Métriques containers Docker
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    metric_relabel_configs:
+      # Garder seulement les containers avec un service compose
+      - source_labels: [container_label_com_docker_compose_service]
+        regex: '.+'
+        action: keep
+
+  # Métriques MySQL
+  - job_name: 'mysql'
+    static_configs:
+      - targets: ['mysql-exporter:9104']
+
+  # Alertmanager lui-même
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']
+
+  # Prometheus lui-même
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

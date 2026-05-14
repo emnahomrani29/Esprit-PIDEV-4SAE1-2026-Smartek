@@ -1,0 +1,178 @@
+groups:
+  # ─────────────────────────────────────────
+  # SANTÉ DES SERVICES
+  # ─────────────────────────────────────────
+  - name: smartek-service-health
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been down for more than 1 minute."
+
+      - alert: HighErrorRate
+        expr: rate(http_server_requests_seconds_count{status=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate on {{ $labels.job }}"
+          description: "Error rate is {{ $value }} req/s on {{ $labels.job }}"
+
+      - alert: SlowResponseTime
+        expr: histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 response time > 2s on {{ $labels.job }}"
+          description: "95th percentile response time is {{ $value }}s on {{ $labels.job }}"
+
+  # ─────────────────────────────────────────
+  # JVM / MÉMOIRE
+  # ─────────────────────────────────────────
+  - name: smartek-jvm
+    rules:
+      - alert: HighJvmMemoryUsage
+        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High JVM heap memory on {{ $labels.job }}"
+          description: "JVM heap usage is {{ $value | humanizePercentage }} on {{ $labels.job }}"
+
+      - alert: CriticalJvmMemoryUsage
+        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical JVM heap memory on {{ $labels.job }}"
+          description: "JVM heap usage is {{ $value | humanizePercentage }} on {{ $labels.job }}"
+
+      - alert: HighCpuUsage
+        expr: process_cpu_usage > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.job }}"
+          description: "CPU usage is above 80% on {{ $labels.job }}"
+
+  # ─────────────────────────────────────────
+  # CONTAINERS (cAdvisor)
+  # ─────────────────────────────────────────
+  - name: smartek-containers
+    rules:
+      - alert: ContainerHighCpuUsage
+        expr: rate(container_cpu_usage_seconds_total{name=~"smartek-.*"}[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} high CPU"
+          description: "Container {{ $labels.name }} CPU usage is {{ $value }}%"
+
+      - alert: ContainerHighMemoryUsage
+        expr: container_memory_usage_bytes{name=~"smartek-.*"} / container_spec_memory_limit_bytes{name=~"smartek-.*"} > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} high memory"
+          description: "Container {{ $labels.name }} memory usage is {{ $value | humanizePercentage }}"
+
+      - alert: ContainerRestarting
+        expr: increase(container_last_seen{name=~"smartek-.*"}[5m]) == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container {{ $labels.name }} may be restarting"
+          description: "Container {{ $labels.name }} has not been seen recently"
+
+  # ─────────────────────────────────────────
+  # SYSTÈME (Node Exporter)
+  # ─────────────────────────────────────────
+  - name: smartek-system
+    rules:
+      - alert: HighSystemCpuUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High system CPU on {{ $labels.instance }}"
+          description: "System CPU usage is {{ $value }}% on {{ $labels.instance }}"
+
+      - alert: HighSystemMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High system memory on {{ $labels.instance }}"
+          description: "System memory usage is {{ $value }}% on {{ $labels.instance }}"
+
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk space available is {{ $value }}% on {{ $labels.instance }}"
+
+      - alert: CriticalDiskSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical disk space on {{ $labels.instance }}"
+          description: "Only {{ $value }}% disk space remaining on {{ $labels.instance }}"
+
+  # ─────────────────────────────────────────
+  # MYSQL (MySQL Exporter)
+  # ─────────────────────────────────────────
+  - name: smartek-mysql
+    rules:
+      - alert: MySQLDown
+        expr: mysql_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MySQL is down"
+          description: "MySQL instance is not responding"
+
+      - alert: MySQLTooManyConnections
+        expr: mysql_global_status_threads_connected / mysql_global_variables_max_connections * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MySQL too many connections"
+          description: "MySQL connections at {{ $value }}% of max"
+
+      - alert: MySQLSlowQueries
+        expr: rate(mysql_global_status_slow_queries[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MySQL slow queries detected"
+          description: "MySQL slow query rate is {{ $value }} queries/s"
+
+      - alert: MySQLHighReplicationLag
+        expr: mysql_slave_status_seconds_behind_master > 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MySQL replication lag"
+          description: "MySQL replication is {{ $value }}s behind master"

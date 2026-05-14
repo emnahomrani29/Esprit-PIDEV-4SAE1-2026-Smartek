@@ -1,0 +1,208 @@
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 px-4 pb-12" style="padding-top: 100px;">
+  <div class="max-w-4xl mx-auto">
+
+    <!-- Header -->
+    <div class="mb-8 pt-4">
+      <h1 class="text-4xl font-bold text-gray-800 mb-2">My Learning Style</h1>
+      <p class="text-gray-600">Define your learning preferences for a personalized experience</p>
+    </div>
+
+    <!-- Messages -->
+    <div *ngIf="successMessage" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+      {{ successMessage }}
+    </div>
+    <div *ngIf="errorMessage && !showModal" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      {{ errorMessage }}
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading && !showModal" class="text-center py-12 bg-white rounded-lg shadow">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <p class="mt-4 text-gray-600">Chargement...</p>
+    </div>
+
+    <!-- Preference Card -->
+    <div *ngIf="!loading && preference" class="bg-white rounded-xl shadow-md overflow-hidden max-w-3xl mx-auto">
+
+      <!-- Card Header gradient -->
+      <div class="p-8 text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+        <div class="flex items-center gap-5">
+          <div class="w-16 h-16 rounded-full flex items-center justify-center" style="background: rgba(255,255,255,0.2)">
+            <span class="material-icons text-4xl">{{ getStyleIcon(preference.preferredStyle) }}</span>
+          </div>
+          <div>
+            <h2 class="text-2xl font-bold">{{ getStyleLabel(preference.preferredStyle) }}</h2>
+            <p class="opacity-90 mt-1">Your preferred learning style</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Body -->
+      <div class="p-8">
+
+        <!-- Description -->
+        <p class="text-gray-700 text-base leading-relaxed mb-6">{{ styleDescriptions[preference.preferredStyle] }}</p>
+
+        <!-- Content Preferences -->
+        <div class="mb-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">Content Preferences</h3>
+          <div class="space-y-3">
+            <div class="flex items-center gap-3">
+              <span class="material-icons" [class]="preference.videoPreferred ? 'text-green-500' : 'text-gray-300'">
+                {{ preference.videoPreferred ? 'check_circle' : 'cancel' }}
+              </span>
+              <span class="text-gray-700">Vidéos</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="material-icons" [class]="preference.textPreferred ? 'text-green-500' : 'text-gray-300'">
+                {{ preference.textPreferred ? 'check_circle' : 'cancel' }}
+              </span>
+              <span class="text-gray-700">Textes et documents</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="material-icons" [class]="preference.practicalWorkPreferred ? 'text-green-500' : 'text-gray-300'">
+                {{ preference.practicalWorkPreferred ? 'check_circle' : 'cancel' }}
+              </span>
+              <span class="text-gray-700">Travaux pratiques</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Last updated -->
+        <p class="text-gray-400 text-sm mb-6">
+          <span class="material-icons text-sm align-middle mr-1">schedule</span>
+          Last updated: {{ formatDate(preference.lastUpdated) }}
+        </p>
+
+        <!-- Actions -->
+        <div class="flex gap-4">
+          <button (click)="openEditModal()"
+            class="flex-1 bg-blue-50 text-blue-600 px-6 py-3 rounded-lg hover:bg-blue-100 transition flex items-center justify-center gap-2 font-medium">
+            <span class="material-icons text-sm">edit</span> Edit
+          </button>
+          <button (click)="deletePreference()"
+            class="flex-1 bg-red-50 text-red-600 px-6 py-3 rounded-lg hover:bg-red-100 transition flex items-center justify-center gap-2 font-medium">
+            <span class="material-icons text-sm">delete</span> Delete
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && !preference" class="text-center py-16 bg-white rounded-xl shadow-md max-w-2xl mx-auto">
+      <div class="w-32 h-32 rounded-full flex items-center justify-center mx-auto mb-6"
+        style="background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%)">
+        <span class="material-icons text-6xl" style="color: #667eea">psychology</span>
+      </div>
+      <h3 class="text-2xl font-semibold text-gray-800 mb-3">Define your learning style</h3>
+      <p class="text-gray-500 mb-8 leading-relaxed max-w-md mx-auto">
+        Help us personalize your learning experience by defining your preferences
+      </p>
+      <button (click)="openAddModal()"
+        class="inline-flex items-center gap-3 text-white px-8 py-4 rounded-lg font-semibold shadow-lg hover:shadow-xl transition"
+        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+        <span class="material-icons">add</span>
+        Define my preferences
+      </button>
+      <a href="/learner/learning-style-quiz"
+        class="inline-flex items-center gap-3 px-8 py-4 rounded-lg font-semibold border-2 border-indigo-400 text-indigo-600 hover:bg-indigo-50 transition mt-3">
+        <span class="material-icons">quiz</span>
+        Take the Quiz to discover my style
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal -->
+<div *ngIf="showModal"
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4"
+  (click)="closeModal()" tabindex="0" role="button" (keydown.enter)="closeModal()">
+  <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+    (click)="$event.stopPropagation()" tabindex="0" role="button" (keydown.enter)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+    <div class="flex justify-between items-center p-6 border-b border-gray-200">
+      <h2 class="text-2xl font-bold text-gray-800">
+        {{ isEditMode ? 'Modifier mes préférences' : 'Définir mes préférences' }}
+      </h2>
+      <button (click)="closeModal()" class="text-gray-400 hover:text-gray-600">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6">
+      <div *ngIf="successMessage" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">{{ successMessage }}</div>
+      <div *ngIf="errorMessage" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{{ errorMessage }}</div>
+
+      <form (ngSubmit)="savePreference()">
+
+        <!-- Style selection -->
+        <div class="mb-6">
+          <label class="block text-sm font-semibold text-gray-700 mb-3">
+            Preferred learning style <span class="text-red-500">*</span>
+          </label>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div *ngFor="let style of learningStyleTypes"
+              (click)="currentPreference.preferredStyle = style"
+              class="border-2 rounded-lg p-4 cursor-pointer transition"
+              [class.border-indigo-500]="currentPreference.preferredStyle === style"
+              [class.bg-indigo-50]="currentPreference.preferredStyle === style"
+              [class.border-gray-200]="currentPreference.preferredStyle !== style" tabindex="0" role="button" (keydown.enter)="currentPreference.preferredStyle = style">
+              <div class="flex items-start gap-3">
+                <span class="material-icons text-2xl"
+                  [class.text-indigo-600]="currentPreference.preferredStyle === style"
+                  [class.text-gray-400]="currentPreference.preferredStyle !== style">
+                  {{ getStyleIcon(style) }}
+                </span>
+                <div>
+                  <h4 class="font-semibold text-gray-800 text-sm mb-1">{{ getStyleLabel(style) }}</h4>
+                  <p class="text-gray-500 text-xs leading-snug">{{ styleDescriptions[style] }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Content preferences -->
+        <div class="mb-6">
+          <label class="block text-sm font-semibold text-gray-700 mb-3" for="contentpreferences">Content Preferences</label>
+          <div class="space-y-3">
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" [(ngModel)]="currentPreference.videoPreferred" name="videoPreferred" id="contentpreferences"
+                class="w-5 h-5 cursor-pointer accent-indigo-600">
+              <span class="text-gray-700">I prefer videos</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" [(ngModel)]="currentPreference.textPreferred" name="textPreferred"
+                class="w-5 h-5 cursor-pointer accent-indigo-600">
+              <span class="text-gray-700">I prefer texts and documents</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" [(ngModel)]="currentPreference.practicalWorkPreferred" name="practicalWorkPreferred"
+                class="w-5 h-5 cursor-pointer accent-indigo-600">
+              <span class="text-gray-700">I prefer practical work</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-3 pt-2">
+          <button type="button" (click)="closeModal()"
+            class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-semibold">
+            Cancel
+          </button>
+          <button type="submit" [disabled]="loading"
+            class="flex-1 text-white px-6 py-3 rounded-lg font-semibold shadow hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+            <span *ngIf="!loading">{{ isEditMode ? 'Update' : 'Save' }}</span>
+            <span *ngIf="loading">Loading...</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>

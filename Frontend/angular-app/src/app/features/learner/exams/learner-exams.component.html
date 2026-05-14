@@ -1,0 +1,330 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 py-12 relative overflow-hidden">
+  <!-- Animated background elements -->
+  <div class="absolute top-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+  <div class="absolute top-0 right-0 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+  <div class="absolute bottom-0 left-1/2 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+  
+  <div class="container mx-auto max-w-7xl px-4 relative z-10">
+    <!-- Header -->
+    <div class="mb-12 text-center animate-fade-in-up">
+      <h1 class="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4 gradient-animate">
+        My Exams & Quizzes
+      </h1>
+      <p class="text-gray-600 text-xl">Test your knowledge and validate your skills</p>
+    </div>
+
+    <!-- Barre de recherche et tri -->
+    <div *ngIf="!isLoading && (quizzes.length > 0 || exams.length > 0)" class="mb-8 bg-white rounded-2xl shadow-lg p-6 animate-fade-in">
+      <div class="flex flex-col md:flex-row gap-4">
+        <!-- Recherche -->
+        <div class="flex-1">
+          <div class="relative">
+            <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input
+              type="text"
+              [(ngModel)]="searchTerm"
+              (ngModelChange)="onSearchChange($event)"
+              placeholder="Rechercher un examen ou quiz..."
+              class="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors">
+          </div>
+        </div>
+
+        <!-- Tri -->
+        <div class="flex gap-2">
+          <button
+            (click)="onSortChange('name')"
+            [class.bg-blue-600]="sortBy === 'name'"
+            [class.text-white]="sortBy === 'name'"
+            [class.bg-gray-100]="sortBy !== 'name'"
+            [class.text-gray-700]="sortBy !== 'name'"
+            class="px-4 py-3 rounded-xl font-semibold transition-all hover:shadow-md flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
+            </svg>
+            Nom
+            <svg *ngIf="sortBy === 'name'" class="w-4 h-4" [class.rotate-180]="sortOrder === 'desc'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+            </svg>
+          </button>
+
+          <button
+            (click)="onSortChange('status')"
+            [class.bg-blue-600]="sortBy === 'status'"
+            [class.text-white]="sortBy === 'status'"
+            [class.bg-gray-100]="sortBy !== 'status'"
+            [class.text-gray-700]="sortBy !== 'status'"
+            class="px-4 py-3 rounded-xl font-semibold transition-all hover:shadow-md flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Statut
+            <svg *ngIf="sortBy === 'status'" class="w-4 h-4" [class.rotate-180]="sortOrder === 'desc'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+            </svg>
+          </button>
+
+          <button
+            (click)="onSortChange('score')"
+            [class.bg-blue-600]="sortBy === 'score'"
+            [class.text-white]="sortBy === 'score'"
+            [class.bg-gray-100]="sortBy !== 'score'"
+            [class.text-gray-700]="sortBy !== 'score'"
+            class="px-4 py-3 rounded-xl font-semibold transition-all hover:shadow-md flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+            Score
+            <svg *ngIf="sortBy === 'score'" class="w-4 h-4" [class.rotate-180]="sortOrder === 'desc'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Résultats de recherche -->
+      <div *ngIf="searchTerm" class="mt-4 text-sm text-gray-600">
+        {{ displayedQuizzes.length + displayedExams.length }} résultat(s) trouvé(s)
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="flex justify-center items-center py-20 animate-fade-in">
+      <div class="relative">
+        <div class="animate-spin rounded-full h-20 w-20 border-b-4 border-blue-600"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          <svg class="w-8 h-8 text-blue-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage && !isLoading" class="max-w-2xl mx-auto bg-red-50 border-l-4 border-red-500 text-red-700 px-6 py-4 rounded-lg mb-6">
+      <div class="flex items-center">
+        <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+        {{ errorMessage }}
+      </div>
+    </div>
+
+    <div *ngIf="!isLoading && !errorMessage">
+      <!-- Quizzes Section -->
+      <div class="mb-16 animate-fade-in-up">
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-8 flex items-center">
+          <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+          </div>
+          Quiz de Cours
+        </h2>
+
+        <div *ngIf="quizzes.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div *ngFor="let quiz of displayedQuizzes; let i = index" 
+               class="exam-card bg-white rounded-2xl shadow-lg overflow-hidden animate-scale-in"
+               [class.stagger-1]="i % 6 === 0"
+               [class.stagger-2]="i % 6 === 1"
+               [class.stagger-3]="i % 6 === 2"
+               [class.stagger-4]="i % 6 === 3"
+               [class.stagger-5]="i % 6 === 4"
+               [class.stagger-6]="i % 6 === 5">
+            
+            <!-- Quiz Header -->
+            <div class="h-32 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 flex items-center justify-center relative overflow-hidden">
+              <!-- Animated background pattern -->
+              <div class="absolute inset-0 opacity-20">
+                <div class="absolute top-0 left-0 w-24 h-24 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+                <div class="absolute bottom-0 right-0 w-32 h-32 bg-white rounded-full translate-x-1/2 translate-y-1/2"></div>
+              </div>
+              
+              <svg class="w-16 h-16 text-white opacity-90 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              
+              <span *ngIf="quiz.isLocked" class="lock-icon absolute top-4 right-4 bg-gray-800 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg backdrop-blur-sm">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                </svg>
+                Verrouillé
+              </span>
+            </div>
+
+            <!-- Quiz Content -->
+            <div class="p-6">
+              <h3 class="text-xl font-bold text-gray-800 mb-3 line-clamp-2">{{ quiz.title }}</h3>
+              <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ quiz.description }}</p>
+
+              <!-- Quiz Info -->
+              <div class="space-y-2 mb-4 text-sm">
+                <div class="flex items-center text-gray-600">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span>{{ quiz.duration }} minutes</span>
+                </div>
+                <div class="flex items-center text-gray-600">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span>{{ quiz.questionCount || 0 }} questions</span>
+                </div>
+                <div class="flex items-center text-gray-600">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                  </svg>
+                  <span>Note de passage: {{ quiz.passingScore }}%</span>
+                </div>
+              </div>
+
+              <!-- Score Display -->
+              <div *ngIf="quiz.hasAttempted" [class]="'p-4 rounded-xl border-2 mb-4 score-badge ' + getScoreBgColor(quiz)">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-gray-700">Meilleur score</span>
+                  <span [class]="'text-2xl font-bold ' + getScoreColor(quiz)">
+                    {{ getScorePercentage(quiz) }}%
+                  </span>
+                </div>
+                <div class="text-xs text-gray-600 mt-1">
+                  {{ quiz.bestScore }} / {{ quiz.totalMarks }} points
+                </div>
+              </div>
+
+              <!-- Action Button -->
+              <button 
+                (click)="quiz.hasAttempted ? retakeExam(quiz) : startExam(quiz)"
+                [disabled]="quiz.isLocked || ((quiz.attemptsCount ?? 0) >= 2)"
+                [class.opacity-50]="quiz.isLocked || ((quiz.attemptsCount ?? 0) >= 2)"
+                [class.cursor-not-allowed]="quiz.isLocked || ((quiz.attemptsCount ?? 0) >= 2)"
+                class="btn-exam w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-6 rounded-xl font-semibold flex items-center justify-center group disabled:transform-none disabled:hover:shadow-none">
+                <svg class="w-5 h-5 mr-2 group-hover:animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="group-hover:tracking-wide transition-all">
+                  {{ ((quiz.attemptsCount ?? 0) >= 2) ? 'Limite atteinte (2/2)' : (quiz.hasAttempted ? 'Repasser le quiz (' + (quiz.attemptsCount ?? 0) + '/2)' : 'Commencer le quiz') }}
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="quizzes.length === 0" class="text-center py-12 bg-white rounded-2xl shadow-lg">
+          <svg class="w-24 h-24 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <p class="text-gray-500 text-lg">Aucun quiz disponible</p>
+        </div>
+      </div>
+
+      <!-- Exams Section -->
+      <div class="animate-fade-in-up stagger-2">
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-8 flex items-center">
+          <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          Examens de Formation
+        </h2>
+
+        <div *ngIf="exams.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div *ngFor="let exam of displayedExams; let i = index" 
+               class="exam-card bg-white rounded-2xl shadow-lg overflow-hidden animate-scale-in"
+               [class.stagger-1]="i % 6 === 0"
+               [class.stagger-2]="i % 6 === 1"
+               [class.stagger-3]="i % 6 === 2"
+               [class.stagger-4]="i % 6 === 3"
+               [class.stagger-5]="i % 6 === 4"
+               [class.stagger-6]="i % 6 === 5">
+            
+            <!-- Exam Header -->
+            <div class="h-32 bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-600 flex items-center justify-center relative overflow-hidden">
+              <!-- Animated background pattern -->
+              <div class="absolute inset-0 opacity-20">
+                <div class="absolute top-0 left-0 w-24 h-24 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+                <div class="absolute bottom-0 right-0 w-32 h-32 bg-white rounded-full translate-x-1/2 translate-y-1/2"></div>
+              </div>
+              
+              <svg class="w-16 h-16 text-white opacity-90 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              
+              <span *ngIf="exam.isLocked" class="lock-icon absolute top-4 right-4 bg-gray-800 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg backdrop-blur-sm">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                </svg>
+                Verrouillé
+              </span>
+            </div>
+
+            <!-- Exam Content -->
+            <div class="p-6">
+              <h3 class="text-xl font-bold text-gray-800 mb-3 line-clamp-2">{{ exam.title }}</h3>
+              <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ exam.description }}</p>
+
+              <!-- Exam Info -->
+              <div class="space-y-2 mb-4 text-sm">
+                <div class="flex items-center text-gray-600">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span>{{ exam.duration }} minutes</span>
+                </div>
+                <div class="flex items-center text-gray-600">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span>{{ exam.questionCount || 0 }} questions</span>
+                </div>
+                <div class="flex items-center text-gray-600">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                  </svg>
+                  <span>Note de passage: {{ exam.passingScore }}%</span>
+                </div>
+              </div>
+
+              <!-- Score Display -->
+              <div *ngIf="exam.hasAttempted" [class]="'p-4 rounded-xl border-2 mb-4 ' + getScoreBgColor(exam)">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-gray-700">Meilleur score</span>
+                  <span [class]="'text-2xl font-bold ' + getScoreColor(exam)">
+                    {{ getScorePercentage(exam) }}%
+                  </span>
+                </div>
+                <div class="text-xs text-gray-600 mt-1">
+                  {{ exam.bestScore }} / {{ exam.totalMarks }} points
+                </div>
+              </div>
+
+              <!-- Action Button -->
+              <button 
+                (click)="exam.hasAttempted ? retakeExam(exam) : startExam(exam)"
+                [disabled]="exam.isLocked || ((exam.attemptsCount ?? 0) >= 2)"
+                [class.opacity-50]="exam.isLocked || ((exam.attemptsCount ?? 0) >= 2)"
+                [class.cursor-not-allowed]="exam.isLocked || ((exam.attemptsCount ?? 0) >= 2)"
+                class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:shadow-xl transition-all duration-300 flex items-center justify-center transform hover:scale-105 disabled:transform-none disabled:hover:shadow-none">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                {{ ((exam.attemptsCount ?? 0) >= 2) ? 'Limite atteinte (2/2)' : (exam.hasAttempted ? 'Repasser l\'examen (' + (exam.attemptsCount ?? 0) + '/2)' : 'Commencer l\'examen') }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="exams.length === 0" class="text-center py-12 bg-white rounded-2xl shadow-lg">
+          <svg class="w-24 h-24 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <p class="text-gray-500 text-lg">Aucun examen disponible</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

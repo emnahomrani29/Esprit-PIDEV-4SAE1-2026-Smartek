@@ -1,0 +1,202 @@
+services:
+
+  mysql:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  eureka-server:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  config-server:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  api-gateway:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+
+  auth-service:
+    restart: always
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+
+  event-service:
+    restart: always
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  planning-service:
+    restart: always
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  training-service:
+    restart: always
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  offers-service:
+    restart: always
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  course-service:
+    restart: always
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  exam-service:
+    restart: always
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  skill-evidence-service:
+    restart: always
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  learning:
+    restart: always
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  sponsor-service:
+    restart: always
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  certification-badge-service:
+    restart: always
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  frontend:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  prometheus:
+    restart: always
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+
+  grafana:
+    restart: always
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-smartek123}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+
+  alertmanager:
+    restart: always
+    environment:
+      ALERT_EMAIL_USER: ${ALERT_EMAIL_USER:-}
+      ALERT_EMAIL_PASSWORD: ${ALERT_EMAIL_PASSWORD:-}
+
+  node-exporter:
+    restart: always
+
+  cadvisor:
+    restart: always
+
+  mysql-exporter:
+    restart: always
+    environment:
+      DATA_SOURCE_NAME: "root:${MYSQL_ROOT_PASSWORD:-root}@(mysql:3306)/"
+
+  uptime-kuma:
+    restart: always

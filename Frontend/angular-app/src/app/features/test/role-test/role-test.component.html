@@ -1,0 +1,66 @@
+<div class="container mx-auto p-6 max-w-4xl">
+  <h1 class="text-3xl font-bold mb-6">Test de Routage par Rôle</h1>
+
+  <!-- Statut actuel -->
+  <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+    <h2 class="text-xl font-semibold mb-2">Statut Actuel</h2>
+    <p class="mb-1">
+      <span class="font-medium">Authentifié:</span> 
+      <span [class]="isAuthenticated ? 'text-green-600' : 'text-red-600'">
+        {{ isAuthenticated ? 'Oui' : 'Non' }}
+      </span>
+    </p>
+    <p *ngIf="currentRole">
+      <span class="font-medium">Rôle:</span> 
+      <span class="text-blue-600 font-semibold">{{ currentRole }}</span>
+    </p>
+  </div>
+
+  <!-- Boutons de simulation -->
+  <div class="bg-white rounded-lg shadow p-6 mb-6">
+    <h2 class="text-xl font-semibold mb-4">Simuler un Rôle</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <button 
+        *ngFor="let role of roles"
+        (click)="simulateRole(role.value)"
+        class="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-left">
+        <div class="font-semibold">{{ role.label }}</div>
+        <div class="text-sm opacity-90">{{ role.value }}</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Navigation rapide -->
+  <div class="bg-white rounded-lg shadow p-6 mb-6" *ngIf="isAuthenticated">
+    <h2 class="text-xl font-semibold mb-4">Navigation Rapide</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <button 
+        *ngFor="let role of roles"
+        (click)="navigateToRole(role.path)"
+        class="px-4 py-3 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors text-left">
+        <div class="font-semibold">{{ role.label }}</div>
+        <div class="text-sm text-gray-600">{{ role.path }}</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Instructions -->
+  <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+    <h2 class="text-xl font-semibold mb-2">Instructions</h2>
+    <ol class="list-decimal list-inside space-y-2">
+      <li>Cliquez sur un rôle pour simuler une connexion</li>
+      <li>Vous serez redirigé vers le dashboard correspondant</li>
+      <li>Essayez d'accéder à d'autres routes pour tester les guards</li>
+      <li>Les routes non autorisées vous redirigeront vers /dashboard</li>
+    </ol>
+  </div>
+
+  <!-- Déconnexion -->
+  <div class="text-center" *ngIf="isAuthenticated">
+    <button 
+      (click)="logout()"
+      class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+      Se Déconnecter
+    </button>
+  </div>
+</div>

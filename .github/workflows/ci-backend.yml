@@ -1,0 +1,93 @@
+name: CI Backend
+
+on:
+  push:
+    paths: ['Backend/**']
+  pull_request:
+    paths: ['Backend/**']
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: '17'
+
+jobs:
+  test:
+    name: "Test ${{ matrix.service }}"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - auth-service
+          - event-service
+          - planning-service
+          - training-service
+          - offers-service
+          - course-service
+          - exam-service
+          - certification-badge-service
+          - skiil-evidence-service
+          - learning
+          - smartek_sponsor
+      fail-fast: false
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_HOST: '%'
+          MYSQL_DATABASE: testdb
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+        ports:
+          - 3306:3306
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -u root -proot --silent; then
+              echo "MySQL is ready!"
+              break
+            fi
+            echo "Waiting for MySQL... ($i/30)"
+            sleep 2
+          done
+
+      - name: Run tests + JaCoCo coverage
+        run: mvn verify -B --no-transfer-progress
+        working-directory: Backend/${{ matrix.service }}
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/testdb?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: root
+
+      - name: Upload JaCoCo report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-${{ matrix.service }}
+          path: Backend/${{ matrix.service }}/target/site/jacoco/
+          retention-days: 7
+
+      - name: Upload Surefire report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-${{ matrix.service }}
+          path: Backend/${{ matrix.service }}/target/surefire-reports/
+          retention-days: 7

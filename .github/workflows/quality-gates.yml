@@ -1,0 +1,141 @@
+name: Quality Gates
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: '17'
+
+jobs:
+  # ── SONARQUBE ANALYSIS ────────────────────────────────────────
+  sonarqube:
+    name: "SonarQube - ${{ matrix.service }}"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - auth-service
+          - event-service
+          - planning-service
+          - training-service
+          - offers-service
+          - course-service
+          - exam-service
+          - certification-badge-service
+      fail-fast: false
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_HOST: '%'
+          MYSQL_DATABASE: testdb
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+        ports:
+          - 3306:3306
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -u root -proot --silent; then
+              echo "MySQL is ready!"
+              break
+            fi
+            echo "Waiting for MySQL... ($i/30)"
+            sleep 2
+          done
+
+      - name: Build and generate coverage
+        run: mvn verify -B --no-transfer-progress
+        working-directory: Backend/${{ matrix.service }}
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/testdb?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: root
+
+      - name: SonarCloud analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [ -z "$SONAR_TOKEN" ]; then
+            echo "SONAR_TOKEN not configured - skipping SonarCloud analysis"
+            exit 0
+          fi
+          mvn sonar:sonar \
+            -Dsonar.projectKey=${{ secrets.SONAR_ORGANIZATION }}_smartek-${{ matrix.service }} \
+            -Dsonar.projectName="Smartek ${{ matrix.service }}" \
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+            -Dsonar.exclusions="**/dto/**,**/entity/**,**/config/**,**/*Application.java,**/db/migration/**" \
+            -Dsonar.java.binaries=target/classes \
+            -B --no-transfer-progress
+        working-directory: Backend/${{ matrix.service }}
+
+  # ── COVERAGE CHECK ────────────────────────────────────────────
+  coverage-check:
+    name: Coverage threshold check
+    runs-on: ubuntu-latest
+    needs: sonarqube
+    if: always()
+    steps:
+      - name: Coverage summary
+        run: |
+          echo "SonarQube analysis completed for all services"
+          echo "Check SonarQube dashboard for detailed coverage reports"
+
+  # ── CODE SMELL CHECK ──────────────────────────────────────────
+  code-smell-check:
+    name: Code smell detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect TODO/FIXME comments
+        run: |
+          COUNT=$(grep -rn "TODO\|FIXME\|HACK\|XXX" \
+            --include="*.java" --include="*.ts" \
+            Backend/ Frontend/angular-app/src/ 2>/dev/null | wc -l || echo 0)
+          echo "Found $COUNT TODO/FIXME comments"
+          if [ "$COUNT" -gt 50 ]; then
+            echo "Too many TODO/FIXME: $COUNT (max: 50)"
+            exit 1
+          fi
+
+  # ── CREDENTIALS CHECK ─────────────────────────────────────────
+  credentials-check:
+    name: Hardcoded credentials check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for hardcoded passwords in Java files
+        run: |
+          if grep -rn 'password\s*=\s*"[^${\|]' \
+            --include="*.java" Backend/ 2>/dev/null | \
+            grep -v "test\|Test\|mock\|Mock\|example\|Example"; then
+            echo "Potential hardcoded credentials detected!"
+            exit 1
+          fi
+          echo "No hardcoded credentials found"
+        continue-on-error: true

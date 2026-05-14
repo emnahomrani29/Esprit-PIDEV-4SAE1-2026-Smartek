@@ -1,0 +1,2 @@
+-- Aucune donnée initiale requise
+-- Les utilisateurs sont créés via l'API /api/auth/register

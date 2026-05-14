@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr" xml:lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Sponsorship Approved</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #28a745; color: white; padding: 20px; text-align: center; }
+        .content { background: #f9f9f9; padding: 30px; }
+        .details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .amount { font-size: 24px; font-weight: bold; color: #28a745; }
+        .button { display: inline-block; background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; }
+        .footer { text-align: center; color: #666; font-size: 12px; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✅ Sponsorship Approved!</h1>
+        </div>
+        
+        <div class="content">
+            <p>🎉 <strong>Great news!</strong> Your sponsorship request has been approved and is now active.</p>
+            
+            <div class="details">
+                <h3>Approved Sponsorship Details</h3>
+                <p><strong>Type:</strong> <span th:text="${sponsorshipType}">COURSE</span></p>
+                <p><strong>Target:</strong> <span th:text="${targetType}">COURSE</span> #<span th:text="${targetId}">1</span></p>
+                <p><strong>Amount:</strong> <span class="amount">€<span th:text="${amount}">5000</span></span></p>
+                <p><strong>Visibility:</strong> <span th:text="${visibilityLevel}">FEATURED</span></p>
+                <p><strong>Period:</strong> <span th:text="${startDate}">2024-01-01</span> to <span th:text="${endDate}">2024-12-31</span></p>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="http://localhost:4200/dashboard/sponsorships" class="button">
+                    View My Sponsorships
+                </a>
+            </div>
+            
+            <p>Your sponsorship is now live and will be visible according to your selected visibility level.</p>
+            <p>Thank you for choosing Smartek!</p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated message from Smartek Sponsorship Platform</p>
+            <p>© 2024 Smartek. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

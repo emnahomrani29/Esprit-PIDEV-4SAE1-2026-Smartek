@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr" xml:lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Budget Threshold Alert</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); color: white; padding: 20px; text-align: center; }
+        .content { background: #f9f9f9; padding: 30px; }
+        .alert-box { background: #f8d7da; border: 1px solid #f5c6cb; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; }
+        .percentage { font-size: 48px; font-weight: bold; color: #dc3545; }
+        .contract-details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .detail-row { display: flex; justify-content: space-between; margin: 10px 0; }
+        .label { font-weight: bold; color: #555; }
+        .value { color: #333; }
+        .button { display: inline-block; background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 5px; }
+        .footer { text-align: center; color: #666; font-size: 12px; margin-top: 30px; }
+        .progress-bar { width: 100%; height: 20px; background: #e9ecef; border-radius: 10px; overflow: hidden; margin: 10px 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #28a745 0%, #ffc107 70%, #dc3545 90%); transition: width 0.3s ease; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚠️ Budget Threshold Alert</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear <span th:text="${sponsorName}">Sponsor</span>,</p>
+            <p>Your contract budget usage has reached a significant threshold that requires your attention.</p>
+            
+            <div class="alert-box">
+                <div class="percentage" th:text="${percentage + '%'}">80%</div>
+                <p><strong>Budget Usage</strong></p>
+                <div class="progress-bar">
+                    <div class="progress-fill" th:style="'width: ' + ${percentage} + '%'"></div>
+                </div>
+            </div>
+            
+            <div class="contract-details">
+                <h3>Contract Information</h3>
+                
+                <div class="detail-row">
+                    <span class="label">Contract Number:</span>
+                    <span class="value" th:text="${contractNumber}">CTR-2024-001</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="label">Budget Usage:</span>
+                    <span class="value" th:text="${percentage + '% used'}">80% used</span>
+                </div>
+            </div>
+            
+            <div th:if="${percentage >= 90}" style="background: #f8d7da; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h4 style="color: #dc3545; margin-top: 0;">🚨 Critical Alert!</h4>
+                <p><strong>You have used 90% or more of your budget.</strong></p>
+                <p>Consider increasing your contract budget or managing your remaining sponsorships carefully.</p>
+            </div>
+            
+            <div th:if="${percentage >= 80 and percentage < 90}" style="background: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h4 style="color: #856404; margin-top: 0;">⚠️ Warning!</h4>
+                <p><strong>You have used 80% of your budget.</strong></p>
+                <p>Plan your remaining sponsorships carefully to avoid budget exhaustion.</p>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a th:href="'http://localhost:4200/dashboard'" class="button">
+                    View Budget Details
+                </a>
+            </div>
+            
+            <p><strong>Recommendations:</strong></p>
+            <ul>
+                <li>Review your current active sponsorships</li>
+                <li>Consider increasing your contract budget</li>
+                <li>Plan future sponsorships strategically</li>
+                <li>Contact our team for budget optimization advice</li>
+            </ul>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated message from Smartek Sponsorship Platform</p>
+            <p>© 2024 Smartek. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

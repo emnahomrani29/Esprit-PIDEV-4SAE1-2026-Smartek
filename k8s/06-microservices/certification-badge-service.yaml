@@ -1,0 +1,97 @@
+# ════════════════════════════════════════════════════════════════
+# CERTIFICATION & BADGE SERVICE - Deployment & Service
+# ════════════════════════════════════════════════════════════════
+# Dépendances: MySQL, Eureka Server, Auth Service
+# Port: 8094
+# ════════════════════════════════════════════════════════════════
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: certification-badge-service
+  namespace: smartek
+  labels:
+    app: certification-badge-service
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: certification-badge-service
+  template:
+    metadata:
+      labels:
+        app: certification-badge-service
+        tier: backend
+    spec:
+      serviceAccountName: smartek-backend-sa
+      containers:
+      - name: certification-badge-service
+        image: ghcr.io/votre-org/smartek-certification-badge-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8094
+          name: http
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:mysql://mysql:3306/smartek_certification?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: username
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: password
+        - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          value: "http://eureka-server:8761/eureka/"
+        - name: AUTH_SERVICE_BASE_URL
+          value: "http://auth-service:8081"
+        - name: CERTIFICATE_VERIFICATION_BASE_URL
+          value: "http://certification-badge-service:8094"
+        - name: PDF_VERIFICATION_BASE_URL
+          value: "http://certification-badge-service:8094"
+        - name: SPRING_PROFILES_ACTIVE
+          value: "prod"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8094
+          initialDelaySeconds: 120
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8094
+          initialDelaySeconds: 60
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: certification-badge-service
+  namespace: smartek
+  labels:
+    app: certification-badge-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8094
+    targetPort: 8094
+    protocol: TCP
+    name: http
+  selector:
+    app: certification-badge-service

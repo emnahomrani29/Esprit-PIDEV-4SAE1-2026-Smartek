@@ -1,0 +1,62 @@
+spring:
+  application:
+    name: auth-service
+  
+  datasource:
+    url: jdbc:mysql://mysql:3306/smartek_auth?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    defer-datasource-initialization: true
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  
+  sql:
+    init:
+      mode: never
+
+  cloud:
+    config:
+      enabled: false
+
+server:
+  port: 8081
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+    enabled: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+# JWT Configuration
+jwt:
+  secret: smartek-secret-key-for-jwt-token-generation-2024-very-secure
+  expiration: 86400000 # 24 hours in milliseconds
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+# Logging
+logging:
+  level:
+    com.smartek: DEBUG
+    org.springframework.security: DEBUG

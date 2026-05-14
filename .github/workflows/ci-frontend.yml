@@ -1,0 +1,47 @@
+name: CI Frontend
+
+on:
+  push:
+    paths: ['Frontend/**']
+  pull_request:
+    paths: ['Frontend/**']
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Frontend/angular-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: Frontend/angular-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Run tests (headless)
+        run: npm test -- --watch=false --browsers=ChromeHeadless --no-progress --code-coverage
+
+      - name: Build production
+        run: npm run build -- --configuration production
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: Frontend/angular-app/coverage/
+          retention-days: 7

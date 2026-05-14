@@ -1,0 +1,43 @@
+:host {
+  display: block;
+  height: 100vh;
+  overflow: hidden;
+}
+
+video {
+  transform: scaleX(-1); // Effet miroir pour la vidéo locale
+}
+
+// Animation pour les messages de chat
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bg-gray-700 {
+  animation: slideIn 0.3s ease-out;
+}
+
+// Scrollbar personnalisée
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #6b7280;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}

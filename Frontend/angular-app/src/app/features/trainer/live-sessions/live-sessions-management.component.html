@@ -1,0 +1,289 @@
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <button class="btn btn-outline-secondary mb-3" (click)="goBack()">
+        <i class="bi bi-arrow-left"></i> Retour aux cours
+      </button>
+      
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="mb-1">
+            <i class="bi bi-camera-video text-primary"></i>
+            Sessions Live
+          </h2>
+          <p class="text-muted mb-0" *ngIf="course">{{ course!.title }}</p>
+        </div>
+        <button class="btn btn-primary" (click)="openCreateForm()" [disabled]="loading">
+          <i class="bi bi-plus-circle"></i> Nouvelle session
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <div class="row" *ngIf="error || success">
+    <div class="col-12">
+      <div class="alert alert-danger alert-dismissible fade show" *ngIf="error">
+        {{ error }}
+        <button type="button" class="btn-close" (click)="error = ''"></button>
+      </div>
+      <div class="alert alert-success alert-dismissible fade show" *ngIf="success">
+        {{ success }}
+        <button type="button" class="btn-close" (click)="success = ''"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="btn-group" role="group">
+        <button 
+          type="button" 
+          class="btn btn-outline-primary"
+          [class.active]="selectedFilter === 'all'"
+          (click)="setFilter('all')">
+          Toutes
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-outline-primary"
+          [class.active]="selectedFilter === 'upcoming'"
+          (click)="setFilter('upcoming')">
+          À venir
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-outline-primary"
+          [class.active]="selectedFilter === 'ongoing'"
+          (click)="setFilter('ongoing')">
+          En cours
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-outline-primary"
+          [class.active]="selectedFilter === 'completed'"
+          (click)="setFilter('completed')">
+          Terminées
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="row" *ngIf="loading && !showSessionForm">
+    <div class="col-12 text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Chargement...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Session Form Modal -->
+  <div class="modal fade show d-block" *ngIf="showSessionForm" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            {{ isEditMode ? 'Modifier la session' : 'Nouvelle session live' }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closeForm()"></button>
+        </div>
+        <div class="modal-body">
+          <form>
+            <div class="mb-3">
+              <label for="title" class="form-label">Titre *</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="title"
+                [(ngModel)]="sessionForm.title"
+                name="title"
+                placeholder="Ex: Session 1 - Introduction"
+                required>
+            </div>
+
+            <div class="mb-3">
+              <label for="description" class="form-label">Description</label>
+              <textarea 
+                class="form-control" 
+                id="description"
+                [(ngModel)]="sessionForm.description"
+                name="description"
+                rows="3"
+                placeholder="Description de la session..."></textarea>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="startTime" class="form-label">Date et heure de début *</label>
+                <input 
+                  type="datetime-local" 
+                  class="form-control" 
+                  id="startTime"
+                  [(ngModel)]="sessionForm.startTime"
+                  name="startTime"
+                  required>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="endTime" class="form-label">Date et heure de fin *</label>
+                <input 
+                  type="datetime-local" 
+                  class="form-control" 
+                  id="endTime"
+                  [(ngModel)]="sessionForm.endTime"
+                  name="endTime"
+                  required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="maxParticipants" class="form-label">Nombre maximum de participants</label>
+              <input 
+                type="number" 
+                class="form-control" 
+                id="maxParticipants"
+                [(ngModel)]="sessionForm.maxParticipants"
+                name="maxParticipants"
+                min="1"
+                placeholder="Ex: 50">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeForm()">
+            Annuler
+          </button>
+          <button type="button" class="btn btn-primary" (click)="saveSession()" [disabled]="loading">
+            <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+            {{ isEditMode ? 'Mettre à jour' : 'Créer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sessions List -->
+  <div class="row" *ngIf="!loading || showSessionForm">
+    <div class="col-12" *ngIf="filteredSessions.length === 0">
+      <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i>
+        Aucune session {{ selectedFilter !== 'all' ? getFilterLabel() : '' }} pour ce cours.
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4 mb-4" *ngFor="let session of filteredSessions">
+      <div class="card h-100 session-card" [class.session-ongoing]="session.status === SessionStatus.ONGOING">
+        <div class="card-body">
+          <!-- Status Badge -->
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <span class="badge" [ngClass]="'bg-' + session.statusColor">
+              <i class="bi" [ngClass]="{
+                'bi-clock': session.status === SessionStatus.SCHEDULED,
+                'bi-broadcast': session.status === SessionStatus.ONGOING,
+                'bi-check-circle': session.status === SessionStatus.COMPLETED,
+                'bi-x-circle': session.status === SessionStatus.CANCELLED
+              }"></i>
+              {{ session.statusLabel }}
+            </span>
+            <span class="badge bg-light text-dark" *ngIf="session.status === SessionStatus.ONGOING">
+              🔴 EN DIRECT
+            </span>
+          </div>
+
+          <!-- Title -->
+          <h5 class="card-title mb-2">{{ session.title }}</h5>
+          
+          <!-- Description -->
+          <p class="card-text text-muted small mb-3" *ngIf="session.description">
+            {{ session.description }}
+          </p>
+
+          <!-- Date & Time -->
+          <div class="mb-2">
+            <i class="bi bi-calendar3 text-primary"></i>
+            <small class="ms-2">
+              {{ session.startTime | date:'dd/MM/yyyy à HH:mm' }}
+            </small>
+          </div>
+
+          <!-- Duration -->
+          <div class="mb-2">
+            <i class="bi bi-clock text-primary"></i>
+            <small class="ms-2">{{ session.duration }}</small>
+          </div>
+
+          <!-- Time until start -->
+          <div class="mb-3" *ngIf="session.isUpcoming && session.timeUntilStart">
+            <i class="bi bi-hourglass-split text-warning"></i>
+            <small class="ms-2 text-warning fw-bold">{{ session.timeUntilStart }}</small>
+          </div>
+
+          <!-- Max Participants -->
+          <div class="mb-3" *ngIf="session.maxParticipants">
+            <i class="bi bi-people text-primary"></i>
+            <small class="ms-2">Max: {{ session.maxParticipants }} participants</small>
+          </div>
+
+          <!-- Actions -->
+          <div class="btn-group w-100 mb-2" role="group">
+            <!-- Start Session -->
+            <button 
+              *ngIf="session.status === SessionStatus.SCHEDULED"
+              class="btn btn-sm btn-success"
+              (click)="updateStatus(session.sessionId, SessionStatus.ONGOING)"
+              title="Démarrer la session">
+              <i class="bi bi-play-fill"></i>
+            </button>
+
+            <!-- End Session -->
+            <button 
+              *ngIf="session.status === SessionStatus.ONGOING"
+              class="btn btn-sm btn-secondary"
+              (click)="updateStatus(session.sessionId, SessionStatus.COMPLETED)"
+              title="Terminer la session">
+              <i class="bi bi-stop-fill"></i>
+            </button>
+
+            <!-- Join Session -->
+            <button 
+              *ngIf="session.status === SessionStatus.SCHEDULED || session.status === SessionStatus.ONGOING"
+              class="btn btn-sm btn-primary"
+              (click)="joinSession(session.roomId)"
+              title="Rejoindre la session">
+              <i class="bi bi-camera-video"></i>
+            </button>
+
+            <!-- Edit -->
+            <button 
+              *ngIf="session.status === SessionStatus.SCHEDULED"
+              class="btn btn-sm btn-outline-secondary"
+              (click)="openEditForm(session)"
+              title="Modifier">
+              <i class="bi bi-pencil"></i>
+            </button>
+
+            <!-- Cancel -->
+            <button 
+              *ngIf="session.status === SessionStatus.SCHEDULED || session.status === SessionStatus.ONGOING"
+              class="btn btn-sm btn-warning"
+              (click)="updateStatus(session.sessionId, SessionStatus.CANCELLED)"
+              title="Annuler">
+              <i class="bi bi-x-circle"></i>
+            </button>
+
+            <!-- Delete -->
+            <button 
+              class="btn btn-sm btn-danger"
+              (click)="deleteSession(session.sessionId)"
+              title="Supprimer">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

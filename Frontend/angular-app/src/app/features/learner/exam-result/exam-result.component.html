@@ -1,0 +1,151 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 py-12">
+  <div class="container mx-auto max-w-4xl px-4">
+    
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="flex justify-center items-center py-20">
+      <div class="animate-spin rounded-full h-20 w-20 border-b-4 border-blue-600"></div>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage && !isLoading" class="max-w-2xl mx-auto bg-red-50 border-l-4 border-red-500 text-red-700 px-6 py-4 rounded-lg mb-6">
+      {{ errorMessage }}
+    </div>
+
+    <!-- Result Content -->
+    <div *ngIf="result && !isLoading" class="space-y-6">
+      
+      <!-- Result Header -->
+      <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
+        <div class="mb-6">
+          <div class="inline-flex items-center justify-center w-24 h-24 rounded-full mb-4"
+               [class.bg-green-100]="result.passed"
+               [class.bg-red-100]="!result.passed">
+            <svg *ngIf="result.passed" class="w-12 h-12 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <svg *ngIf="!result.passed" class="w-12 h-12 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          
+          <h1 class="text-4xl font-bold mb-2"
+              [class.text-green-600]="result.passed"
+              [class.text-red-600]="!result.passed">
+            {{ result.passed ? 'Félicitations !' : 'Pas encore réussi' }}
+          </h1>
+          
+          <p class="text-gray-600 text-lg">
+            {{ result.passed ? 'Vous avez réussi l\'examen' : 'Continuez vos efforts' }}
+          </p>
+        </div>
+
+        <!-- Score Display -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+          <div class="bg-blue-50 rounded-xl p-6">
+            <div class="text-3xl font-bold text-blue-600">{{ result.percentage }}%</div>
+            <div class="text-sm text-gray-600 mt-1">Score obtenu</div>
+          </div>
+          
+          <div class="bg-indigo-50 rounded-xl p-6">
+            <div class="text-3xl font-bold text-indigo-600">{{ result.obtainedMarks }} / {{ result.totalMarks }}</div>
+            <div class="text-sm text-gray-600 mt-1">Points</div>
+          </div>
+          
+          <div class="bg-purple-50 rounded-xl p-6">
+            <div class="text-3xl font-bold text-purple-600">{{ exam?.passingScore }}%</div>
+            <div class="text-sm text-gray-600 mt-1">Score requis</div>
+          </div>
+        </div>
+
+        <!-- Submission Date -->
+        <div class="mt-6 text-sm text-gray-600">
+          <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          Soumis le {{ result.submittedAt | date:'dd/MM/yyyy à HH:mm' }}
+        </div>
+      </div>
+
+      <!-- Correction Status -->
+      <div class="bg-white rounded-2xl shadow-lg p-6">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <div class="w-12 h-12 rounded-full flex items-center justify-center mr-4"
+                 [class.bg-green-100]="result.isCorrected"
+                 [class.bg-yellow-100]="!result.isCorrected">
+              <svg *ngIf="result.isCorrected" class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              <svg *ngIf="!result.isCorrected" class="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-bold text-gray-800">
+                {{ result.isCorrected ? 'Examen corrigé' : 'En attente de correction' }}
+              </h3>
+              <p class="text-sm text-gray-600">
+                {{ result.isCorrected ? 'Votre examen a été corrigé par un formateur' : 'Votre examen sera corrigé prochainement' }}
+              </p>
+              <p *ngIf="result.isCorrected && result.correctedAt" class="text-xs text-gray-500 mt-1">
+                Corrigé le {{ result.correctedAt | date:'dd/MM/yyyy à HH:mm' }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed Results (if corrected) -->
+      <div *ngIf="result.isCorrected && exam" class="bg-white rounded-2xl shadow-lg p-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-6">Détails des réponses</h3>
+        
+        <div class="space-y-4">
+          <div *ngFor="let question of exam.questions; let i = index" 
+               class="border-2 rounded-xl p-4"
+               [class.border-green-200]="isAnswerCorrect(question.id!)"
+               [class.bg-green-50]="isAnswerCorrect(question.id!)"
+               [class.border-red-200]="!isAnswerCorrect(question.id!)"
+               [class.bg-red-50]="!isAnswerCorrect(question.id!)">
+            
+            <div class="flex justify-between items-start mb-3">
+              <h4 class="font-semibold text-gray-800">Question {{ i + 1 }}</h4>
+              <span class="text-sm font-semibold"
+                    [class.text-green-600]="isAnswerCorrect(question.id!)"
+                    [class.text-red-600]="!isAnswerCorrect(question.id!)">
+                {{ isAnswerCorrect(question.id!) ? '✓ Correct' : '✗ Incorrect' }}
+              </span>
+            </div>
+            
+            <p class="text-gray-700 mb-3">{{ question.questionText }}</p>
+            
+            <div class="bg-white rounded-lg p-3 mb-2">
+              <div class="text-sm text-gray-600 mb-1">Votre réponse :</div>
+              <div class="font-medium text-gray-800">{{ getUserAnswer(question.id!) }}</div>
+            </div>
+            
+            <div *ngIf="!isAnswerCorrect(question.id!)" class="bg-white rounded-lg p-3">
+              <div class="text-sm text-gray-600 mb-1">Réponse correcte :</div>
+              <div class="font-medium text-green-600">{{ question.correctAnswer }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-center gap-4">
+        <button
+          (click)="goBack()"
+          class="px-8 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-all">
+          Retour aux examens
+        </button>
+        
+        <button
+          *ngIf="!result.passed && exam"
+          (click)="retakeExam()"
+          class="px-8 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all">
+          Repasser l'examen
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

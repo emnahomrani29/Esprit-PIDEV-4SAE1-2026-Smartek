@@ -1,0 +1,871 @@
+<!-- Animated Page Header -->
+<app-page-header
+  title="Course Management"
+  subtitle="Create and manage your courses with chapters"
+  icon="📚"
+  gradient="from-primary via-orange-500 to-accent"
+  [showStats]="true"
+  [stats]="getCourseStats()">
+</app-page-header>
+
+<div class="container mx-auto px-4 py-8">
+  <!-- Action Button and Search/Sort -->
+  <div class="mb-8">
+    <div class="flex justify-end mb-4">
+      <button 
+        (click)="openCreateModal()"
+        class="bg-gradient-to-r from-primary to-accent text-white px-6 py-3 rounded-xl hover:shadow-card-hover hover:scale-105 transition-all duration-300 flex items-center gap-2 font-semibold">
+        <span class="material-icons">add</span>
+        Create Course
+      </button>
+    </div>
+
+    <!-- Barre de recherche et tri -->
+    <div *ngIf="courses.length > 0" class="bg-white rounded-2xl shadow-card p-6 border border-gray-100">
+      <div class="flex flex-col md:flex-row gap-4">
+        <!-- Recherche -->
+        <div class="flex-1">
+          <div class="relative">
+            <span class="material-icons absolute left-4 top-1/2 transform -translate-y-1/2 text-primary">search</span>
+            <input
+              type="text"
+              [(ngModel)]="searchTerm"
+              (ngModelChange)="onSearchChange($event)"
+              placeholder="Rechercher un cours..."
+              class="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all">
+          </div>
+        </div>
+
+        <!-- Tri -->
+        <div class="flex gap-2">
+          <button
+            (click)="onSortChange('name')"
+            [class.bg-gradient-to-r]="sortBy === 'name'"
+            [class.from-primary]="sortBy === 'name'"
+            [class.to-accent]="sortBy === 'name'"
+            [class.text-white]="sortBy === 'name'"
+            [class.shadow-card]="sortBy === 'name'"
+            [class.bg-gray-100]="sortBy !== 'name'"
+            [class.text-gray-700]="sortBy !== 'name'"
+            class="px-4 py-3 rounded-xl font-semibold transition-all hover:shadow-md flex items-center gap-2">
+            <span class="material-icons text-sm">sort_by_alpha</span>
+            Nom
+            <span *ngIf="sortBy === 'name'" class="material-icons text-sm" [class.rotate-180]="sortOrder === 'desc'">arrow_upward</span>
+          </button>
+
+          <button
+            (click)="onSortChange('duration')"
+            [class.bg-gradient-to-r]="sortBy === 'duration'"
+            [class.from-primary]="sortBy === 'duration'"
+            [class.to-accent]="sortBy === 'duration'"
+            [class.text-white]="sortBy === 'duration'"
+            [class.shadow-card]="sortBy === 'duration'"
+            [class.bg-gray-100]="sortBy !== 'duration'"
+            [class.text-gray-700]="sortBy !== 'duration'"
+            class="px-4 py-3 rounded-xl font-semibold transition-all hover:shadow-md flex items-center gap-2">
+            <span class="material-icons text-sm">schedule</span>
+            Durée
+            <span *ngIf="sortBy === 'duration'" class="material-icons text-sm" [class.rotate-180]="sortOrder === 'desc'">arrow_upward</span>
+          </button>
+
+          <button
+            (click)="onSortChange('chapters')"
+            [class.bg-gradient-to-r]="sortBy === 'chapters'"
+            [class.from-primary]="sortBy === 'chapters'"
+            [class.to-accent]="sortBy === 'chapters'"
+            [class.text-white]="sortBy === 'chapters'"
+            [class.shadow-card]="sortBy === 'chapters'"
+            [class.bg-gray-100]="sortBy !== 'chapters'"
+            [class.text-gray-700]="sortBy !== 'chapters'"
+            class="px-4 py-3 rounded-xl font-semibold transition-all hover:shadow-md flex items-center gap-2">
+            <span class="material-icons text-sm">menu_book</span>
+            Chapitres
+            <span *ngIf="sortBy === 'chapters'" class="material-icons text-sm" [class.rotate-180]="sortOrder === 'desc'">arrow_upward</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Résultats de recherche -->
+      <div *ngIf="searchTerm" class="mt-4 text-sm text-gray-600 flex items-center gap-2">
+        <span class="material-icons text-primary text-base">info</span>
+        {{ displayedCourses.length }} résultat(s) trouvé(s)
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading && courses.length === 0" class="text-center py-12">
+    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+    <p class="mt-4 text-gray-600">Loading courses...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && courses.length === 0" class="text-center py-16 bg-gradient-to-br from-background to-white rounded-2xl shadow-card border border-gray-100">
+    <div class="mb-4">
+      <span class="material-icons text-8xl text-primary/30">school</span>
+    </div>
+    <h3 class="text-2xl font-bold text-gray-800 mt-4">No courses yet</h3>
+    <p class="text-gray-500 mt-2 mb-6">Create your first course to get started</p>
+    <button 
+      (click)="openCreateModal()"
+      class="bg-gradient-to-r from-primary to-accent text-white px-8 py-3 rounded-xl hover:shadow-card-hover hover:scale-105 transition-all duration-300 inline-flex items-center gap-2 font-semibold">
+      <span class="material-icons">add</span>
+      Create Your First Course
+    </button>
+  </div>
+
+  <!-- Courses Grid -->
+  <div *ngIf="courses.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div *ngFor="let course of displayedCourses" class="bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden border border-gray-100 group hover:scale-105">
+      <!-- Card Header with Gradient -->
+      <div class="h-2 bg-gradient-to-r from-primary via-orange-500 to-accent"></div>
+      
+      <div class="p-6">
+        <div class="flex items-start justify-between mb-4">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="material-icons text-primary text-2xl">menu_book</span>
+              <h3 class="text-xl font-bold text-gray-800 group-hover:text-primary transition-colors">{{ course.title }}</h3>
+            </div>
+            <!-- Delivery Mode Badge -->
+            <div class="mb-2">
+              <span *ngIf="course.deliveryMode === DeliveryMode.PRESENTIEL" 
+                    class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
+                <span class="material-icons text-xs">business</span>
+                Présentiel
+              </span>
+              <span *ngIf="course.deliveryMode === DeliveryMode.EN_LIGNE" 
+                    class="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">
+                <span class="material-icons text-xs">videocam</span>
+                En ligne
+              </span>
+            </div>
+            <p class="text-gray-600 text-sm line-clamp-3 leading-relaxed">{{ course.content }}</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-4 text-sm text-gray-500 mb-4 pb-4 border-b border-gray-100">
+          <div class="flex items-center gap-2">
+            <span class="material-icons text-sm text-accent">calendar_today</span>
+            <span>{{ course.duration }}</span>
+          </div>
+          <div *ngIf="course.deliveryMode === DeliveryMode.PRESENTIEL" class="flex items-center gap-2">
+            <span class="material-icons text-sm text-primary">auto_stories</span>
+            <span>{{ course.chapters?.length || 0 }} chapitres</span>
+          </div>
+          <div *ngIf="course.deliveryMode === DeliveryMode.EN_LIGNE" class="flex items-center gap-2">
+            <span class="material-icons text-sm text-purple-600">videocam</span>
+            <span>{{ course.liveSessions?.length || 0 }} sessions</span>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <!-- Manage Chapters Button - Only for PRESENTIEL -->
+          <button 
+            *ngIf="course.deliveryMode === DeliveryMode.PRESENTIEL"
+            (click)="openChaptersModal(course)"
+            class="w-full bg-gradient-to-r from-accent/10 to-primary/10 text-accent hover:from-accent hover:to-primary hover:text-white px-4 py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 font-semibold border border-accent/20 hover:border-transparent">
+            <span class="material-icons text-sm">menu_book</span>
+            Manage Chapters
+          </button>
+          
+          <!-- Manage Live Sessions Button - Only for EN_LIGNE -->
+          <button 
+            *ngIf="course.deliveryMode === DeliveryMode.EN_LIGNE"
+            (click)="manageLiveSessions(course.courseId!)"
+            class="w-full bg-gradient-to-r from-purple-100 to-purple-200 text-purple-700 hover:from-purple-600 hover:to-purple-700 hover:text-white px-4 py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 font-semibold border border-purple-300 hover:border-transparent">
+            <span class="material-icons text-sm">videocam</span>
+            Manage Live Sessions
+          </button>
+          
+          <div class="flex gap-2">
+            <button 
+              (click)="openEditModal(course)"
+              class="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-4 py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 font-semibold border border-blue-200 hover:border-blue-600">
+              <span class="material-icons text-sm">edit</span>
+              Edit
+            </button>
+            <button 
+              (click)="deleteCourse(course.courseId!)"
+              class="flex-1 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white px-4 py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 font-semibold border border-red-200 hover:border-red-600">
+              <span class="material-icons text-sm">delete</span>
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Course Modal -->
+<div *ngIf="showModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-down">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-gray-100">
+    <!-- Modal Header with Gradient -->
+    <div class="bg-gradient-to-r from-primary to-accent p-6">
+      <div class="flex justify-between items-center">
+        <div class="text-white">
+          <h2 class="text-2xl font-bold flex items-center gap-2">
+            <span class="material-icons">{{ isEditMode ? 'edit' : 'add_circle' }}</span>
+            {{ isEditMode ? 'Edit Course' : 'Create New Course' }}
+          </h2>
+          <p class="text-white/80 text-sm mt-1">{{ isEditMode ? 'Update course information' : 'Fill in the details below' }}</p>
+        </div>
+        <button (click)="closeModal()" class="text-white/80 hover:text-white hover:bg-white/20 rounded-full p-2 transition-all">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+    </div>
+
+    <form [formGroup]="courseForm" (ngSubmit)="onSubmit()" class="p-6">
+      <!-- Title -->
+      <div class="mb-6">
+        <label class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+          <span class="material-icons text-primary text-base">title</span>
+          Course Title <span class="text-red-500">*</span>
+        </label>
+        <input 
+          type="text" 
+          formControlName="title"
+          class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+          placeholder="Enter course title">
+        <div *ngIf="courseForm.get('title')?.invalid && courseForm.get('title')?.touched" class="text-red-500 text-sm mt-2 flex items-center gap-1">
+          <span class="material-icons text-xs">error</span>
+          Title is required
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="mb-6">
+        <label class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+          <span class="material-icons text-primary text-base">description</span>
+          Course Content <span class="text-red-500">*</span>
+        </label>
+        <textarea 
+          formControlName="content"
+          rows="6"
+          class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+          placeholder="Enter course content and description"></textarea>
+        <div *ngIf="courseForm.get('content')?.invalid && courseForm.get('content')?.touched" class="text-red-500 text-sm mt-2 flex items-center gap-1">
+          <span class="material-icons text-xs">error</span>
+          Content is required
+        </div>
+      </div>
+
+      <!-- Duration -->
+      <div class="mb-6">
+        <label class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+          <span class="material-icons text-primary text-base">event</span>
+          Duration (End Date) <span class="text-red-500">*</span>
+        </label>
+        <input 
+          type="date" 
+          formControlName="duration"
+          class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+        <div *ngIf="courseForm.get('duration')?.invalid && courseForm.get('duration')?.touched" class="text-red-500 text-sm mt-2 flex items-center gap-1">
+          <span class="material-icons text-xs">error</span>
+          Duration is required
+        </div>
+      </div>
+
+      <!-- Delivery Mode -->
+      <div class="mb-6">
+        <label class="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+          <span class="material-icons text-primary text-base">computer</span>
+          Mode de livraison <span class="text-red-500">*</span>
+        </label>
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Présentiel -->
+          <label class="relative cursor-pointer">
+            <input 
+              type="radio" 
+              formControlName="deliveryMode"
+              [value]="DeliveryMode.PRESENTIEL"
+              class="peer sr-only">
+            <div class="p-4 border-2 border-gray-200 rounded-xl transition-all peer-checked:border-green-500 peer-checked:bg-green-50 hover:border-green-300 hover:shadow-md">
+              <div class="flex items-center gap-3">
+                <span class="material-icons text-3xl text-green-600">business</span>
+                <div>
+                  <h4 class="font-bold text-gray-800">Présentiel</h4>
+                  <p class="text-xs text-gray-600">Cours avec chapitres PDF</p>
+                </div>
+              </div>
+            </div>
+          </label>
+
+          <!-- En ligne -->
+          <label class="relative cursor-pointer">
+            <input 
+              type="radio" 
+              formControlName="deliveryMode"
+              [value]="DeliveryMode.EN_LIGNE"
+              class="peer sr-only">
+            <div class="p-4 border-2 border-gray-200 rounded-xl transition-all peer-checked:border-purple-500 peer-checked:bg-purple-50 hover:border-purple-300 hover:shadow-md">
+              <div class="flex items-center gap-3">
+                <span class="material-icons text-3xl text-purple-600">videocam</span>
+                <div>
+                  <h4 class="font-bold text-gray-800">En ligne</h4>
+                  <p class="text-xs text-gray-600">Cours avec sessions live</p>
+                </div>
+              </div>
+            </div>
+          </label>
+        </div>
+        
+        <!-- Info message based on selection -->
+        <div *ngIf="courseForm.get('deliveryMode')?.value === DeliveryMode.PRESENTIEL" 
+             class="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-2">
+          <span class="material-icons text-sm text-green-600">info</span>
+          <p class="text-xs text-green-700">
+            Les cours en présentiel utilisent des <strong>chapitres avec des PDFs</strong> que les learners peuvent télécharger.
+          </p>
+        </div>
+        
+        <div *ngIf="courseForm.get('deliveryMode')?.value === DeliveryMode.EN_LIGNE" 
+             class="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg flex items-start gap-2">
+          <span class="material-icons text-sm text-purple-600">info</span>
+          <p class="text-xs text-purple-700">
+            Les cours en ligne n'utilisent pas de chapitres. Vous pourrez créer des <strong>sessions live</strong> après la création du cours.
+          </p>
+        </div>
+      </div>
+
+      <!-- Chapters Section - Only for PRESENTIEL -->
+      <div class="mb-6" *ngIf="courseForm.get('deliveryMode')?.value === DeliveryMode.PRESENTIEL">
+        <div class="flex justify-between items-center mb-4">
+          <label class="block text-sm font-bold text-gray-700 flex items-center gap-2">
+            <span class="material-icons text-accent text-base">auto_stories</span>
+            Chapters (optional)
+          </label>
+          <button 
+            type="button"
+            (click)="addChapter()"
+            class="bg-gradient-to-r from-accent/10 to-primary/10 text-accent hover:from-accent hover:to-primary hover:text-white px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 text-sm font-semibold border border-accent/20 hover:border-transparent">
+            <span class="material-icons text-sm">add</span>
+            Add Chapter
+          </button>
+        </div>
+
+        <div *ngIf="chapters.length === 0" class="text-center py-10 bg-gradient-to-br from-gray-50 to-background rounded-2xl border-2 border-dashed border-gray-300">
+          <span class="material-icons text-5xl text-gray-400 mb-3">menu_book</span>
+          <p class="text-gray-600 font-semibold">No chapters added</p>
+          <p class="text-gray-400 text-sm mt-1">Click "Add Chapter" to get started</p>
+        </div>
+
+        <div *ngIf="chapters.length > 0" class="space-y-3">
+          <div *ngFor="let chapter of chapters; let i = index" class="border-2 border-accent/20 rounded-xl p-4 bg-gradient-to-br from-accent/5 to-primary/5 hover:border-accent/40 transition-all">
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="bg-gradient-to-r from-accent to-primary text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm">
+                    Chapter {{ chapter.orderIndex }}
+                  </span>
+                  <h4 class="font-bold text-gray-800">{{ chapter.title }}</h4>
+                </div>
+                <p *ngIf="chapter.description" class="text-sm text-gray-600 mb-2 ml-1">{{ chapter.description }}</p>
+                <div *ngIf="chapter.pdfFile" class="flex items-center gap-2 text-sm text-gray-700 bg-white/50 px-3 py-2 rounded-lg mt-2">
+                  <span class="material-icons text-sm text-red-600">picture_as_pdf</span>
+                  <span class="font-medium">{{ chapter.pdfFile.name }}</span>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button 
+                  type="button"
+                  (click)="openEditChapterModal(i)"
+                  class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded-lg transition-all">
+                  <span class="material-icons text-sm">edit</span>
+                </button>
+                <button 
+                  type="button"
+                  (click)="removeChapter(i)"
+                  class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-all">
+                  <span class="material-icons text-sm">delete</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-4 pt-4 border-t border-gray-200">
+        <button 
+          type="button"
+          (click)="closeModal()"
+          class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all">
+          Cancel
+        </button>
+        <button 
+          type="submit"
+          [disabled]="courseForm.invalid || loading"
+          class="flex-1 bg-gradient-to-r from-primary to-accent text-white px-6 py-3 rounded-xl hover:shadow-card-hover hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-semibold flex items-center justify-center gap-2">
+          <span class="material-icons text-sm">{{ isEditMode ? 'save' : 'add_circle' }}</span>
+          {{ isEditMode ? 'Update Course' : 'Create Course' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Chapter Modal -->
+<div *ngIf="showChapterModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-fade-in-down">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full border-2 border-gray-100">
+    <!-- Modal Header with Gradient -->
+    <div class="bg-gradient-to-r from-accent to-primary p-6">
+      <div class="flex justify-between items-center">
+        <div class="text-white">
+          <h2 class="text-xl font-bold flex items-center gap-2">
+            <span class="material-icons">{{ editingChapterIndex !== null ? 'edit' : 'add_circle' }}</span>
+            {{ editingChapterIndex !== null ? 'Edit Chapter' : 'New Chapter' }}
+          </h2>
+          <p class="text-white/80 text-sm mt-1">{{ editingChapterIndex !== null ? 'Update chapter details' : 'Add a new chapter to your course' }}</p>
+        </div>
+        <button (click)="closeChapterModal()" class="text-white/80 hover:text-white hover:bg-white/20 rounded-full p-2 transition-all">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+    </div>
+
+    <form [formGroup]="chapterForm" (ngSubmit)="saveChapter()" class="p-6">
+      <!-- Title -->
+      <div class="mb-4">
+        <label class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+          <span class="material-icons text-accent text-base">title</span>
+          Chapter Title <span class="text-red-500">*</span>
+        </label>
+        <input 
+          type="text" 
+          formControlName="title"
+          class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+          placeholder="Ex: Introduction to Basics">
+        <div *ngIf="chapterForm.get('title')?.invalid && chapterForm.get('title')?.touched" class="text-red-500 text-sm mt-2 flex items-center gap-1">
+          <span class="material-icons text-xs">error</span>
+          Title is required
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="mb-4">
+        <label class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+          <span class="material-icons text-accent text-base">description</span>
+          Description
+        </label>
+        <textarea 
+          formControlName="description"
+          rows="3"
+          class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+          placeholder="Chapter description..."></textarea>
+      </div>
+
+      <!-- Order -->
+      <div class="mb-4">
+        <label class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+          <span class="material-icons text-accent text-base">format_list_numbered</span>
+          Order <span class="text-red-500">*</span>
+        </label>
+        <input 
+          type="number" 
+          formControlName="orderIndex"
+          min="1"
+          class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all">
+      </div>
+
+      <!-- PDF Upload -->
+      <div class="mb-6">
+        <label class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+          <span class="material-icons text-accent text-base">upload_file</span>
+          PDF File (optional)
+        </label>
+        <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-accent transition-all bg-gradient-to-br from-gray-50 to-background">
+          <div class="text-center">
+            <span class="material-icons text-5xl text-accent/40 mb-3">cloud_upload</span>
+            <div class="mb-2">
+              <label for="chapter-pdf-upload" class="cursor-pointer text-accent hover:text-primary font-bold transition-colors">
+                Choose PDF File
+              </label>
+              <input 
+                id="chapter-pdf-upload"
+                type="file" 
+                accept=".pdf"
+                (change)="onChapterModalFileSelected($event)"
+                class="hidden">
+            </div>
+            <p class="text-sm text-gray-500">or drag and drop a file here</p>
+            <p class="text-xs text-gray-400 mt-1">PDF only, max 10MB</p>
+          </div>
+          <div *ngIf="selectedChapterFile" class="mt-4 flex items-center justify-between bg-gradient-to-r from-accent/10 to-primary/10 p-3 rounded-xl border border-accent/20">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-red-600">picture_as_pdf</span>
+              <span class="text-sm font-semibold text-gray-700">{{ selectedChapterFile.name }}</span>
+            </div>
+            <button 
+              type="button"
+              (click)="selectedChapterFile = null"
+              class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded-lg transition-all">
+              <span class="material-icons text-sm">close</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-4">
+        <button 
+          type="button"
+          (click)="closeChapterModal()"
+          class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all">
+          Cancel
+        </button>
+        <button 
+          type="submit"
+          [disabled]="chapterForm.invalid"
+          class="flex-1 bg-gradient-to-r from-accent to-primary text-white px-6 py-3 rounded-xl hover:shadow-card-hover hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-semibold flex items-center justify-center gap-2">
+          <span class="material-icons text-sm">{{ editingChapterIndex !== null ? 'save' : 'add_circle' }}</span>
+          {{ editingChapterIndex !== null ? 'Update' : 'Add' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Chapters List Modal -->
+<div *ngIf="showChaptersListModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-fade-in-down">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border-2 border-gray-100">
+    <!-- Modal Header with Gradient -->
+    <div class="bg-gradient-to-r from-accent to-primary p-6">
+      <div class="flex justify-between items-center">
+        <div class="text-white">
+          <h2 class="text-2xl font-bold flex items-center gap-2">
+            <span class="material-icons">auto_stories</span>
+            Course Chapters
+          </h2>
+          <p class="text-white/90 mt-1 font-medium">{{ currentCourseForChapters?.title }}</p>
+        </div>
+        <button (click)="closeChaptersModal()" class="text-white/80 hover:text-white hover:bg-white/20 rounded-full p-2 transition-all">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6 bg-gradient-to-r from-background to-white p-4 rounded-xl border border-gray-200">
+        <p class="text-gray-700 font-semibold flex items-center gap-2">
+          <span class="material-icons text-accent">menu_book</span>
+          {{ courseChapters.length }} chapter(s)
+        </p>
+        <button 
+          (click)="openAddChapterModal()"
+          class="bg-gradient-to-r from-accent to-primary text-white px-4 py-2 rounded-xl hover:shadow-card-hover hover:scale-105 transition-all duration-300 flex items-center gap-2 font-semibold">
+          <span class="material-icons text-sm">add</span>
+          Add Chapter
+        </button>
+      </div>
+
+      <div *ngIf="loadingChapters" class="text-center py-12">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-accent/20 border-t-accent"></div>
+        <p class="mt-4 text-gray-600 font-medium">Loading...</p>
+      </div>
+
+      <div *ngIf="!loadingChapters && courseChapters.length === 0" class="text-center py-16 bg-gradient-to-br from-gray-50 to-background rounded-2xl border-2 border-dashed border-gray-300">
+        <span class="material-icons text-7xl text-gray-300 mb-4">menu_book</span>
+        <h3 class="text-lg font-bold text-gray-700 mt-4">No Chapters</h3>
+        <p class="text-gray-500 mt-2 mb-6">Add the first chapter to this course</p>
+        <button 
+          (click)="openAddChapterModal()"
+          class="bg-gradient-to-r from-accent to-primary text-white px-6 py-3 rounded-xl hover:shadow-card-hover hover:scale-105 transition-all duration-300 inline-flex items-center gap-2 font-semibold">
+          <span class="material-icons">add</span>
+          Add First Chapter
+        </button>
+      </div>
+
+      <div *ngIf="!loadingChapters && courseChapters.length > 0" class="space-y-3">
+        <div *ngFor="let chapter of courseChapters" class="border-2 border-gray-200 rounded-xl p-5 hover:border-accent/40 hover:shadow-card transition-all bg-white">
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-3">
+                <span class="bg-gradient-to-r from-accent to-primary text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm">
+                  Chapter {{ chapter.orderIndex }}
+                </span>
+                <h4 class="font-bold text-gray-800 text-lg">{{ chapter.title }}</h4>
+              </div>
+              <p *ngIf="chapter.description" class="text-sm text-gray-600 mb-3 ml-1 leading-relaxed">{{ chapter.description }}</p>
+              <div *ngIf="chapter.pdfFileName" class="flex items-center gap-2 text-sm text-gray-700 bg-gradient-to-r from-red-50 to-orange-50 px-3 py-2 rounded-lg border border-red-200">
+                <span class="material-icons text-sm text-red-600">picture_as_pdf</span>
+                <span class="font-medium">{{ chapter.pdfFileName }}</span>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button 
+                (click)="deleteChapterFromList(chapter.chapterId!)"
+                class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-all">
+                <span class="material-icons text-sm">delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-6 border-t border-gray-200 bg-gray-50">
+      <button 
+        (click)="closeChaptersModal()"
+        class="w-full px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-white hover:border-gray-400 transition-all">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Live Sessions Modal -->
+<div *ngIf="showLiveSessionsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4 animate-fade-in-down">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto border-2 border-gray-100">
+    <!-- Modal Header -->
+    <div class="bg-gradient-to-r from-purple-600 to-purple-800 p-6 sticky top-0 z-10">
+      <div class="flex justify-between items-center">
+        <div class="text-white">
+          <h2 class="text-2xl font-bold flex items-center gap-2">
+            <span class="material-icons">videocam</span>
+            Sessions Live
+          </h2>
+          <p class="text-white/90 mt-1 font-medium" *ngIf="currentCourseForSessions">{{ currentCourseForSessions.title }}</p>
+        </div>
+        <button (click)="closeLiveSessionsModal()" class="text-white/80 hover:text-white hover:bg-white/20 rounded-full p-2 transition-all">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="p-6">
+      <!-- Session Form (shown at top when active) -->
+      <div *ngIf="showSessionForm" class="mb-6 bg-gradient-to-br from-purple-50 to-white rounded-xl border-2 border-purple-400 shadow-lg p-6 animate-fade-in-down">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <span class="material-icons text-purple-600">{{ isEditingSession ? 'edit' : 'add_circle' }}</span>
+            {{ isEditingSession ? 'Modifier la Session' : 'Nouvelle Session' }}
+          </h3>
+          <button (click)="closeSessionForm()" class="text-gray-500 hover:text-gray-700">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+
+        <!-- Title -->
+        <div class="mb-4">
+          <label class="block text-sm font-bold text-gray-700 mb-2">
+            Titre <span class="text-red-500">*</span>
+          </label>
+          <input 
+            type="text" 
+            [(ngModel)]="sessionForm.title"
+            name="sessionTitle"
+            class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600"
+            placeholder="Ex: Session 1 - Introduction">
+        </div>
+
+        <!-- Description -->
+        <div class="mb-4">
+          <label class="block text-sm font-bold text-gray-700 mb-2" for="description">Description</label>
+          <textarea  id="description"
+            [(ngModel)]="sessionForm.description"
+            name="sessionDescription"
+            rows="2"
+            class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600"
+            placeholder="Description..."></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <!-- Start Time -->
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">
+              Date début <span class="text-red-500">*</span>
+            </label>
+            <input 
+              type="datetime-local" 
+              [(ngModel)]="sessionForm.startTime"
+              name="sessionStartTime"
+              [min]="getCurrentDateTime()"
+              class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600">
+          </div>
+
+          <!-- End Time -->
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">
+              Date fin <span class="text-red-500">*</span>
+            </label>
+            <input 
+              type="datetime-local" 
+              [(ngModel)]="sessionForm.endTime"
+              name="sessionEndTime"
+              class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600">
+          </div>
+        </div>
+
+        <!-- Max Participants -->
+        <div class="mb-4">
+          <label class="block text-sm font-bold text-gray-700 mb-2" for="participantsmax">Participants max</label>
+          <input  id="participantsmax"
+            type="number" 
+            [(ngModel)]="sessionForm.maxParticipants"
+            name="sessionMaxParticipants"
+            min="1"
+            class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600"
+            placeholder="Ex: 50">
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-3">
+          <button 
+            type="button"
+            (click)="closeSessionForm()"
+            class="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50">
+            Annuler
+          </button>
+          <button 
+            type="button"
+            (click)="saveSession()"
+            class="flex-1 bg-gradient-to-r from-purple-600 to-purple-800 text-white px-4 py-2 rounded-lg hover:shadow-lg font-semibold">
+            {{ isEditingSession ? 'Mettre à jour' : 'Créer' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Bar (shown when form is hidden) -->
+      <div *ngIf="!showSessionForm" class="flex justify-between items-center mb-6 bg-gradient-to-r from-background to-white p-4 rounded-xl border border-gray-200">
+        <p class="text-gray-700 font-semibold flex items-center gap-2">
+          <span class="material-icons text-purple-600">videocam</span>
+          {{ liveSessions.length }} session(s)
+        </p>
+        <button 
+          (click)="openSessionForm()"
+          class="bg-gradient-to-r from-purple-600 to-purple-800 text-white px-4 py-2 rounded-xl hover:shadow-card-hover hover:scale-105 transition-all duration-300 flex items-center gap-2 font-semibold">
+          <span class="material-icons text-sm">add</span>
+          Nouvelle Session
+        </button>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="loadingLiveSessions" class="text-center py-12">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600"></div>
+        <p class="mt-4 text-gray-600 font-medium">Chargement...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!loadingLiveSessions && liveSessions.length === 0" class="text-center py-16 bg-gradient-to-br from-gray-50 to-background rounded-2xl border-2 border-dashed border-gray-300">
+        <span class="material-icons text-7xl text-gray-300 mb-4">videocam_off</span>
+        <h3 class="text-lg font-bold text-gray-700 mt-4">Aucune Session</h3>
+        <p class="text-gray-500 mt-2 mb-6">Créez la première session live pour ce cours</p>
+        <button 
+          (click)="openSessionForm()"
+          class="bg-gradient-to-r from-purple-600 to-purple-800 text-white px-6 py-3 rounded-xl hover:shadow-card-hover hover:scale-105 transition-all duration-300 inline-flex items-center gap-2 font-semibold">
+          <span class="material-icons">add</span>
+          Créer une Session
+        </button>
+      </div>
+
+      <!-- Sessions List -->
+      <div *ngIf="!loadingLiveSessions && liveSessions.length > 0" class="space-y-3">
+        <div *ngFor="let session of liveSessions" class="border-2 border-gray-200 rounded-xl p-5 hover:border-purple-400 hover:shadow-card transition-all bg-white">
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-3">
+                <span 
+                  class="text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm"
+                  [ngClass]="{
+                    'bg-gradient-to-r from-blue-500 to-blue-600': session.status === 'SCHEDULED',
+                    'bg-gradient-to-r from-green-500 to-green-600': session.status === 'ONGOING',
+                    'bg-gradient-to-r from-gray-500 to-gray-600': session.status === 'COMPLETED',
+                    'bg-gradient-to-r from-red-500 to-red-600': session.status === 'CANCELLED'
+                  }">
+                  {{ getStatusLabel(session.status) }}
+                </span>
+                <h4 class="font-bold text-gray-800 text-lg">{{ session.title }}</h4>
+              </div>
+              <p *ngIf="session.description" class="text-sm text-gray-600 mb-3 ml-1 leading-relaxed">{{ session.description }}</p>
+              
+              <div class="flex flex-wrap gap-4 text-sm text-gray-700 mb-3">
+                <div class="flex items-center gap-2">
+                  <span class="material-icons text-sm text-purple-600">event</span>
+                  <span>{{ formatDateTime(session.startTime) }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="material-icons text-sm text-purple-600">schedule</span>
+                  <span>{{ getSessionDuration(session.startTime, session.endTime) }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="material-icons text-sm text-purple-600">people</span>
+                  <span>{{ session.currentParticipants || 0 }} / {{ session.maxParticipants || '∞' }} participants</span>
+                </div>
+              </div>
+              
+              <!-- Action Buttons -->
+              <div class="flex items-center gap-2 flex-wrap">
+                <!-- Démarrer (SCHEDULED → ONGOING) -->
+                <button 
+                  *ngIf="session.status === 'SCHEDULED'"
+                  (click)="startSession(session)"
+                  class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center gap-2 font-semibold text-sm">
+                  <span class="material-icons text-sm">play_arrow</span>
+                  Démarrer
+                </button>
+
+                <!-- Rejoindre (ONGOING) -->
+                <button 
+                  *ngIf="session.status === 'ONGOING'"
+                  (click)="joinSession(session.roomId)"
+                  class="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center gap-2 font-semibold text-sm">
+                  <span class="material-icons text-sm">videocam</span>
+                  Rejoindre
+                </button>
+
+                <!-- Terminer (ONGOING → COMPLETED) -->
+                <button 
+                  *ngIf="session.status === 'ONGOING'"
+                  (click)="endSession(session)"
+                  class="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center gap-2 font-semibold text-sm">
+                  <span class="material-icons text-sm">stop</span>
+                  Terminer
+                </button>
+
+                <!-- Badge terminée -->
+                <span *ngIf="session.status === 'COMPLETED'"
+                      class="text-gray-500 text-sm flex items-center gap-1">
+                  <span class="material-icons text-sm">check_circle</span>
+                  Session terminée
+                </span>
+
+                <!-- Badge annulée -->
+                <span *ngIf="session.status === 'CANCELLED'"
+                      class="text-red-400 text-sm flex items-center gap-1">
+                  <span class="material-icons text-sm">cancel</span>
+                  Annulée
+                </span>
+              </div>
+            </div>
+            <div class="flex flex-col gap-2">
+              <button 
+                (click)="openEditSessionForm(session)"
+                class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded-lg transition-all">
+                <span class="material-icons text-sm">edit</span>
+              </button>
+              <button 
+                (click)="deleteSession(session.sessionId)"
+                class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-all">
+                <span class="material-icons text-sm">delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Close Button -->
+    <div class="p-6 border-t border-gray-200 bg-gray-50 sticky bottom-0">
+      <button 
+        (click)="closeLiveSessionsModal()"
+        class="w-full px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-white hover:border-gray-400 transition-all">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>
+

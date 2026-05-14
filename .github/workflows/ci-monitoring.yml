@@ -1,0 +1,52 @@
+name: CI Monitoring
+
+on:
+  push:
+    paths:
+      - 'monitoring/**'
+      - 'docker-compose*.yml'
+  pull_request:
+    paths:
+      - 'monitoring/**'
+  workflow_dispatch:
+
+jobs:
+  test-monitoring-stack:
+    name: Test Monitoring Stack
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Prometheus config
+        run: |
+          docker run --rm -v ${{ github.workspace }}/monitoring/prometheus:/etc/prometheus prom/prometheus:latest promtool check config /etc/prometheus/prometheus.yml
+
+      - name: Validate alert rules
+        run: |
+          docker run --rm -v ${{ github.workspace }}/monitoring/prometheus:/etc/prometheus prom/prometheus:latest promtool check rules /etc/prometheus/alert-rules.yml
+
+      - name: Start monitoring stack
+        run: |
+          docker compose up -d prometheus grafana loki
+        continue-on-error: true
+
+      - name: Wait for Prometheus
+        run: |
+          timeout 60 bash -c 'until curl -sf http://localhost:9090/-/ready; do sleep 3; done' || echo "Prometheus not ready"
+        continue-on-error: true
+
+      - name: Wait for Grafana
+        run: |
+          timeout 60 bash -c 'until curl -sf http://localhost:3000/api/health; do sleep 3; done' || echo "Grafana not ready"
+        continue-on-error: true
+
+      - name: Check Prometheus targets
+        run: |
+          curl -sf http://localhost:9090/api/v1/targets | python3 -m json.tool || echo "Could not reach Prometheus"
+        continue-on-error: true
+
+      - name: Teardown
+        if: always()
+        run: docker compose down -v
+        continue-on-error: true

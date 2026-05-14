@@ -1,0 +1,188 @@
+<div class="p-6 bg-gray-50 min-h-screen">
+
+  <!-- Welcome Banner -->
+  <div class="rounded-2xl mb-6 overflow-hidden shadow-lg"
+       style="background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);">
+    <div class="flex items-center justify-between px-8 py-6">
+      <div class="flex items-center gap-5">
+        <div class="w-16 h-16 rounded-full bg-white/30 flex items-center justify-center text-white text-2xl font-bold shadow-inner">
+          {{ userInitial }}
+        </div>
+        <div>
+          <h2 class="text-2xl font-bold text-white">Welcome, {{ userName }}!</h2>
+          <p class="text-white/80 text-sm mt-0.5">Role: {{ userRole }}</p>
+        </div>
+      </div>
+      <div class="text-right">
+        <p class="text-white/70 text-sm">Experience</p>
+        <p class="text-white text-4xl font-bold">{{ experience }} <span class="text-2xl">years</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+    <div class="bg-white rounded-2xl p-5 shadow-sm">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-sm text-gray-500">Offres actives</p>
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #f093fb, #f5576c)">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+        </div>
+      </div>
+      <p class="text-2xl font-bold text-gray-800">${{ stats.activeOffers * 1000 | number }}</p>
+      <p class="text-xs text-green-500 mt-1 font-medium">{{ stats.offersChange }}</p>
+    </div>
+
+    <div class="bg-white rounded-2xl p-5 shadow-sm">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-sm text-gray-500">Candidatures</p>
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #4facfe, #00f2fe)">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+      </div>
+      <p class="text-2xl font-bold text-gray-800">{{ stats.pendingApplications }},300</p>
+      <p class="text-xs text-green-500 mt-1 font-medium">{{ stats.applicationsChange }}</p>
+    </div>
+
+    <div class="bg-white rounded-2xl p-5 shadow-sm">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-sm text-gray-500">Nouveaux candidats</p>
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #43e97b, #38f9d7)">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </div>
+      </div>
+      <p class="text-2xl font-bold text-gray-800">+{{ stats.scheduledInterviews }},462</p>
+      <p class="text-xs text-red-400 mt-1 font-medium">{{ stats.interviewsChange }}</p>
+    </div>
+
+    <div class="bg-white rounded-2xl p-5 shadow-sm">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-sm text-gray-500">Entretiens</p>
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #fa709a, #fee140)">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+        </div>
+      </div>
+      <p class="text-2xl font-bold text-gray-800">${{ stats.employeesInTraining * 8000 | number }}</p>
+      <p class="text-xs text-green-500 mt-1 font-medium">{{ stats.trainingChange }}</p>
+    </div>
+
+  </div>
+
+  <!-- Main Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Offres récentes (2/3) -->
+    <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6">
+      <div class="flex items-center justify-between mb-2">
+        <div>
+          <h3 class="text-base font-bold text-gray-800">Offres d'emploi</h3>
+          <p class="text-xs text-gray-400">{{ recentOffers.length }} offres ce mois</p>
+        </div>
+        <a routerLink="/rh-company/offers" class="text-xs text-indigo-500 hover:underline font-medium">Voir tout →</a>
+      </div>
+
+      <table class="w-full mt-4">
+        <thead>
+          <tr class="text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
+            <th class="text-left pb-3 font-semibold">Offre</th>
+            <th class="text-left pb-3 font-semibold hidden md:table-cell">Contrat</th>
+            <th class="text-left pb-3 font-semibold hidden md:table-cell">Candidatures</th>
+            <th class="text-left pb-3 font-semibold">Complétion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let offer of recentOffers" class="border-b border-gray-50 hover:bg-gray-50 transition">
+            <td class="py-3 pr-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                  {{ offer.title.charAt(0) }}
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-gray-800 truncate max-w-[140px]">{{ offer.title }}</p>
+                  <p class="text-xs text-gray-400">{{ offer.location }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="py-3 hidden md:table-cell">
+              <span class="text-xs text-gray-500">{{ offer.contractType }}</span>
+            </td>
+            <td class="py-3 hidden md:table-cell">
+              <span class="text-xs font-medium text-gray-700">{{ offer.applicationCount }}</span>
+            </td>
+            <td class="py-3">
+              <div class="flex items-center gap-2">
+                <div class="flex-1 bg-gray-100 rounded-full h-1.5 min-w-[60px]">
+                  <div class="h-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all"
+                       [style.width.%]="offer.completion"></div>
+                </div>
+                <span class="text-xs text-gray-500 shrink-0">{{ offer.completion }}%</span>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="recentOffers.length === 0">
+            <td colspan="4" class="py-8 text-center text-gray-400 text-sm">Aucune offre publiée</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Activités récentes (1/3) -->
+    <div class="bg-white rounded-2xl shadow-sm p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-base font-bold text-gray-800">Activités récentes</h3>
+          <p class="text-xs text-gray-400">24% ce mois</p>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div *ngFor="let activity of recentActivities" class="flex items-start gap-3">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5"
+               [ngClass]="activity.color">
+            <svg *ngIf="activity.icon === 'offer'" class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            <svg *ngIf="activity.icon === 'app'" class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <svg *ngIf="activity.icon === 'interview'" class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <svg *ngIf="activity.icon === 'training'" class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-gray-800">{{ activity.label }}</p>
+            <p class="text-xs text-gray-400 truncate">{{ activity.sub }}</p>
+          </div>
+          <span class="text-xs text-gray-400 shrink-0">{{ activity.time }}</span>
+        </div>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="mt-6 pt-4 border-t border-gray-100 space-y-2">
+        <a routerLink="/rh-company/offers"
+           class="flex items-center justify-between p-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 transition group">
+          <span class="text-sm font-medium text-indigo-700">Publier une offre</span>
+          <span class="text-indigo-400 group-hover:text-indigo-600">›</span>
+        </a>
+        <a routerLink="/rh-company/participation"
+           class="flex items-center justify-between p-3 rounded-xl bg-purple-50 hover:bg-purple-100 transition group">
+          <span class="text-sm font-medium text-purple-700">Inscrire un employé</span>
+          <span class="text-purple-400 group-hover:text-purple-600">›</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>

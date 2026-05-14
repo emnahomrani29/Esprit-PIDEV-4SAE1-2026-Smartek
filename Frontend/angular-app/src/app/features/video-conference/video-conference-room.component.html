@@ -1,0 +1,368 @@
+<div class="fixed inset-0 bg-[#202124] flex flex-col select-none">
+
+  <!-- ── TOP BAR ─────────────────────────────────────────────────────────── -->
+  <div class="flex items-center justify-between px-6 py-3 bg-[#202124] z-10">
+    <!-- Left: room info -->
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
+        <span class="text-white font-semibold text-sm">En direct</span>
+      </div>
+      <span class="text-gray-400 text-xs bg-[#3c4043] px-3 py-1 rounded-full font-mono">{{ roomId }}</span>
+    </div>
+
+    <!-- Center: time -->
+    <div class="text-gray-300 text-sm font-medium">{{ currentTime }}</div>
+
+    <!-- Right: participant count -->
+    <div class="flex items-center gap-2 text-gray-300 text-sm">
+      <span class="material-icons text-base">people</span>
+      <span>{{ getParticipantCount() }}</span>
+    </div>
+  </div>
+
+  <!-- ── MAIN AREA ──────────────────────────────────────────────────────── -->
+  <div class="flex-1 flex overflow-hidden relative">
+
+    <!-- VIDEO GRID -->
+    <div class="flex-1 flex items-center justify-center p-4 overflow-hidden"
+         [class.mr-80]="showChat || showParticipants">
+
+      <!-- ── SCREEN SHARE LAYOUT ─────────────────────────────────────────── -->
+      <ng-container *ngIf="isSharingScreen || sharingParticipant">
+        <div class="w-full h-full flex gap-3">
+          <!-- Main screen share view -->
+          <div class="flex-1 relative bg-black rounded-2xl overflow-hidden">
+            <video #screenVideo
+                   autoplay muted playsinline
+                   class="w-full h-full object-contain">
+            </video>
+            <div class="absolute bottom-3 left-3 bg-black/60 px-3 py-1 rounded-lg text-white text-xs font-semibold flex items-center gap-1">
+              <span class="material-icons text-sm text-green-400">screen_share</span>
+              {{ isSharingScreen ? userName + ' (Vous)' : sharingParticipant?.name }} — Partage d'écran
+            </div>
+          </div>
+
+          <!-- Thumbnail strip (right side) -->
+          <div class="flex flex-col gap-2 w-44 overflow-y-auto">
+            <!-- Local thumbnail -->
+            <div class="relative bg-[#3c4043] rounded-xl overflow-hidden aspect-video flex-shrink-0">
+              <video #localVideo autoplay muted playsinline
+                     class="w-full h-full object-cover"
+                     [class.hidden]="isVideoOff"></video>
+              <div *ngIf="isVideoOff"
+                   class="absolute inset-0 flex items-center justify-center bg-[#3c4043]">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg"
+                     [style.background]="getAvatarColor(userName)">
+                  {{ userName.charAt(0).toUpperCase() }}
+                </div>
+              </div>
+              <div class="absolute bottom-1 left-1 text-white text-xs bg-black/50 px-1.5 py-0.5 rounded">
+                Vous
+              </div>
+            </div>
+
+            <!-- Remote thumbnails -->
+            <div *ngFor="let p of participants"
+                 class="relative bg-[#3c4043] rounded-xl overflow-hidden aspect-video flex-shrink-0">
+              <video [id]="p.videoElementId" autoplay playsinline
+                     class="w-full h-full object-cover"
+                     [class.hidden]="p.isVideoOff || !p.stream"></video>
+              <div *ngIf="p.isVideoOff || !p.stream"
+                   class="absolute inset-0 flex items-center justify-center bg-[#3c4043]">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg"
+                     [style.background]="getAvatarColor(p.name)">
+                  {{ p.name.charAt(0).toUpperCase() }}
+                </div>
+              </div>
+              <div class="absolute bottom-1 left-1 text-white text-xs bg-black/50 px-1.5 py-0.5 rounded truncate max-w-full">
+                {{ p.name }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ── NORMAL GRID LAYOUT ──────────────────────────────────────────── -->
+      <ng-container *ngIf="!isSharingScreen && !sharingParticipant">
+        <div class="w-full h-full"
+             [ngClass]="getGridClass()">
+
+          <!-- Local tile -->
+          <div class="relative bg-[#3c4043] rounded-2xl overflow-hidden group"
+               [class.ring-2]="isSpeaking"
+               [class.ring-blue-400]="isSpeaking">
+
+            <video #localVideo autoplay muted playsinline
+                   class="w-full h-full object-cover"
+                   [class.hidden]="isVideoOff"></video>
+
+            <!-- Avatar when video off -->
+            <div *ngIf="isVideoOff"
+                 class="absolute inset-0 flex items-center justify-center"
+                 [style.background]="getAvatarColor(userName) + '33'">
+              <div class="w-24 h-24 rounded-full flex items-center justify-center text-white font-bold text-4xl shadow-lg"
+                   [style.background]="getAvatarColor(userName)">
+                {{ userName.charAt(0).toUpperCase() }}
+              </div>
+            </div>
+
+            <!-- Name label -->
+            <div class="absolute bottom-3 left-3 flex items-center gap-2">
+              <div class="bg-black/60 backdrop-blur-sm px-3 py-1 rounded-lg flex items-center gap-2">
+                <span class="text-white text-sm font-medium">{{ userName }} (Vous)</span>
+                <span *ngIf="isMuted" class="material-icons text-red-400 text-sm">mic_off</span>
+              </div>
+            </div>
+
+            <!-- Hover overlay -->
+            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all rounded-2xl"></div>
+          </div>
+
+          <!-- Remote participant tiles -->
+          <div *ngFor="let p of participants"
+               class="relative bg-[#3c4043] rounded-2xl overflow-hidden group"
+               [class.ring-2]="p.isSpeaking"
+               [class.ring-blue-400]="p.isSpeaking">
+
+            <video [id]="p.videoElementId" autoplay playsinline
+                   class="w-full h-full object-cover"
+                   [class.hidden]="p.isVideoOff || !p.stream"></video>
+
+            <!-- Avatar when video off or no stream -->
+            <div *ngIf="p.isVideoOff || !p.stream"
+                 class="absolute inset-0 flex items-center justify-center"
+                 [style.background]="getAvatarColor(p.name) + '33'">
+              <div class="w-24 h-24 rounded-full flex items-center justify-center text-white font-bold text-4xl shadow-lg"
+                   [style.background]="getAvatarColor(p.name)">
+                {{ p.name.charAt(0).toUpperCase() }}
+              </div>
+              <div *ngIf="!p.stream" class="absolute bottom-16 text-gray-400 text-xs">Connexion...</div>
+            </div>
+
+            <!-- Name label -->
+            <div class="absolute bottom-3 left-3 flex items-center gap-2">
+              <div class="bg-black/60 backdrop-blur-sm px-3 py-1 rounded-lg flex items-center gap-2">
+                <span class="text-white text-sm font-medium">{{ p.name }}</span>
+                <span *ngIf="p.isMuted" class="material-icons text-red-400 text-sm">mic_off</span>
+              </div>
+            </div>
+
+            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all rounded-2xl"></div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+
+    <!-- ── SIDEBAR ─────────────────────────────────────────────────────── -->
+    <div *ngIf="showChat || showParticipants"
+         class="absolute right-0 top-0 bottom-0 w-80 bg-[#2d2e30] border-l border-[#3c4043] flex flex-col rounded-l-2xl overflow-hidden">
+
+      <!-- Sidebar tabs -->
+      <div class="flex border-b border-[#3c4043]">
+        <button (click)="showChat=true; showParticipants=false; unreadMessages=0"
+                class="flex-1 py-3 text-sm font-medium transition-all"
+                [class.text-white]="showChat"
+                [class.border-b-2]="showChat"
+                [class.border-blue-400]="showChat"
+                [class.text-gray-400]="!showChat">
+          Chat
+          <span *ngIf="unreadMessages > 0 && !showChat"
+                class="ml-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+            {{ unreadMessages }}
+          </span>
+        </button>
+        <button (click)="showParticipants=true; showChat=false"
+                class="flex-1 py-3 text-sm font-medium transition-all"
+                [class.text-white]="showParticipants"
+                [class.border-b-2]="showParticipants"
+                [class.border-blue-400]="showParticipants"
+                [class.text-gray-400]="!showParticipants">
+          Participants ({{ getParticipantCount() }})
+        </button>
+        <button (click)="showChat=false; showParticipants=false"
+                class="px-3 text-gray-400 hover:text-white transition-all">
+          <span class="material-icons text-base">close</span>
+        </button>
+      </div>
+
+      <!-- CHAT PANEL -->
+      <div *ngIf="showChat" class="flex-1 flex flex-col overflow-hidden">
+        <div #chatContainer class="flex-1 overflow-y-auto p-4 space-y-3">
+          <div *ngFor="let msg of chatMessages">
+            <!-- System message -->
+            <div *ngIf="msg.isSystem" class="text-center text-gray-500 text-xs py-1">
+              {{ msg.message }}
+            </div>
+            <!-- User message -->
+            <div *ngIf="!msg.isSystem">
+              <div class="flex items-start gap-2">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                     [style.background]="getAvatarColor(msg.sender)">
+                  {{ msg.sender.charAt(0).toUpperCase() }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-baseline gap-2 mb-1">
+                    <span class="text-sm font-semibold"
+                          [class.text-blue-400]="msg.sender === userName"
+                          [class.text-gray-300]="msg.sender !== userName">
+                      {{ msg.sender === userName ? 'Vous' : msg.sender }}
+                    </span>
+                    <span class="text-gray-500 text-xs">{{ msg.timestamp | date:'HH:mm' }}</span>
+                  </div>
+                  <div class="bg-[#3c4043] rounded-2xl rounded-tl-sm px-3 py-2 text-white text-sm break-words">
+                    {{ msg.message }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 border-t border-[#3c4043]">
+          <div class="flex items-center gap-2 bg-[#3c4043] rounded-full px-4 py-2">
+            <input type="text"
+                   [(ngModel)]="newMessage"
+                   (keyup.enter)="sendMessage()"
+                   placeholder="Envoyer un message..."
+                   class="flex-1 bg-transparent text-white text-sm placeholder-gray-500 focus:outline-none">
+            <button (click)="sendMessage()"
+                    [disabled]="!newMessage.trim()"
+                    class="text-blue-400 hover:text-blue-300 disabled:text-gray-600 transition-all">
+              <span class="material-icons text-base">send</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PARTICIPANTS PANEL -->
+      <div *ngIf="showParticipants" class="flex-1 overflow-y-auto p-4 space-y-2">
+        <!-- Local user -->
+        <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-[#3c4043] transition-all">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
+               [style.background]="getAvatarColor(userName)">
+            {{ userName.charAt(0).toUpperCase() }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-white text-sm font-medium truncate">{{ userName }}</p>
+            <p class="text-gray-400 text-xs">Vous · Hôte</p>
+          </div>
+          <div class="flex gap-1">
+            <span class="material-icons text-sm" [class.text-red-400]="isMuted" [class.text-gray-400]="!isMuted">
+              {{ isMuted ? 'mic_off' : 'mic' }}
+            </span>
+            <span class="material-icons text-sm" [class.text-red-400]="isVideoOff" [class.text-gray-400]="!isVideoOff">
+              {{ isVideoOff ? 'videocam_off' : 'videocam' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Remote participants -->
+        <div *ngFor="let p of participants"
+             class="flex items-center gap-3 p-2 rounded-xl hover:bg-[#3c4043] transition-all">
+          <div class="relative">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
+                 [style.background]="getAvatarColor(p.name)">
+              {{ p.name.charAt(0).toUpperCase() }}
+            </div>
+            <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#2d2e30]"
+                  [class.bg-green-400]="p.stream"
+                  [class.bg-yellow-400]="!p.stream"></span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-white text-sm font-medium truncate">{{ p.name }}</p>
+            <p class="text-gray-400 text-xs">{{ p.stream ? 'Connecté' : 'Connexion...' }}</p>
+          </div>
+          <div class="flex gap-1">
+            <span class="material-icons text-sm" [class.text-red-400]="p.isMuted" [class.text-gray-400]="!p.isMuted">
+              {{ p.isMuted ? 'mic_off' : 'mic' }}
+            </span>
+            <span class="material-icons text-sm" [class.text-red-400]="p.isVideoOff" [class.text-gray-400]="!p.isVideoOff">
+              {{ p.isVideoOff ? 'videocam_off' : 'videocam' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BOTTOM CONTROLS ────────────────────────────────────────────────── -->
+  <div class="bg-[#202124] px-6 py-4 flex items-center justify-between">
+    <!-- Left: room name -->
+    <div class="w-48 hidden md:block">
+      <p class="text-white text-sm font-medium truncate">Session Live</p>
+      <p class="text-gray-400 text-xs truncate">{{ roomId }}</p>
+    </div>
+
+    <!-- Center: controls -->
+    <div class="flex items-center gap-2">
+      <!-- Mic -->
+      <button (click)="toggleMute()"
+              [class.bg-red-600]="isMuted"
+              [class.hover:bg-red-700]="isMuted"
+              [class.bg-[#3c4043]]="!isMuted"
+              [class.hover:bg-[#4a4d51]]="!isMuted"
+              class="w-14 h-14 rounded-full flex flex-col items-center justify-center gap-0.5 transition-all group"
+              [title]="isMuted ? 'Activer le micro' : 'Couper le micro'">
+        <span class="material-icons text-white text-xl">{{ isMuted ? 'mic_off' : 'mic' }}</span>
+      </button>
+
+      <!-- Camera -->
+      <button (click)="toggleVideo()"
+              [class.bg-red-600]="isVideoOff"
+              [class.hover:bg-red-700]="isVideoOff"
+              [class.bg-[#3c4043]]="!isVideoOff"
+              [class.hover:bg-[#4a4d51]]="!isVideoOff"
+              class="w-14 h-14 rounded-full flex flex-col items-center justify-center gap-0.5 transition-all"
+              [title]="isVideoOff ? 'Activer la caméra' : 'Désactiver la caméra'">
+        <span class="material-icons text-white text-xl">{{ isVideoOff ? 'videocam_off' : 'videocam' }}</span>
+      </button>
+
+      <!-- Screen share -->
+      <button (click)="toggleScreenShare()"
+              [class.bg-blue-600]="isSharingScreen"
+              [class.hover:bg-blue-700]="isSharingScreen"
+              [class.bg-[#3c4043]]="!isSharingScreen"
+              [class.hover:bg-[#4a4d51]]="!isSharingScreen"
+              class="w-14 h-14 rounded-full flex flex-col items-center justify-center gap-0.5 transition-all"
+              [title]="isSharingScreen ? 'Arrêter le partage' : 'Partager l\'écran'">
+        <span class="material-icons text-white text-xl">{{ isSharingScreen ? 'stop_screen_share' : 'present_to_all' }}</span>
+      </button>
+
+      <!-- Chat -->
+      <button (click)="toggleChat()"
+              [class.bg-blue-600]="showChat"
+              [class.hover:bg-blue-700]="showChat"
+              [class.bg-[#3c4043]]="!showChat"
+              [class.hover:bg-[#4a4d51]]="!showChat"
+              class="w-14 h-14 rounded-full flex items-center justify-center transition-all relative"
+              title="Chat">
+        <span class="material-icons text-white text-xl">chat_bubble_outline</span>
+        <span *ngIf="unreadMessages > 0 && !showChat"
+              class="absolute top-1 right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+          {{ unreadMessages > 9 ? '9+' : unreadMessages }}
+        </span>
+      </button>
+
+      <!-- Participants -->
+      <button (click)="toggleParticipants()"
+              [class.bg-blue-600]="showParticipants"
+              [class.hover:bg-blue-700]="showParticipants"
+              [class.bg-[#3c4043]]="!showParticipants"
+              [class.hover:bg-[#4a4d51]]="!showParticipants"
+              class="w-14 h-14 rounded-full flex items-center justify-center transition-all"
+              title="Participants">
+        <span class="material-icons text-white text-xl">people_outline</span>
+      </button>
+    </div>
+
+    <!-- Right: leave button -->
+    <div class="w-48 flex justify-end">
+      <button (click)="leaveRoom()"
+              class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-full font-semibold transition-all flex items-center gap-2 text-sm">
+        <span class="material-icons text-base">call_end</span>
+        Quitter
+      </button>
+    </div>
+  </div>
+</div>

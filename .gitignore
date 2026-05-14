@@ -1,0 +1,27 @@
+# Java / Maven
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Angular / Node
+**/node_modules/
+**/dist/
+**/.angular/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+*.env
+

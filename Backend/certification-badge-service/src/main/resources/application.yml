@@ -1,0 +1,106 @@
+spring:
+  application:
+    name: certification-badge-service
+
+  datasource:
+    url: jdbc:mysql://mysql:3306/smartek_certification?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  flyway:
+    enabled: false
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    validate-on-migrate: false
+
+  cloud:
+    config:
+      enabled: false
+
+  mail:
+    host: sandbox.smtp.mailtrap.io
+    port: 2525
+    username: your_mailtrap_username
+    password: your_mailtrap_password
+    from: noreply@smartek.com
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  port: 8094
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+    registry-fetch-interval-seconds: 30
+    initial-instance-info-replication-interval-seconds: 10
+    instance-info-replication-interval-seconds: 10
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+
+logging:
+  level:
+    com.smartek: DEBUG
+    org.springframework.security: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+  health:
+    db:
+      enabled: true
+    mail:
+      enabled: false
+
+jwt:
+  secret: smartek-secret-key-for-jwt-token-generation-2024-very-secure
+  expiration: 86400000
+
+internal:
+  api-key: exam-service-dev-key
+
+auth-service:
+  base-url: http://auth-service:8081
+
+certificate:
+  keystore:
+    path: smartek-keystore.p12
+    password: smartek123
+    alias: smartek
+  verification:
+    base-url: http://certification-badge-service:8094
+
+pdf:
+  signing:
+    keystore-path: smartek-keystore.p12
+    keystore-password: smartek123
+    key-alias: smartek
+    password: smartek123
+    alias: smartek
+  verification:
+    base-url: http://certification-badge-service:8094
