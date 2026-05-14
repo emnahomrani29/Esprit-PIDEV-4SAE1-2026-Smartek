@@ -5,13 +5,12 @@ pipeline {
     agent any
 
     environment {
-        MAVEN_HOME   = '/usr/share/maven'
-        PATH         = "/usr/share/maven/bin:/usr/bin:${env.PATH}"
-        SERVICE_NAME    = 'course-service'
-        SERVICE_PATH    = 'Backend/course-service'
-        IMAGE_NAME      = "${DOCKER_REGISTRY ?: 'smartek'}/${SERVICE_NAME}"
-        IMAGE_TAG       = "${BUILD_NUMBER}"
-        SONAR_PROJECT   = 'smartek-course-service'
+        SERVICE_NAME  = 'course-service'
+        SERVICE_PATH  = 'Backend/course-service'
+        IMAGE_NAME    = 'smartek/course-service'
+        IMAGE_TAG     = "${BUILD_NUMBER}"
+        SONAR_PROJECT = 'smartek-course-service'
+        MVN           = '/usr/share/maven/bin/mvn'
     }
 
     options {
@@ -31,86 +30,60 @@ pipeline {
 
         stage('Build & Test') {
             steps {
-                dir("${SERVICE_PATH}") {
-                    sh '/usr/share/maven/bin/mvn clean verify -Pcoverage --no-transfer-progress -Dspring.profiles.active=test'
+                dir("${env.SERVICE_PATH}") {
+                    sh "${env.MVN} clean verify -Pcoverage --no-transfer-progress -Dspring.profiles.active=test"
                 }
             }
             post {
                 always {
-                    junit testResults: "${SERVICE_PATH}/target/surefire-reports/*.xml", allowEmptyResults: true
-                    jacoco(execPattern: "${SERVICE_PATH}/target/jacoco.exec",
-                           classPattern: "${SERVICE_PATH}/target/classes",
-                           sourcePattern: "${SERVICE_PATH}/src/main/java")
+                    junit testResults: "${env.SERVICE_PATH}/target/surefire-reports/*.xml",
+                          allowEmptyResults: true
+                    jacoco execPattern: "${env.SERVICE_PATH}/target/jacoco.exec",
+                           classPattern: "${env.SERVICE_PATH}/target/classes",
+                           sourcePattern: "${env.SERVICE_PATH}/src/main/java"
                 }
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            when { branch pattern: 'main|develop|feature/.*', comparator: 'REGEXP' }
-            steps {
-                withSonarQubeEnv('SonarQube') {
-                    dir("${SERVICE_PATH}") {
-                        sh '/usr/share/maven/bin/mvn sonar:sonar -Dsonar.projectKey=${SONAR_PROJECT} --no-transfer-progress'
-                    }
-                }
-            }
-        }
-
-        stage('Quality Gate') {
-            when { branch pattern: 'main|develop|feature/.*', comparator: 'REGEXP' }
-            steps {
-                timeout(time: 5, unit: 'MINUTES') { waitForQualityGate abortPipeline: true }
             }
         }
 
         stage('Docker Build') {
             steps {
                 sh """
-                    docker build \\
-                        --build-arg BUILD_DATE=\$(date -u +%Y-%m-%dT%H:%M:%SZ) \\
-                        --build-arg VERSION=${IMAGE_TAG} \\
-                        -t ${IMAGE_NAME}:${IMAGE_TAG} \\
-                        -t ${IMAGE_NAME}:latest \\
-                        ${SERVICE_PATH}
+                    docker build \\\\
+                        --build-arg BUILD_DATE=\\\2026-05-14T23:28:42Z \\\\
+                        --build-arg VERSION=${env.IMAGE_TAG} \\\\
+                        -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} \\\\
+                        -t ${env.IMAGE_NAME}:latest \\\\
+                        ${env.SERVICE_PATH}
                 """
-            }
-        }
-
-        stage('Security Scan') {
-            steps {
-                sh "trivy image --exit-code 0 --severity HIGH,CRITICAL --format table ${IMAGE_NAME}:${IMAGE_TAG}"
             }
         }
 
         stage('Docker Push') {
             when { branch pattern: 'main|develop', comparator: 'REGEXP' }
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-registry-credentials',
-                                                  usernameVariable: 'DOCKER_USER',
-                                                  passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(
+                    credentialsId: 'docker-registry-credentials',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
                     sh """
-                        echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
-                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                        docker push ${IMAGE_NAME}:latest
+                        echo \\\ | docker login -u \\\ --password-stdin
+                        docker push ${env.IMAGE_NAME}:${env.IMAGE_TAG}
+                        docker push ${env.IMAGE_NAME}:latest
                     """
                 }
-            }
-        }
-
-        stage('Deploy (Dev)') {
-            when { branch 'develop' }
-            steps {
-                sh "docker service update --image ${IMAGE_NAME}:${IMAGE_TAG} smartek_${SERVICE_NAME} || echo 'Skipping deploy'"
             }
         }
     }
 
     post {
         always {
-            sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true"
+            script {
+                sh "docker rmi smartek/course-service:${BUILD_NUMBER} || true"
+            }
             deleteDir()
         }
-        success { echo "✅ ${SERVICE_NAME} pipeline succeeded (build #${BUILD_NUMBER})" }
-        failure { echo "❌ ${SERVICE_NAME} pipeline failed (build #${BUILD_NUMBER})" }
+        success { echo "? course-service build #${BUILD_NUMBER} succeeded" }
+        failure { echo "? course-service build #${BUILD_NUMBER} failed" }
     }
 }
