@@ -22,11 +22,11 @@ services:
       - "8080:8080"
       - "50000:50000"
     environment:
-      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false -Xmx1024m
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false -Xmx1536m
     deploy:
       resources:
         limits:
-          memory: 1536M
+          memory: 2G
         reservations:
           memory: 512M
     volumes:

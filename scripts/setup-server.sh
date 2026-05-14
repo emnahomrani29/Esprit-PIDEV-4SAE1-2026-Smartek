@@ -1,18 +1,18 @@
 #!/bin/bash
 # =============================================================================
-# SMARTEK Sprint 3 — VM Setup Helper Script
+# SMARTEK Sprint 3 — Server Setup Helper Script
 # =============================================================================
-# Run this on your fresh Ubuntu 22.04 VM as the smartek user
+# Run this on your fresh Ubuntu 22.04 server (cloud or VM) as the smartek user
 # =============================================================================
 
 set -e
 
-VM_IP="${1:-192.168.1.100}"
+SERVER_IP="${1:-192.168.1.100}"
 DOCKER_USER="${2:-<DOCKER_HUB_USER>}"
 
 echo "=========================================="
-echo "SMARTEK Sprint 3 — VM Setup"
-echo "VM IP: $VM_IP"
+echo "SMARTEK Sprint 3 — Server Setup"
+echo "Server IP: $SERVER_IP"
 echo "Docker Hub User: $DOCKER_USER"
 echo "=========================================="
 
@@ -107,9 +107,9 @@ git checkout offers-service 2>/dev/null || git checkout -b offers-service origin
 # 8. Replace placeholders
 # -----------------------------------------------------------------------------
 echo "[8/8] Replacing placeholders in configs..."
-sed -i "s/192.168.1.100/$VM_IP/g" jenkins/ci/Jenkinsfile-auth-service
-sed -i "s/192.168.1.100/$VM_IP/g" jenkins/ci/Jenkinsfile-offers-service
-sed -i "s/<VM_IP>/$VM_IP/g" k8s/infra/api-gateway/api-gateway-deployment.yaml
+sed -i "s/192.168.1.100/$SERVER_IP/g" jenkins/ci/Jenkinsfile-auth-service
+sed -i "s/192.168.1.100/$SERVER_IP/g" jenkins/ci/Jenkinsfile-offers-service
+sed -i "s/<SERVER_IP>/$SERVER_IP/g" k8s/infra/api-gateway/api-gateway-deployment.yaml
 sed -i "s/<DOCKER_HUB_USER>/$DOCKER_USER/g" k8s/apps/auth-service/auth-service-deployment.yaml
 sed -i "s/<DOCKER_HUB_USER>/$DOCKER_USER/g" k8s/apps/offers-service/offers-service-deployment.yaml
 sed -i "s/<DOCKER_HUB_USER>/$DOCKER_USER/g" k8s/apps/frontend/frontend-deployment.yaml

@@ -1,34 +1,23 @@
 # SMARTEK — Sprint 3 DevOps Complete Guide
 
-> **Scope:** Deploy the SMARTEK platform (Infra + Auth Service + Offers Service + Frontend) on a **KubeAdm cluster** inside a VM, with a full **CI/CD Jenkins pipeline**, **SonarQube**, **Nexus**, **Vault**, **Prometheus**, and **Grafana**.
+> **Scope:** Deploy the SMARTEK platform (Infra + Auth Service + Offers Service + Frontend) on a **KubeAdm cluster** on a cloud server, with a full **CI/CD Jenkins pipeline**, **SonarQube**, **Nexus**, **Vault**, **Prometheus**, and **Grafana**.
 
 ---
 
-## ⚠️ IMPORTANT: 8GB RAM / 2 vCPU Setup
+## ⚠️ IMPORTANT: Cloud Server Setup
 
-This guide is **optimized for 8GB RAM and 2 vCPU**. It is tight but doable for a demo.
+This guide is written for a **cloud server** (e.g., Hetzner, AWS, DigitalOcean) with a **public IP address**.
 
-### What was optimized:
-- **Memory limits** added to all Docker containers (Jenkins, SonarQube, Nexus, Vault)
-- **Memory & CPU limits** added to all Kubernetes pods (MySQL, Eureka, services, monitoring)
-- **SonarQube** tuned down to use ~1.5GB max (was ~3GB)
-- **Nexus** tuned down to use ~1GB max
+**Why cloud instead of local VM?**
+- No VirtualBox/VMware slowness
+- No NAT/port-forwarding headaches
+- GitHub webhooks work out of the box (public IP)
+- 16GB RAM + 4 vCPU = smooth experience
+- You can access everything from your PC browser directly
 
-### Tips to survive 8GB:
-1. **Start services one by one** — don't launch everything simultaneously
-2. **If a pod gets `OOMKilled`** — increase its memory limit slightly or reduce another service's limit
-3. **During build**, Jenkins + Maven uses a lot of RAM. Close any browser tabs on the VM host
-4. **If the VM freezes** — increase VM swap:
-   ```bash
-   sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile
-   ```
-5. **For evaluation day** — if you only need to show the running app, you can temporarily stop SonarQube or Nexus:
-   ```bash
-   docker stop sonarqube sonar-db nexus
-   ```
+> **Security note:** This server will expose Jenkins, SonarQube, Nexus, and your app to the internet. We will set up a basic firewall, but **shut down the server after your evaluation** — do not leave it running.
 
-### Recommended upgrade (if possible):
-If you can bump to **12–16GB RAM**, the experience will be much smoother. But **8GB works** — just follow the limits.
+---
 
 ---
 
@@ -37,8 +26,8 @@ If you can bump to **12–16GB RAM**, the experience will be much smoother. But 
 ## Table of Contents
 
 1. [Architecture Overview](#1-architecture-overview)
-2. [VM Specifications & OS Setup](#2-vm-specifications--os-setup)
-3. [Install Docker on the VM](#3-install-docker-on-the-vm)
+2. [Server Setup (Hetzner Cloud)](#2-server-setup-hetzner-cloud)
+3. [Install Docker on the Server](#3-install-docker-on-the-server)
 4. [Set Up the KubeAdm Cluster](#4-set-up-the-kubeadm-cluster)
 5. [Deploy DevOps Tools (Jenkins, SonarQube, Nexus, Vault)](#5-deploy-devops-tools-jenkins-sonarqube-nexus-vault)
 6. [Configure Jenkins](#6-configure-jenkins)
@@ -58,9 +47,9 @@ If you can bump to **12–16GB RAM**, the experience will be much smoother. But 
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                              UBUNTU 22.04 VM                                │
+│                           UBUNTU 22.04 CLOUD SERVER                         │
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │              KUBEADM CLUSTER (inside VM)                            │   │
+│  │              KUBEADM CLUSTER (on server)                            │   │
 │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐  │   │
 │  │  │  MySQL   │ │  Eureka  │ │  Config  │ │ API GW   │ │ Offers   │  │   │
 │  │  │          │ │  Server  │ │  Server  │ │          │ │ Service  │  │   │
@@ -72,72 +61,140 @@ If you can bump to **12–16GB RAM**, the experience will be much smoother. But 
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐                       │
 │  │ Jenkins  │ │SonarQube │ │  Nexus   │ │  Vault   │  ← Docker containers  │
-│  │  :8080   │ │  :9000   │ │  :8081   │ │  :8200   │    on VM host         │
+│  │  :8080   │ │  :9000   │ │  :8081   │ │  :8200   │    on server host     │
 │  └──────────┘ └──────────┘ └──────────┘ └──────────┘                       │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 2. VM Specifications & OS Setup
+## 2. Server Setup (Hetzner Cloud)
 
 ### Recommended Specs
-| Resource | Minimum | Recommended |
-|----------|---------|-------------|
-| **RAM** | 8 GB | **16 GB** |
-| **vCPU** | 2 | **4** |
-| **Disk** | 40 GB | **60 GB SSD** |
-| **OS** | — | **Ubuntu 22.04 LTS Server** |
+| Resource | Spec |
+|----------|------|
+| **RAM** | **16 GB** |
+| **vCPU** | **4** |
+| **Disk** | **160 GB** |
+| **OS** | **Ubuntu 22.04 LTS** |
+| **Location** | Any (closest to you) |
 
-### 2.1 Install Ubuntu 22.04
-1. Download Ubuntu 22.04 LTS Server ISO.
-2. Create a new VM in VirtualBox / VMware / cloud provider.
-3. During setup:
-   - Create user: `smartek` (or your name)
-   - Enable OpenSSH server.
-   - Let it install updates automatically.
-
-### 2.2 Initial VM Configuration
-```bash
-# Update system
-sudo apt update && sudo apt upgrade -y
-
-# Install essentials
-sudo apt install -y curl wget git vim net-tools openssh-server
-
-# Set static IP (optional but recommended)
-# Edit /etc/netplan/00-installer-config.yaml
-sudo nano /etc/netplan/00-installer-config.yaml
-```
-
-Example netplan config for static IP:
-```yaml
-network:
-  version: 2
-  ethernets:
-    eth0:
-      dhcp4: no
-      addresses:
-        - 192.168.1.100/24
-      routes:
-        - to: default
-          via: 192.168.1.1
-      nameservers:
-        addresses:
-          - 8.8.8.8
-          - 1.1.1.1
-```
-
-Apply:
-```bash
-sudo netplan apply
-```
-
-> **Note:** Replace `192.168.1.100` with your actual VM IP. Update `VM_IP` in all pipeline files accordingly.
+> Example Hetzner server: **CCX23** (4 AMD vCPU, 16GB RAM, 160GB NVMe)
 
 ---
 
-## 3. Install Docker on the VM
+### Step 0: Generate an SSH Key (on your PC)
+
+If you don't have an SSH key yet, generate one on your **local PC** (not the server):
+
+```bash
+# Windows (Git Bash / WSL / PowerShell)
+ssh-keygen -t ed25519 -C "your-email@example.com"
+
+# Press Enter to save to default location (~/.ssh/id_ed25519)
+# Press Enter twice for no passphrase (simpler for demos)
+```
+
+Copy the **public key** to your clipboard:
+```bash
+# macOS
+pbcopy < ~/.ssh/id_ed255.pub
+
+# Windows (Git Bash)
+cat ~/.ssh/id_ed25519.pub | clip
+
+# Linux
+xclip -sel clip < ~/.ssh/id_ed25519.pub
+```
+
+---
+
+### Step 1: Create the Server on Hetzner
+
+1. Go to [Hetzner Cloud Console](https://console.hetzner.cloud/)
+2. **Projects** → Select or create a project
+3. Click **Add Server**
+4. **Location:** Pick closest to you (e.g., Nuremberg, Falkenstein, Helsinki)
+5. **Image:** `Ubuntu 22.04`
+6. **Type:** `CCX23` (4 vCPU, 16GB RAM) or equivalent
+7. **SSH Key:** Click **Add SSH Key** → paste your public key → name it `my-pc`
+8. **Name:** `smartek-devops`
+9. Click **Create & Buy Now**
+
+Wait ~1 minute for the server to be ready.
+
+---
+
+### Step 2: Connect to Your Server
+
+Your server now has a **public IP** (e.g., `78.46.123.45`).
+
+From your PC:
+```bash
+ssh root@YOUR_SERVER_IP
+```
+
+Example:
+```bash
+ssh root@78.46.123.45
+```
+
+> **First time?** Type `yes` when asked about host authenticity.
+
+---
+
+### Step 3: Initial Server Configuration
+
+Once logged in as `root`:
+
+```bash
+# Update system
+apt update && apt upgrade -y
+
+# Install essentials
+apt install -y curl wget git vim net-tools ufw
+
+# Create a non-root user (recommended)
+adduser smartek
+usermod -aG sudo smartek
+
+# Copy SSH key to new user
+mkdir -p /home/smartek/.ssh
+cp /root/.ssh/authorized_keys /home/smartek/.ssh/
+chown -R smartek:smartek /home/smartek/.ssh
+chmod 700 /home/smartek/.ssh
+chmod 600 /home/smartek/.ssh/authorized_keys
+
+# Switch to new user
+su - smartek
+```
+
+From now on, use `smartek` user:
+```bash
+ssh smartek@YOUR_SERVER_IP
+```
+
+> **Shortcut:** We provide `scripts/setup-server.sh` in the repo that automates Docker, kubeadm, and config replacement. You can run it after cloning:
+> ```bash
+> chmod +x scripts/setup-server.sh
+> ./scripts/setup-server.sh YOUR_SERVER_IP yourdockerhubuser
+> ```
+
+---
+
+### Step 4: Note Your Server IP
+
+Your server IP is the **public IPv4** shown in the Hetzner console.  
+Example: `78.46.123.45`
+
+This is your `<SERVER_IP>` / `<SERVER_IP>` for the rest of the guide.  
+Replace all `192.168.1.100` placeholders with this IP.
+
+---
+
+---
+
+## 3. Install Docker on the Server
 
 ```bash
 # Remove old versions
@@ -164,6 +221,44 @@ newgrp docker
 # Verify
 docker --version
 ```
+
+---
+
+## 3.5 Configure Firewall (UFW)
+
+Your server is on the public internet. Open only the ports you need:
+
+```bash
+# Allow SSH (so you don't lock yourself out)
+sudo ufw allow 22/tcp
+
+# Allow Jenkins
+sudo ufw allow 8080/tcp
+
+# Allow SonarQube
+sudo ufw allow 9000/tcp
+
+# Allow Nexus
+sudo ufw allow 8081/tcp
+
+# Allow Vault
+sudo ufw allow 8200/tcp
+
+# Allow Kubernetes NodePorts (frontend, gateway, grafana, prometheus)
+sudo ufw allow 30090/tcp
+sudo ufw allow 30420/tcp
+sudo ufw allow 30091/tcp
+sudo ufw allow 30092/tcp
+
+# Enable firewall
+sudo ufw enable
+
+# Check status
+sudo ufw status
+```
+
+> **Hetzner Firewall (optional extra layer):**
+> You can also add a firewall in the Hetzner Console → `Firewall` → Create rules for the same ports. This blocks traffic before it even reaches your server.
 
 ---
 
@@ -219,7 +314,7 @@ sudo systemctl enable containerd
 
 ```bash
 # Initialize control plane
-sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address=<VM_IP>
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address=<SERVER_IP>
 
 # Example:
 # sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address=192.168.1.100
@@ -257,7 +352,7 @@ Both should show `Ready` / `Running`.
 
 ## 5. Deploy DevOps Tools (Jenkins, SonarQube, Nexus, Vault)
 
-All DevOps tools run as **Docker containers on the VM host** (outside K8s). This keeps Jenkins independent of cluster failures and simplifies networking.
+All DevOps tools run as **Docker containers on the server host** (outside K8s). This keeps Jenkins independent of cluster failures and simplifies networking.
 
 ### 5.1 Start the Tools Stack
 
@@ -282,7 +377,7 @@ You should see containers: `jenkins`, `sonarqube`, `sonar-db`, `nexus`, `vault`.
 ```bash
 docker stats --no-stream
 ```
-If memory usage is at the limit, increase the VM RAM or adjust the `deploy.resources.limits.memory` values in `docker-compose.tools.yml`.
+With 16GB RAM you shouldn't hit limits, but if any container restarts, check memory with `docker stats` and adjust `deploy.resources.limits.memory` in `docker-compose.tools.yml`.
 
 ---
 
@@ -290,7 +385,7 @@ If memory usage is at the limit, increase the VM RAM or adjust the `deploy.resou
 
 ### 6.1 First-Time Setup
 
-1. Open `http://<VM_IP>:8080`
+1. Open `http://<SERVER_IP>:8080`
 2. Get initial admin password:
    ```bash
    docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
@@ -401,7 +496,7 @@ docker compose -f docker-compose.tools.yml restart jenkins
 
 ## 7. Configure SonarQube
 
-1. Open `http://<VM_IP>:9000`
+1. Open `http://<SERVER_IP>:9000`
 2. Default login: `admin / admin`
 3. Change password when prompted (e.g., `admin123`).
 
@@ -424,7 +519,7 @@ docker compose -f docker-compose.tools.yml restart jenkins
 
 ## 8. Configure Nexus
 
-1. Open `http://<VM_IP>:8081`
+1. Open `http://<SERVER_IP>:8081`
 2. Get initial password:
    ```bash
    docker exec nexus cat /nexus-data/admin.password
@@ -455,7 +550,7 @@ If you later want to push Docker images to Nexus instead of Docker Hub:
 
 ## 9. Configure Vault
 
-1. Open `http://<VM_IP>:8200`
+1. Open `http://<SERVER_IP>:8200`
 2. Vault is running in **dev mode** with root token: `smartek-root-token`
 3. Login with **Token** method, token: `smartek-root-token`
 
@@ -509,13 +604,13 @@ For **each CI job**, enable the webhook trigger:
 
 The webhook URL format is the same for all jobs:
 ```
-http://<VM_IP>:8080/github-webhook/
+http://<SERVER_IP>:8080/github-webhook/
 ```
 
 ### 10.2 Add Webhook in GitHub
 
 1. Go to your GitHub repo → **Settings → Webhooks → Add webhook**
-2. **Payload URL:** `http://<VM_IP>:8080/github-webhook/`
+2. **Payload URL:** `http://<SERVER_IP>:8080/github-webhook/`
 3. **Content type:** `application/json`
 4. **Which events?** Just the `push` event
 5. Save.
@@ -524,10 +619,7 @@ http://<VM_IP>:8080/github-webhook/
 
 Make a small commit and push to any branch. The GitHub webhook will trigger **all CI jobs**, but each job checks if its service folder changed and skips if there are no changes. Only the affected service(s) will actually build and deploy.
 
-> **If your VM is behind NAT** (e.g., VirtualBox on your laptop), GitHub cannot reach `http://<VM_IP>:8080`. Use one of these workarounds:
-> - **ngrok:** `ngrok http 8080` → gives a public URL
-> - **Tailscale:** Put both your laptop and VM on the same Tailnet
-> - **Manual trigger:** Skip webhooks and run Jenkins jobs manually (the evaluator will likely accept manual trigger if you explain the NAT limitation)
+> ✅ **With a cloud server, webhooks work automatically!** GitHub can reach your public IP directly. No ngrok or Tailscale needed.
 
 ---
 
@@ -568,19 +660,19 @@ We use **per-service CI/CD pipelines**. Each service has its own Jenkinsfile. Th
 
 > **Infra CD** (`Jenkinsfile-infra`) deploys MySQL, Eureka, Config Server, API Gateway, Prometheus, and Grafana. Run this **once** before any app CD jobs.
 
-### 11.3 Important: Update VM_IP in Pipelines
+### 11.3 Important: Update SERVER_IP in Pipelines
 
-Before running, edit both Jenkinsfiles and replace `192.168.1.100` with your actual VM IP:
+Before running, edit the Jenkinsfiles and replace `192.168.1.100` with your actual server public IP:
 
 ```bash
 # In repo root
-sed -i 's/192.168.1.100/YOUR_VM_IP/g' jenkins/ci/Jenkinsfile-auth-service
-sed -i 's/192.168.1.100/YOUR_VM_IP/g' jenkins/ci/Jenkinsfile-offers-service
+sed -i 's/192.168.1.100/YOUR_SERVER_IP/g' jenkins/ci/Jenkinsfile-auth-service
+sed -i 's/192.168.1.100/YOUR_SERVER_IP/g' jenkins/ci/Jenkinsfile-offers-service
 ```
 
 Also update `k8s/infra/api-gateway/api-gateway-deployment.yaml`:
 ```bash
-sed -i 's/<VM_IP>/YOUR_VM_IP/g' k8s/infra/api-gateway/api-gateway-deployment.yaml
+sed -i 's/<SERVER_IP>/YOUR_SERVER_IP/g' k8s/infra/api-gateway/api-gateway-deployment.yaml
 ```
 
 ### 11.4 Important: Update Docker Hub User in K8s Manifests
@@ -645,10 +737,10 @@ kubectl logs -n smartek deployment/api-gateway --tail=50
 
 | Service | URL |
 |---------|-----|
-| Frontend | `http://<VM_IP>:30420` |
-| API Gateway | `http://<VM_IP>:30090` |
-| Grafana | `http://<VM_IP>:30092` |
-| Prometheus | `http://<VM_IP>:30091` |
+| Frontend | `http://<SERVER_IP>:30420` |
+| API Gateway | `http://<SERVER_IP>:30090` |
+| Grafana | `http://<SERVER_IP>:30092` |
+| Prometheus | `http://<SERVER_IP>:30091` |
 | Eureka (via port-forward) | `kubectl port-forward -n smartek svc/eureka-server 8761:8761` → `http://localhost:8761` |
 
 ---
@@ -658,17 +750,17 @@ kubectl logs -n smartek deployment/api-gateway --tail=50
 ### 13.1 Prometheus
 - Already configured via `prometheus-configmap.yaml`
 - Scrapes: Prometheus itself, Eureka, API Gateway, Offers Service, Config Server
-- Access: `http://<VM_IP>:30091`
+- Access: `http://<SERVER_IP>:30091`
 - Go to **Status → Targets** to verify all endpoints are UP.
 
 ### 13.2 Grafana
-- Access: `http://<VM_IP>:30092`
+- Access: `http://<SERVER_IP>:30092`
 - Login: `admin / admin`
 
 #### Add Prometheus Data Source
 1. **Configuration → Data Sources → Add data source**
 2. Select **Prometheus**
-3. URL: `http://prometheus:9090` (inside cluster) or `http://<VM_IP>:30091`
+3. URL: `http://prometheus:9090` (inside cluster) or `http://<SERVER_IP>:30091`
 4. Save & Test.
 
 #### Import Dashboards
@@ -685,15 +777,15 @@ You should now see JVM metrics, memory usage, HTTP requests, etc.
 
 | Tool / Service | URL / Command | Credentials |
 |----------------|---------------|-------------|
-| **Jenkins** | `http://<VM_IP>:8080` | admin / admin123 |
-| **SonarQube** | `http://<VM_IP>:9000` | admin / admin123 |
-| **Nexus** | `http://<VM_IP>:8081` | admin / *your-password* |
-| **Vault** | `http://<VM_IP>:8200` | Token: `smartek-root-token` |
+| **Jenkins** | `http://<SERVER_IP>:8080` | admin / admin123 |
+| **SonarQube** | `http://<SERVER_IP>:9000` | admin / admin123 |
+| **Nexus** | `http://<SERVER_IP>:8081` | admin / *your-password* |
+| **Vault** | `http://<SERVER_IP>:8200` | Token: `smartek-root-token` |
 | **K8s Dashboard** | `kubectl proxy` → `http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/` | Token auth |
-| **Frontend** | `http://<VM_IP>:30420` | — |
-| **API Gateway** | `http://<VM_IP>:30090` | — |
-| **Grafana** | `http://<VM_IP>:30092` | admin / admin |
-| **Prometheus** | `http://<VM_IP>:30091` | — |
+| **Frontend** | `http://<SERVER_IP>:30420` | — |
+| **API Gateway** | `http://<SERVER_IP>:30090` | — |
+| **Grafana** | `http://<SERVER_IP>:30092` | admin / admin |
+| **Prometheus** | `http://<SERVER_IP>:30091` | — |
 | **Eureka** | `kubectl port-forward -n smartek svc/eureka-server 8761:8761` | — |
 
 ---
@@ -713,9 +805,9 @@ docker exec -u root jenkins chown jenkins:jenkins /var/jenkins_home/.kube/config
 
 ### SonarQube analysis fails
 - Check `sonar-token` is saved in Jenkins.
-- Verify SonarQube URL (`http://<VM_IP>:9000`) is reachable from Jenkins container:
+- Verify SonarQube URL (`http://<SERVER_IP>:9000`) is reachable from Jenkins container:
   ```bash
-  docker exec jenkins curl -sf http://<VM_IP>:9000/api/system/status
+  docker exec jenkins curl -sf http://<SERVER_IP>:9000/api/system/status
   ```
 
 ### K8s pods stuck in `Pending`
@@ -742,7 +834,7 @@ kubectl get pvc -n smartek
 - DNS resolution works because both are in the `smartek` namespace.
 
 ### Grafana shows "No Data"
-- Verify Prometheus target is UP at `http://<VM_IP>:30091/targets`
+- Verify Prometheus target is UP at `http://<SERVER_IP>:30091/targets`
 - Check if `micrometer-registry-prometheus` dependency is present in offers-service (already added).
 - Ensure actuator endpoint `/actuator/prometheus` is accessible inside the cluster.
 
@@ -766,11 +858,11 @@ kubectl get nodes
 kubectl get pods -n smartek
 
 # 5. Access application
-# Frontend:     http://<VM_IP>:30420
-# API Gateway:  http://<VM_IP>:30090
-# Grafana:      http://<VM_IP>:30092
-# SonarQube:    http://<VM_IP>:9000
-# Jenkins:      http://<VM_IP>:8080
+# Frontend:     http://<SERVER_IP>:30420
+# API Gateway:  http://<SERVER_IP>:30090
+# Grafana:      http://<SERVER_IP>:30092
+# SonarQube:    http://<SERVER_IP>:9000
+# Jenkins:      http://<SERVER_IP>:8080
 ```
 
 ---
@@ -779,12 +871,12 @@ kubectl get pods -n smartek
 
 | File | What to Change |
 |------|----------------|
-| `jenkins/ci/Jenkinsfile-auth-service` | Replace `192.168.1.100` with your VM IP |
-| `jenkins/ci/Jenkinsfile-offers-service` | Replace `192.168.1.100` with your VM IP |
-| `jenkins/cd/Jenkinsfile-auth-service` | Replace `192.168.1.100` with your VM IP |
-| `jenkins/cd/Jenkinsfile-offers-service` | Replace `192.168.1.100` with your VM IP |
-| `jenkins/cd/Jenkinsfile-infra` | Replace `192.168.1.100` with your VM IP |
-| `k8s/infra/api-gateway/api-gateway-deployment.yaml` | Replace `<VM_IP>` with your VM IP |
+| `jenkins/ci/Jenkinsfile-auth-service` | Replace `192.168.1.100` with your server IP |
+| `jenkins/ci/Jenkinsfile-offers-service` | Replace `192.168.1.100` with your server IP |
+| `jenkins/cd/Jenkinsfile-auth-service` | Replace `192.168.1.100` with your server IP |
+| `jenkins/cd/Jenkinsfile-offers-service` | Replace `192.168.1.100` with your server IP |
+| `jenkins/cd/Jenkinsfile-infra` | Replace `192.168.1.100` with your server IP |
+| `k8s/infra/api-gateway/api-gateway-deployment.yaml` | Replace `<SERVER_IP>` with your server IP |
 | `k8s/apps/auth-service/auth-service-deployment.yaml` | Replace `<DOCKER_HUB_USER>` with your Docker Hub username |
 | `k8s/apps/offers-service/offers-service-deployment.yaml` | Replace `<DOCKER_HUB_USER>` with your Docker Hub username |
 | `k8s/apps/frontend/frontend-deployment.yaml` | Replace `<DOCKER_HUB_USER>` with your Docker Hub username |
