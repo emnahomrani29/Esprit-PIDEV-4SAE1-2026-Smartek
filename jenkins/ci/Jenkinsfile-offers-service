@@ -1,0 +1,137 @@
+pipeline {
+    agent any
+
+    environment {
+        OFFERS_DIR   = 'Backend/offers-service'
+        IMAGE_PREFIX = 'smartek'
+        VM_IP        = '192.168.1.100'
+        SONAR_URL    = "http://${VM_IP}:9000"
+        NEXUS_URL    = "http://${VM_IP}:8081"
+        NEXUS_REPO   = 'smartek-releases'
+    }
+
+    tools {
+        maven 'Maven-3.9'
+        jdk 'JDK17'
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage('Detect Changes') {
+            steps {
+                script {
+                    def changedFiles = sh(
+                        script: 'git diff --name-only HEAD~1 HEAD || git diff --name-only HEAD',
+                        returnStdout: true
+                    ).trim()
+                    echo "Changed files:\n${changedFiles}"
+                    if (!changedFiles.contains('Backend/offers-service/')) {
+                        echo "No changes in offers-service. Skipping pipeline."
+                        currentBuild.result = 'SUCCESS'
+                        error('No changes detected in offers-service')
+                    }
+                }
+            }
+        }
+
+        stage('Build & Test') {
+            steps {
+                dir("${OFFERS_DIR}") {
+                    sh 'mvn clean verify -B'
+                }
+            }
+            post {
+                always {
+                    junit "${OFFERS_DIR}/target/surefire-reports/*.xml"
+                    publishHTML(target: [
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: "${OFFERS_DIR}/target/site/jacoco",
+                        reportFiles: 'index.html',
+                        reportName: 'JaCoCo Coverage Report'
+                    ])
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                    dir("${OFFERS_DIR}") {
+                        sh """
+                            mvn sonar:sonar \
+                                -Dsonar.projectKey=offers-service \
+                                -Dsonar.projectName="Offers Service" \
+                                -Dsonar.host.url=${SONAR_URL} \
+                                -Dsonar.token=${SONAR_TOKEN} \
+                                -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Publish JAR to Nexus') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'nexus-credentials',
+                    usernameVariable: 'NEXUS_USER',
+                    passwordVariable: 'NEXUS_PASS'
+                )]) {
+                    dir("${OFFERS_DIR}") {
+                        sh """
+                            mvn deploy -DskipTests -B \
+                                -DaltDeploymentRepository=nexus::default::${NEXUS_URL}/repository/${NEXUS_REPO}/
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Build & Push Docker Image') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'docker-hub-credentials',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    script {
+                        def image = docker.build(
+                            "${DOCKER_USER}/${IMAGE_PREFIX}-offers-service:${BUILD_NUMBER}",
+                            "${OFFERS_DIR}"
+                        )
+                        docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-credentials') {
+                            image.push()
+                            image.push('latest')
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Update K8s Manifest Tag') {
+            steps {
+                sh """
+                    sed -i "s|<DOCKER_HUB_USER>.*\\/${IMAGE_PREFIX}-offers-service:.*|<DOCKER_HUB_USER>\\/${IMAGE_PREFIX}-offers-service:${BUILD_NUMBER}|g" \
+                        k8s/apps/offers-service/offers-service-deployment.yaml
+                """
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            build job: 'smartek-offers-service-cd', wait: false
+        }
+        failure {
+            echo 'Offers Service CI failed — CD will not be triggered.'
+        }
+    }
+}

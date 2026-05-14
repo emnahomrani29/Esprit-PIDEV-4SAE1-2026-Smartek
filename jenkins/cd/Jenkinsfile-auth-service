@@ -1,0 +1,72 @@
+pipeline {
+    agent any
+
+    environment {
+        KUBECONFIG = credentials('kubeconfig-file')
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage('Checkout Manifests') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Deploy Auth Service') {
+            steps {
+                script {
+                    sh """
+                        export KUBECONFIG=${KUBECONFIG}
+                        kubectl apply -f k8s/apps/auth-service/auth-service-configmap.yaml
+                        kubectl apply -f k8s/apps/auth-service/auth-service-deployment.yaml
+                        kubectl apply -f k8s/apps/auth-service/auth-service-service.yaml
+                    """
+                }
+            }
+        }
+
+        stage('Wait for Rollout') {
+            steps {
+                script {
+                    sh """
+                        export KUBECONFIG=${KUBECONFIG}
+                        kubectl rollout status deployment/auth-service -n smartek --timeout=180s
+                    """
+                }
+            }
+        }
+
+        stage('Smoke Test') {
+            steps {
+                script {
+                    sh """
+                        export KUBECONFIG=${KUBECONFIG}
+                        kubectl run probe-auth --image=curlimages/curl --restart=Never --rm -i -- \
+                            curl -sf http://auth-service.smartek.svc.cluster.local:8081/actuator/health \
+                            && echo "Auth Service is healthy" || echo "Auth Service probe failed"
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo """
+            =====================================================
+            AUTH SERVICE DEPLOYED SUCCESSFULLY
+            =====================================================
+            """
+        }
+        failure {
+            echo 'Auth Service CD failed — check K8s pod logs.'
+        }
+    }
+}

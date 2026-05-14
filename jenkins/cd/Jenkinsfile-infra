@@ -1,0 +1,111 @@
+pipeline {
+    agent any
+
+    environment {
+        KUBECONFIG = credentials('kubeconfig-file')
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '5'))
+    }
+
+    stages {
+        stage('Checkout Manifests') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Deploy Namespace & Infra') {
+            steps {
+                script {
+                    sh """
+                        export KUBECONFIG=${KUBECONFIG}
+
+                        # Namespace
+                        kubectl apply -f k8s/namespace.yaml
+
+                        # MySQL
+                        kubectl apply -f k8s/infra/mysql/mysql-pv.yaml
+                        kubectl apply -f k8s/infra/mysql/mysql-pvc.yaml
+                        kubectl apply -f k8s/infra/mysql/mysql-secret.yaml
+                        kubectl apply -f k8s/infra/mysql/mysql-deployment.yaml
+                        kubectl apply -f k8s/infra/mysql/mysql-service.yaml
+
+                        # Eureka
+                        kubectl apply -f k8s/infra/eureka/eureka-deployment.yaml
+                        kubectl apply -f k8s/infra/eureka/eureka-service.yaml
+
+                        # Config Server
+                        kubectl apply -f k8s/infra/config-server/config-server-deployment.yaml
+                        kubectl apply -f k8s/infra/config-server/config-server-service.yaml
+
+                        # API Gateway
+                        kubectl apply -f k8s/infra/api-gateway/api-gateway-deployment.yaml
+                        kubectl apply -f k8s/infra/api-gateway/api-gateway-service.yaml
+                    """
+                }
+            }
+        }
+
+        stage('Wait for Infra') {
+            steps {
+                script {
+                    sh """
+                        export KUBECONFIG=${KUBECONFIG}
+                        echo "Waiting for MySQL..."
+                        kubectl rollout status deployment/mysql -n smartek --timeout=180s
+
+                        echo "Waiting for Eureka..."
+                        kubectl rollout status deployment/eureka-server -n smartek --timeout=180s
+
+                        echo "Waiting for Config Server..."
+                        kubectl rollout status deployment/config-server -n smartek --timeout=180s
+
+                        echo "Waiting for API Gateway..."
+                        kubectl rollout status deployment/api-gateway -n smartek --timeout=180s
+                    """
+                }
+            }
+        }
+
+        stage('Deploy Monitoring') {
+            steps {
+                script {
+                    sh """
+                        export KUBECONFIG=${KUBECONFIG}
+                        kubectl apply -f k8s/monitoring/prometheus-configmap.yaml
+                        kubectl apply -f k8s/monitoring/prometheus-deployment.yaml
+                        kubectl apply -f k8s/monitoring/prometheus-service.yaml
+                        kubectl apply -f k8s/monitoring/grafana-deployment.yaml
+                        kubectl apply -f k8s/monitoring/grafana-service.yaml
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo """
+            =====================================================
+            INFRASTRUCTURE DEPLOYED SUCCESSFULLY
+            =====================================================
+            Services deployed:
+            - MySQL
+            - Eureka Server
+            - Config Server
+            - API Gateway
+            - Prometheus
+            - Grafana
+            =====================================================
+            """
+        }
+        failure {
+            echo 'Infra CD failed — check K8s pod logs.'
+        }
+    }
+}

@@ -1,0 +1,72 @@
+pipeline {
+    agent any
+
+    environment {
+        KUBECONFIG = credentials('kubeconfig-file')
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage('Checkout Manifests') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Deploy Offers Service') {
+            steps {
+                script {
+                    sh """
+                        export KUBECONFIG=${KUBECONFIG}
+                        kubectl apply -f k8s/apps/offers-service/offers-service-configmap.yaml
+                        kubectl apply -f k8s/apps/offers-service/offers-service-deployment.yaml
+                        kubectl apply -f k8s/apps/offers-service/offers-service-service.yaml
+                    """
+                }
+            }
+        }
+
+        stage('Wait for Rollout') {
+            steps {
+                script {
+                    sh """
+                        export KUBECONFIG=${KUBECONFIG}
+                        kubectl rollout status deployment/offers-service -n smartek --timeout=180s
+                    """
+                }
+            }
+        }
+
+        stage('Smoke Test') {
+            steps {
+                script {
+                    sh """
+                        export KUBECONFIG=${KUBECONFIG}
+                        kubectl run probe-offers --image=curlimages/curl --restart=Never --rm -i -- \
+                            curl -sf http://offers-service.smartek.svc.cluster.local:8085/actuator/health \
+                            && echo "Offers Service is healthy" || echo "Offers Service probe failed"
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo """
+            =====================================================
+            OFFERS SERVICE DEPLOYED SUCCESSFULLY
+            =====================================================
+            """
+        }
+        failure {
+            echo 'Offers Service CD failed — check K8s pod logs.'
+        }
+    }
+}

@@ -1,0 +1,73 @@
+pipeline {
+    agent any
+
+    environment {
+        KUBECONFIG = credentials('kubeconfig-file')
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage('Checkout Manifests') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Deploy Frontend') {
+            steps {
+                script {
+                    sh """
+                        export KUBECONFIG=${KUBECONFIG}
+                        kubectl apply -f k8s/apps/frontend/frontend-deployment.yaml
+                        kubectl apply -f k8s/apps/frontend/frontend-service.yaml
+                    """
+                }
+            }
+        }
+
+        stage('Wait for Rollout') {
+            steps {
+                script {
+                    sh """
+                        export KUBECONFIG=${KUBECONFIG}
+                        kubectl rollout status deployment/frontend -n smartek --timeout=180s
+                    """
+                }
+            }
+        }
+
+        stage('Smoke Test') {
+            steps {
+                script {
+                    sh """
+                        export KUBECONFIG=${KUBECONFIG}
+                        kubectl run probe-frontend --image=curlimages/curl --restart=Never --rm -i -- \
+                            curl -sf http://frontend.smartek.svc.cluster.local:80/ \
+                            && echo "Frontend is healthy" || echo "Frontend probe failed"
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo """
+            =====================================================
+            FRONTEND DEPLOYED SUCCESSFULLY
+            =====================================================
+            Access: http://<VM_IP>:30420
+            =====================================================
+            """
+        }
+        failure {
+            echo 'Frontend CD failed — check K8s pod logs.'
+        }
+    }
+}

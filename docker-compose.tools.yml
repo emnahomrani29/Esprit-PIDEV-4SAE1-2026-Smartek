@@ -1,0 +1,156 @@
+# =============================================================================
+# DevOps Tools Stack — Run this on your Ubuntu VM (outside the K8s cluster)
+# =============================================================================
+# Includes: Jenkins, SonarQube (+ PostgreSQL), Nexus, Vault
+# 
+# OPTIMIZED FOR 8GB RAM VM — memory limits are set aggressively.
+# If you have 16GB+, you can increase the limits below.
+# =============================================================================
+
+version: "3.8"
+
+services:
+  # ---------------------------------------------------------------------------
+  # 1. JENKINS
+  # ---------------------------------------------------------------------------
+  jenkins:
+    image: jenkins/jenkins:lts-jdk17
+    container_name: jenkins
+    restart: unless-stopped
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false -Xmx512m
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+        reservations:
+          memory: 256M
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker
+      - /usr/bin/kubectl:/usr/local/bin/kubectl:ro
+    networks:
+      - devops-network
+
+  # ---------------------------------------------------------------------------
+  # 2. SONARQUBE
+  # ---------------------------------------------------------------------------
+  sonarqube:
+    image: sonarqube:10.4-community
+    container_name: sonarqube
+    restart: unless-stopped
+    depends_on:
+      - sonar-db
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonar-db:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+      SONAR_WEB_JAVAOPTS: -Xmx512m
+      SONAR_CE_JAVAOPTS: -Xmx256m
+      SONAR_SEARCH_JAVAOPTS: -Xmx512m
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+        reservations:
+          memory: 512M
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
+    networks:
+      - devops-network
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+  sonar-db:
+    image: postgres:15-alpine
+    container_name: sonar-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonar
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+    volumes:
+      - sonar_db_data:/var/lib/postgresql/data
+    networks:
+      - devops-network
+
+  # ---------------------------------------------------------------------------
+  # 3. NEXUS
+  # ---------------------------------------------------------------------------
+  nexus:
+    image: sonatype/nexus3:3.65.0
+    container_name: nexus
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+      - "8082:8082"
+    environment:
+      - INSTALL4J_ADD_VM_PARAMS=-Xms512m -Xmx512m -XX:MaxDirectMemorySize=512m
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+    volumes:
+      - nexus_data:/nexus-data
+    networks:
+      - devops-network
+
+  # ---------------------------------------------------------------------------
+  # 4. VAULT (dev mode — for demo/learning only)
+  # ---------------------------------------------------------------------------
+  vault:
+    image: hashicorp/vault:1.15
+    container_name: vault
+    restart: unless-stopped
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: smartek-root-token
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - vault_data:/vault/file
+    networks:
+      - devops-network
+
+# =============================================================================
+# Networks & Volumes
+# =============================================================================
+networks:
+  devops-network:
+    driver: bridge
+
+volumes:
+  jenkins_home:
+  sonarqube_data:
+  sonarqube_logs:
+  sonarqube_extensions:
+  sonar_db_data:
+  nexus_data:
+  vault_data:

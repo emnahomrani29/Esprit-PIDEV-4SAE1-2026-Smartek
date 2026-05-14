@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: offers-service
+  namespace: smartek
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: offers-service
+  template:
+    metadata:
+      labels:
+        app: offers-service
+    spec:
+      containers:
+        - name: offers-service
+          image: <DOCKER_HUB_USER>/smartek-offers-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8085
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+          envFrom:
+            - configMapRef:
+                name: offers-service-config
+          env:
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: root-password
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8085
+            initialDelaySeconds: 40
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8085
+            initialDelaySeconds: 60
+            periodSeconds: 20
