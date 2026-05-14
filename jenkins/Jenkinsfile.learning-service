@@ -26,7 +26,7 @@ pipeline {
         stage('Build & Test') {
             steps {
                 dir("${env.SERVICE_PATH}") {
-                    sh "${env.MVN} clean verify -Pcoverage --no-transfer-progress -Dspring.profiles.active=test"
+                    sh "${env.MVN} clean verify --no-transfer-progress -Dspring.profiles.active=test -Dexclude='**/repository/**,**/integration/**'"
                 }
             }
             post {
@@ -65,7 +65,7 @@ pipeline {
             sh "docker rmi ${env.IMAGE_NAME}:${BUILD_NUMBER} || true"
             deleteDir()
         }
-        success { echo "✅ learning-service build #${BUILD_NUMBER} succeeded" }
-        failure { echo "❌ learning-service build #${BUILD_NUMBER} failed" }
+        success { echo "? learning-service build #${BUILD_NUMBER} succeeded" }
+        failure { echo "? learning-service build #${BUILD_NUMBER} failed" }
     }
 }

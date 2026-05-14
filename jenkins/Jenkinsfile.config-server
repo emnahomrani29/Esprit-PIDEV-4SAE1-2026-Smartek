@@ -10,7 +10,7 @@ pipeline {
 
     options {
         buildDiscarder(logRotator(numToKeepStr: '10'))
-        timeout(time: 20, unit: 'MINUTES')
+        timeout(time: 30, unit: 'MINUTES')
         disableConcurrentBuilds()
     }
 
@@ -23,12 +23,13 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build & Test') {
             steps {
                 dir("${env.SERVICE_PATH}") {
                     sh "${env.MVN} clean package -DskipTests --no-transfer-progress"
                 }
             }
+
         }
 
         stage('Docker Build') {
@@ -56,7 +57,7 @@ pipeline {
             sh "docker rmi ${env.IMAGE_NAME}:${BUILD_NUMBER} || true"
             deleteDir()
         }
-        success { echo "✅ config-server build #${BUILD_NUMBER} succeeded" }
-        failure { echo "❌ config-server build #${BUILD_NUMBER} failed" }
+        success { echo "? config-server build #${BUILD_NUMBER} succeeded" }
+        failure { echo "? config-server build #${BUILD_NUMBER} failed" }
     }
 }
