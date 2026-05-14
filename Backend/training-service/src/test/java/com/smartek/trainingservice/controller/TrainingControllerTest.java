@@ -2,6 +2,7 @@ package com.smartek.trainingservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.smartek.trainingservice.config.TestSecurityConfig;
 import com.smartek.trainingservice.dto.TrainingRequest;
 import com.smartek.trainingservice.dto.TrainingResponse;
 import com.smartek.trainingservice.service.TrainingService;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -30,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Le training-service n'a pas de SecurityConfig custom → pas besoin de @WithMockUser.
  */
 @WebMvcTest(TrainingController.class)
+@Import(TestSecurityConfig.class)
 @ActiveProfiles("test")
 @DisplayName("TrainingController - Tests d'intégration")
 class TrainingControllerTest {

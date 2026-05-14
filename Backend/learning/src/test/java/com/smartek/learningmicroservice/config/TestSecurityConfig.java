@@ -6,17 +6,15 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 
-/**
- * Configuration de sécurité pour les tests — désactive toute sécurité.
- */
 @TestConfiguration
 public class TestSecurityConfig {
 
     @Bean
     public SecurityFilterChain testSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+            .csrf(AbstractHttpConfigurer::disable)
+            .cors(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
         return http.build();
     }
 }

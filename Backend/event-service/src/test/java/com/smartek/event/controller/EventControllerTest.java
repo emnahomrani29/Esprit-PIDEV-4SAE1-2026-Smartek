@@ -2,6 +2,7 @@ package com.smartek.event.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.smartek.event.config.TestSecurityConfig;
 import com.smartek.event.dto.EventRequest;
 import com.smartek.event.dto.EventResponse;
 import com.smartek.event.service.EventService;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -27,6 +29,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(EventController.class)
+@Import(TestSecurityConfig.class)
 @ActiveProfiles("test")
 @DisplayName("EventController - Tests d'intégration")
 class EventControllerTest {

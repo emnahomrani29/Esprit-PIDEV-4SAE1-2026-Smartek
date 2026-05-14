@@ -2,7 +2,6 @@
 import { TestBed } from '@angular/core/testing';
 import { PermissionService } from './permission.service';
 import { AuthService } from './auth.service';
-import { Permission } from '../enums/permission.enum';
 import { Role } from '../enums/role.enum';
 
 describe('PermissionService', () => {
@@ -21,29 +20,34 @@ describe('PermissionService', () => {
     service = TestBed.inject(PermissionService);
   });
 
-  it('LEARNER should have CERTIFICATIONS_VIEW', () => {
+  it('LEARNER should be learner', () => {
     authSpy.getUserInfo.and.returnValue(learner as any);
-    expect(service.hasPermission(Permission.CERTIFICATIONS_VIEW)).toBeTrue();
+    expect(service.isLearner()).toBeTrue();
   });
 
-  it('ADMIN should have USERS_VIEW', () => {
+  it('ADMIN should have USERS_VIEW via hasRole', () => {
     authSpy.getUserInfo.and.returnValue(admin as any);
-    expect(service.hasPermission(Permission.USERS_VIEW)).toBeTrue();
+    expect(service.hasRole(Role.ADMIN)).toBeTrue();
   });
 
-  it('LEARNER should NOT have USERS_VIEW', () => {
+  it('LEARNER should NOT have ADMIN role', () => {
     authSpy.getUserInfo.and.returnValue(learner as any);
-    expect(service.hasPermission(Permission.USERS_VIEW)).toBeFalse();
+    expect(service.hasRole(Role.ADMIN)).toBeFalse();
   });
 
   it('should return false when not authenticated', () => {
     authSpy.getUserInfo.and.returnValue(null);
-    expect(service.hasPermission(Permission.CERTIFICATIONS_VIEW)).toBeFalse();
+    expect(service.hasRole(Role.LEARNER)).toBeFalse();
   });
 
-  it('hasAnyPermission — true if has at least one', () => {
+  it('hasAnyPermission — true if role matches', () => {
     authSpy.getUserInfo.and.returnValue(admin as any);
-    expect(service.hasAnyPermission([Permission.USERS_VIEW, Permission.CERTIFICATIONS_VIEW])).toBeTrue();
+    expect(service.hasAnyPermission([Role.ADMIN, Role.TRAINER])).toBeTrue();
+  });
+
+  it('hasAnyPermission — false if role does not match', () => {
+    authSpy.getUserInfo.and.returnValue(learner as any);
+    expect(service.hasAnyPermission([Role.ADMIN, Role.TRAINER])).toBeFalse();
   });
 
   it('hasRole — true for correct role', () => {
@@ -61,8 +65,33 @@ describe('PermissionService', () => {
     expect(service.isAdmin()).toBeTrue();
   });
 
-  it('getUserPermissions — returns empty array when not authenticated', () => {
-    authSpy.getUserInfo.and.returnValue(null);
-    expect(service.getUserPermissions()).toEqual([]);
+  it('isAdmin — false for LEARNER', () => {
+    authSpy.getUserInfo.and.returnValue(learner as any);
+    expect(service.isAdmin()).toBeFalse();
+  });
+
+  it('isTrainer — true for TRAINER', () => {
+    authSpy.getUserInfo.and.returnValue(trainer as any);
+    expect(service.isTrainer()).toBeTrue();
+  });
+
+  it('canCreate — true for TRAINER', () => {
+    authSpy.getUserInfo.and.returnValue(trainer as any);
+    expect(service.canCreate()).toBeTrue();
+  });
+
+  it('canCreate — false for LEARNER', () => {
+    authSpy.getUserInfo.and.returnValue(learner as any);
+    expect(service.canCreate()).toBeFalse();
+  });
+
+  it('canApplyToJobs — true for LEARNER', () => {
+    authSpy.getUserInfo.and.returnValue(learner as any);
+    expect(service.canApplyToJobs()).toBeTrue();
+  });
+
+  it('isRH — false for LEARNER', () => {
+    authSpy.getUserInfo.and.returnValue(learner as any);
+    expect(service.isRH()).toBeFalse();
   });
 });
