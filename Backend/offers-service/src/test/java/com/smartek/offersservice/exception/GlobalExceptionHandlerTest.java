@@ -1,23 +1,19 @@
 package com.smartek.offersservice.exception;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.smartek.offersservice.config.TestSecurityConfig;
 import com.smartek.offersservice.controller.OfferController;
 import com.smartek.offersservice.dto.OfferRequest;
-import com.smartek.offersservice.security.JwtAuthFilter;
-import com.smartek.offersservice.security.SecurityConfig;
 import com.smartek.offersservice.service.OfferService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
-import org.springframework.context.annotation.Import;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -25,21 +21,28 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Tests du GlobalExceptionHandler via le OfferController.
+ * Tests du GlobalExceptionHandler via le OfferController — standalone MockMvc (sans contexte Spring).
  */
-@WebMvcTest(controllers = OfferController.class,
-        excludeFilters = {
-            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class),
-            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JwtAuthFilter.class)
-        })
-@Import({GlobalExceptionHandler.class, TestSecurityConfig.class})
+@ExtendWith(MockitoExtension.class)
 @DisplayName("GlobalExceptionHandler — Tests")
 class GlobalExceptionHandlerTest {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private ObjectMapper objectMapper;
+    @Mock
+    private OfferService offerService;
 
-    @MockBean private OfferService offerService;
+    @InjectMocks
+    private OfferController offerController;
+
+    private MockMvc mockMvc;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(offerController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+    }
 
     @Test
     @DisplayName("ResourceNotFoundException → 404 avec message")
@@ -56,7 +59,6 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @WithMockUser(roles = "TRAINER")
     @DisplayName("BusinessException → 422 avec message")
     void businessException_shouldReturn422() throws Exception {
         when(offerService.createOffer(any()))
@@ -76,10 +78,8 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @WithMockUser(roles = "TRAINER")
     @DisplayName("MethodArgumentNotValidException → 400 avec erreurs de validation")
     void validationException_shouldReturn400_withFieldErrors() throws Exception {
-        // Requête sans titre (champ obligatoire)
         String body = """
             {
                 "description": "Desc",
@@ -101,7 +101,6 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @WithMockUser(roles = "TRAINER")
     @DisplayName("Exception générique → 500 avec message générique")
     void genericException_shouldReturn500() throws Exception {
         when(offerService.createOffer(any()))
@@ -120,10 +119,8 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @WithMockUser(roles = "TRAINER")
     @DisplayName("Validation multiple → 400 avec toutes les erreurs de champs")
     void multipleValidationErrors_shouldReturn400_withAllErrors() throws Exception {
-        // Requête sans titre, description, companyName, location, contractType, companyId
         String body = "{}";
 
         mockMvc.perform(post("/api/offers")

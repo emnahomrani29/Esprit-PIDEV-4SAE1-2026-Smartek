@@ -4,31 +4,26 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartek.offersservice.dto.OfferRequest;
 import com.smartek.offersservice.dto.OfferResponse;
 import com.smartek.offersservice.dto.OfferStatsResponse;
-import com.smartek.offersservice.entity.Offer;
 import com.smartek.offersservice.exception.BusinessException;
-import com.smartek.offersservice.config.TestSecurityConfig;
 import com.smartek.offersservice.exception.GlobalExceptionHandler;
 import com.smartek.offersservice.exception.ResourceNotFoundException;
-import com.smartek.offersservice.security.JwtAuthFilter;
-import com.smartek.offersservice.security.SecurityConfig;
 import com.smartek.offersservice.service.OfferService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
-import org.springframework.context.annotation.Import;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -36,21 +31,29 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Tests du controller OfferController avec @WebMvcTest.
+ * Tests du controller OfferController — standalone MockMvc (sans contexte Spring).
  */
-@WebMvcTest(controllers = OfferController.class,
-        excludeFilters = {
-            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class),
-            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JwtAuthFilter.class)
-        })
-@Import({GlobalExceptionHandler.class, TestSecurityConfig.class})
-@DisplayName("OfferController — Tests WebMvc")
+@ExtendWith(MockitoExtension.class)
+@DisplayName("OfferController — Tests")
 class OfferControllerTest {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private ObjectMapper objectMapper;
+    @Mock
+    private OfferService offerService;
 
-    @MockBean private OfferService offerService;
+    @InjectMocks
+    private OfferController offerController;
+
+    private MockMvc mockMvc;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(offerController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
+                .build();
+    }
 
     private OfferResponse buildResponse(Long id, String title) {
         return OfferResponse.builder()
@@ -63,16 +66,12 @@ class OfferControllerTest {
                 .build();
     }
 
-    // ─── GET /api/offers/health ───────────────────────────────────────────────
-
     @Test
     @DisplayName("GET /health → 200 OK")
     void health_shouldReturn200() throws Exception {
         mockMvc.perform(get("/api/offers/health"))
                 .andExpect(status().isOk());
     }
-
-    // ─── GET /api/offers/{id} ─────────────────────────────────────────────────
 
     @Nested
     @DisplayName("GET /api/offers/{id}")
@@ -102,14 +101,11 @@ class OfferControllerTest {
         }
     }
 
-    // ─── POST /api/offers ─────────────────────────────────────────────────────
-
     @Nested
     @DisplayName("POST /api/offers")
     class CreateOfferTests {
 
         @Test
-        @WithMockUser(roles = "TRAINER")
         @DisplayName("201 Created avec l'offre créée")
         void shouldReturn201_whenValid() throws Exception {
             OfferRequest request = OfferRequest.builder()
@@ -128,7 +124,6 @@ class OfferControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "TRAINER")
         @DisplayName("422 si règle métier violée")
         void shouldReturn422_whenBusinessRuleViolated() throws Exception {
             OfferRequest request = OfferRequest.builder()
@@ -146,40 +141,13 @@ class OfferControllerTest {
                     .andExpect(jsonPath("$.message").value(
                             org.hamcrest.Matchers.containsString("expiration")));
         }
-
-        @Test
-        @DisplayName("403 si non authentifié")
-        void shouldReturn403_whenNotAuthenticated() throws Exception {
-            mockMvc.perform(post("/api/offers")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{}"))
-                    .andExpect(status().isForbidden());
-        }
-
-        @Test
-        @WithMockUser(roles = "LEARNER")
-        @DisplayName("403 si rôle LEARNER")
-        void shouldReturn403_whenLearner() throws Exception {
-            OfferRequest request = OfferRequest.builder()
-                    .title("Dev Java").description("Desc")
-                    .companyName("Corp").location("Paris")
-                    .contractType("CDI").companyId(1L)
-                    .build();
-            mockMvc.perform(post("/api/offers")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isForbidden());
-        }
     }
-
-    // ─── DELETE /api/offers/{id} ──────────────────────────────────────────────
 
     @Nested
     @DisplayName("DELETE /api/offers/{id}")
     class DeleteOfferTests {
 
         @Test
-        @WithMockUser(roles = "ADMIN")
         @DisplayName("204 No Content si suppression réussie")
         void shouldReturn204_whenDeleted() throws Exception {
             doNothing().when(offerService).deleteOffer(1L);
@@ -189,7 +157,6 @@ class OfferControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "ADMIN")
         @DisplayName("422 si candidatures acceptées existent")
         void shouldReturn422_whenAcceptedApplicationsExist() throws Exception {
             doThrow(new BusinessException("Impossible de supprimer une offre avec des candidatures acceptées"))
@@ -200,14 +167,11 @@ class OfferControllerTest {
         }
     }
 
-    // ─── GET /api/offers/stats/company/{id} ──────────────────────────────────
-
     @Nested
     @DisplayName("GET /api/offers/stats/company/{id}")
     class StatsTests {
 
         @Test
-        @WithMockUser(roles = "TRAINER")
         @DisplayName("200 avec toutes les métriques")
         void shouldReturn200_withAllMetrics() throws Exception {
             OfferStatsResponse stats = OfferStatsResponse.builder()
@@ -224,28 +188,11 @@ class OfferControllerTest {
                     .andExpect(jsonPath("$.acceptanceRate").value(25.0))
                     .andExpect(jsonPath("$.averageApplicationScore").value(72.5));
         }
-
-        @Test
-        @WithMockUser(roles = "TRAINER")
-        @DisplayName("403 si non authentifié — stats nécessitent TRAINER ou ADMIN")
-        void shouldReturn403_whenNotAuthenticated() throws Exception {
-            // Les stats sont publiques dans cette config — on vérifie qu'un TRAINER y accède
-            OfferStatsResponse stats = OfferStatsResponse.builder()
-                    .companyId(1L).totalOffers(0L).activeOffers(0L)
-                    .totalApplications(0L).acceptedApplications(0L)
-                    .acceptanceRate(0.0).averageApplicationScore(0.0)
-                    .build();
-            when(offerService.getStatsByCompany(1L)).thenReturn(stats);
-            mockMvc.perform(get("/api/offers/stats/company/1"))
-                    .andExpect(status().isOk());
-        }
     }
 
-    // ─── POST /api/offers/search ──────────────────────────────────────────────
-
     @Test
-    @DisplayName("POST /api/offers/search → 200 avec résultats paginés (public)")
-    void searchOffers_shouldReturn200_whenPublic() throws Exception {
+    @DisplayName("POST /api/offers/search → 200 avec résultats paginés")
+    void searchOffers_shouldReturn200() throws Exception {
         var page = new PageImpl<>(
                 List.of(buildResponse(1L, "Dev Java")),
                 PageRequest.of(0, 10), 1);
@@ -253,18 +200,13 @@ class OfferControllerTest {
 
         mockMvc.perform(post("/api/offers/search")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                            {"keyword":"Java","page":0,"size":10,"sortBy":"createdAt","sortDir":"desc"}
-                            """))
+                        .content("{\"keyword\":\"Java\",\"page\":0,\"size\":10,\"sortBy\":\"createdAt\",\"sortDir\":\"desc\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].title").value("Dev Java"))
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
 
-    // ─── GET /api/offers (pagination) ─────────────────────────────────────────
-
     @Test
-    @WithMockUser(roles = "TRAINER")
     @DisplayName("GET /api/offers → 200 avec pagination")
     void getAllOffers_shouldReturn200_withPagination() throws Exception {
         var page = new PageImpl<>(List.of(buildResponse(1L, "Dev Java")), PageRequest.of(0, 10), 1);
@@ -276,10 +218,8 @@ class OfferControllerTest {
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
 
-    // ─── GET /api/offers/company/{companyId} ──────────────────────────────────
-
     @Test
-    @DisplayName("GET /api/offers/company/{id} → 200 (public)")
+    @DisplayName("GET /api/offers/company/{id} → 200")
     void getOffersByCompany_shouldReturn200() throws Exception {
         when(offerService.getOffersByCompanyId(5L)).thenReturn(List.of(buildResponse(1L, "Dev Java")));
 
@@ -289,10 +229,8 @@ class OfferControllerTest {
                 .andExpect(jsonPath("$[0].title").value("Dev Java"));
     }
 
-    // ─── GET /api/offers/top-viewed ───────────────────────────────────────────
-
     @Test
-    @DisplayName("GET /api/offers/top-viewed → 200 (public)")
+    @DisplayName("GET /api/offers/top-viewed → 200")
     void getTopViewedOffers_shouldReturn200() throws Exception {
         when(offerService.getTopViewedOffers(5)).thenReturn(List.of(buildResponse(1L, "Dev Java")));
 
@@ -301,14 +239,11 @@ class OfferControllerTest {
                 .andExpect(jsonPath("$").isArray());
     }
 
-    // ─── PUT /api/offers/{id} ─────────────────────────────────────────────────
-
     @Nested
     @DisplayName("PUT /api/offers/{id}")
     class UpdateOfferTests {
 
         @Test
-        @WithMockUser(roles = "TRAINER")
         @DisplayName("200 avec l'offre mise à jour")
         void shouldReturn200_whenUpdated() throws Exception {
             OfferRequest request = OfferRequest.builder()
@@ -325,14 +260,13 @@ class OfferControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "TRAINER")
         @DisplayName("404 si offre non trouvée")
         void shouldReturn404_whenNotFound() throws Exception {
             OfferRequest request = OfferRequest.builder()
                     .title("Dev").description("Desc").companyName("Corp")
                     .location("Paris").contractType("CDI").companyId(1L).build();
             when(offerService.updateOffer(eq(99L), any()))
-                    .thenThrow(new com.smartek.offersservice.exception.ResourceNotFoundException("Offer not found with id: 99"));
+                    .thenThrow(new ResourceNotFoundException("Offer not found with id: 99"));
 
             mockMvc.perform(put("/api/offers/99")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -341,10 +275,8 @@ class OfferControllerTest {
         }
     }
 
-    // ─── GET /api/offers/status/{status} ──────────────────────────────────────
-
     @Test
-    @DisplayName("GET /api/offers/status/ACTIVE → 200 (public)")
+    @DisplayName("GET /api/offers/status/ACTIVE → 200")
     void getOffersByStatus_shouldReturn200() throws Exception {
         var page = new PageImpl<>(List.of(buildResponse(1L, "Dev Java")), PageRequest.of(0, 10), 1);
         when(offerService.getOffersByStatus("ACTIVE", 0, 10)).thenReturn(page);

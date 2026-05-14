@@ -1,48 +1,57 @@
 package com.smartek.offersservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.smartek.offersservice.dto.InterviewRequest;
 import com.smartek.offersservice.dto.InterviewResponse;
-import com.smartek.offersservice.config.TestSecurityConfig;
+import com.smartek.offersservice.exception.BusinessException;
 import com.smartek.offersservice.exception.GlobalExceptionHandler;
-import com.smartek.offersservice.security.JwtAuthFilter;
-import com.smartek.offersservice.security.SecurityConfig;
+import com.smartek.offersservice.exception.ResourceNotFoundException;
 import com.smartek.offersservice.service.InterviewService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
-import org.springframework.context.annotation.Import;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = InterviewController.class,
-        excludeFilters = {
-            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class),
-            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JwtAuthFilter.class)
-        })
-@Import({GlobalExceptionHandler.class, TestSecurityConfig.class})
-@DisplayName("InterviewController — Tests WebMvc")
+/**
+ * Tests du controller InterviewController — standalone MockMvc (sans contexte Spring).
+ */
+@ExtendWith(MockitoExtension.class)
+@DisplayName("InterviewController — Tests")
 class InterviewControllerTest {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private ObjectMapper objectMapper;
+    @Mock
+    private InterviewService interviewService;
 
-    @MockBean private InterviewService interviewService;
+    @InjectMocks
+    private InterviewController interviewController;
+
+    private MockMvc mockMvc;
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule());
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(interviewController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+    }
 
     private InterviewResponse buildResponse(Long id, String status) {
         return InterviewResponse.builder()
@@ -54,14 +63,11 @@ class InterviewControllerTest {
                 .build();
     }
 
-    // ─── POST /api/interviews ─────────────────────────────────────────────────
-
     @Nested
     @DisplayName("POST /api/interviews")
     class CreateInterviewTests {
 
         @Test
-        @WithMockUser(roles = "TRAINER")
         @DisplayName("201 Created pour une candidature ACCEPTED")
         void shouldReturn201_whenApplicationAccepted() throws Exception {
             InterviewRequest request = InterviewRequest.builder()
@@ -79,15 +85,14 @@ class InterviewControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "TRAINER")
-        @DisplayName("422 si candidature non ACCEPTED (BusinessException)")
+        @DisplayName("422 si candidature non ACCEPTED")
         void shouldReturn400_whenApplicationNotAccepted() throws Exception {
             InterviewRequest request = InterviewRequest.builder()
                     .applicationId(2L)
                     .interviewDate(LocalDateTime.now().plusDays(3))
                     .location("Salle A").createdBy(5L).build();
             when(interviewService.createInterview(any()))
-                    .thenThrow(new com.smartek.offersservice.exception.BusinessException("La candidature doit être acceptée"));
+                    .thenThrow(new BusinessException("La candidature doit être acceptée"));
 
             mockMvc.perform(post("/api/interviews")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -96,7 +101,6 @@ class InterviewControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "TRAINER")
         @DisplayName("404 si candidature introuvable")
         void shouldReturn400_whenApplicationNotFound() throws Exception {
             InterviewRequest request = InterviewRequest.builder()
@@ -104,7 +108,7 @@ class InterviewControllerTest {
                     .interviewDate(LocalDateTime.now().plusDays(3))
                     .location("Salle A").createdBy(5L).build();
             when(interviewService.createInterview(any()))
-                    .thenThrow(new com.smartek.offersservice.exception.ResourceNotFoundException("Candidature non trouvée: 99"));
+                    .thenThrow(new ResourceNotFoundException("Candidature non trouvée: 99"));
 
             mockMvc.perform(post("/api/interviews")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -113,10 +117,7 @@ class InterviewControllerTest {
         }
     }
 
-    // ─── GET /api/interviews ──────────────────────────────────────────────────
-
     @Test
-    @WithMockUser(roles = "TRAINER")
     @DisplayName("GET /api/interviews → 200 avec liste complète")
     void getAllInterviews_shouldReturn200() throws Exception {
         when(interviewService.getAllInterviews())
@@ -128,11 +129,8 @@ class InterviewControllerTest {
                 .andExpect(jsonPath("$.length()").value(2));
     }
 
-    // ─── GET /api/interviews/company/{id} ─────────────────────────────────────
-
     @Test
-    @WithMockUser(roles = "TRAINER")
-    @DisplayName("GET /api/interviews/company/{id} → 200 avec entretiens de l'entreprise")
+    @DisplayName("GET /api/interviews/company/{id} → 200")
     void getInterviewsByCompany_shouldReturn200() throws Exception {
         when(interviewService.getInterviewsByCompany(1L))
                 .thenReturn(List.of(buildResponse(10L, "SCHEDULED")));
@@ -143,11 +141,8 @@ class InterviewControllerTest {
                 .andExpect(jsonPath("$[0].offerId").value(100));
     }
 
-    // ─── GET /api/interviews/offer/{id} ──────────────────────────────────────
-
     @Test
-    @WithMockUser(roles = "TRAINER")
-    @DisplayName("GET /api/interviews/offer/{id} → 200 avec entretiens de l'offre")
+    @DisplayName("GET /api/interviews/offer/{id} → 200")
     void getInterviewsByOffer_shouldReturn200() throws Exception {
         when(interviewService.getInterviewsByOffer(100L))
                 .thenReturn(List.of(buildResponse(10L, "SCHEDULED")));
@@ -157,11 +152,8 @@ class InterviewControllerTest {
                 .andExpect(jsonPath("$[0].offerId").value(100));
     }
 
-    // ─── GET /api/interviews/learner/{id} ────────────────────────────────────
-
     @Test
-    @WithMockUser(roles = "LEARNER")
-    @DisplayName("GET /api/interviews/learner/{id} → 200 avec entretiens du candidat")
+    @DisplayName("GET /api/interviews/learner/{id} → 200")
     void getInterviewsByLearner_shouldReturn200() throws Exception {
         when(interviewService.getInterviewsByLearner(2L))
                 .thenReturn(List.of(buildResponse(10L, "SCHEDULED")));
@@ -171,11 +163,8 @@ class InterviewControllerTest {
                 .andExpect(jsonPath("$[0].learnerId").value(2));
     }
 
-    // ─── GET /api/interviews/application/{id} ────────────────────────────────
-
     @Test
-    @WithMockUser(roles = "TRAINER")
-    @DisplayName("GET /api/interviews/application/{id} → 200 avec entretiens de la candidature")
+    @DisplayName("GET /api/interviews/application/{id} → 200")
     void getInterviewsByApplication_shouldReturn200() throws Exception {
         when(interviewService.getInterviewsByApplication(1L))
                 .thenReturn(List.of(buildResponse(10L, "SCHEDULED")));
@@ -185,14 +174,11 @@ class InterviewControllerTest {
                 .andExpect(jsonPath("$[0].applicationId").value(1));
     }
 
-    // ─── PUT /api/interviews/{id}/status ─────────────────────────────────────
-
     @Nested
     @DisplayName("PUT /api/interviews/{id}/status")
     class UpdateStatusTests {
 
         @Test
-        @WithMockUser(roles = "TRAINER")
         @DisplayName("200 avec le nouveau statut COMPLETED")
         void shouldReturn200_whenStatusUpdated() throws Exception {
             when(interviewService.updateInterviewStatus(10L, "COMPLETED"))
@@ -204,8 +190,7 @@ class InterviewControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "TRAINER")
-        @DisplayName("400 si statut invalide (RuntimeException)")
+        @DisplayName("400 si statut invalide")
         void shouldReturn400_whenInvalidStatus() throws Exception {
             when(interviewService.updateInterviewStatus(10L, "INVALID_STATUS"))
                     .thenThrow(new RuntimeException("Statut invalide"));
@@ -215,7 +200,6 @@ class InterviewControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "TRAINER")
         @DisplayName("400 si entretien introuvable")
         void shouldReturn400_whenInterviewNotFound() throws Exception {
             when(interviewService.updateInterviewStatus(99L, "COMPLETED"))
@@ -226,14 +210,11 @@ class InterviewControllerTest {
         }
     }
 
-    // ─── PUT /api/interviews/{id} ─────────────────────────────────────────────
-
     @Nested
     @DisplayName("PUT /api/interviews/{id}")
     class UpdateInterviewTests {
 
         @Test
-        @WithMockUser(roles = "TRAINER")
         @DisplayName("200 avec l'entretien mis à jour")
         void shouldReturn200_whenUpdated() throws Exception {
             InterviewRequest request = InterviewRequest.builder()
@@ -252,7 +233,6 @@ class InterviewControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "TRAINER")
         @DisplayName("400 si entretien introuvable")
         void shouldReturn400_whenNotFound() throws Exception {
             InterviewRequest request = InterviewRequest.builder()
@@ -269,14 +249,11 @@ class InterviewControllerTest {
         }
     }
 
-    // ─── DELETE /api/interviews/{id} ─────────────────────────────────────────
-
     @Nested
     @DisplayName("DELETE /api/interviews/{id}")
     class DeleteInterviewTests {
 
         @Test
-        @WithMockUser(roles = "TRAINER")
         @DisplayName("204 No Content si suppression réussie")
         void shouldReturn204_whenDeleted() throws Exception {
             doNothing().when(interviewService).deleteInterview(10L);
@@ -286,7 +263,6 @@ class InterviewControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "TRAINER")
         @DisplayName("400 si entretien introuvable")
         void shouldReturn400_whenNotFound() throws Exception {
             doThrow(new RuntimeException("Entretien non trouvé"))

@@ -1,44 +1,50 @@
 package com.smartek.offersservice.controller;
 
-import com.smartek.offersservice.config.TestSecurityConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartek.offersservice.dto.OfferResponse;
 import com.smartek.offersservice.exception.BusinessException;
 import com.smartek.offersservice.exception.GlobalExceptionHandler;
 import com.smartek.offersservice.exception.ResourceNotFoundException;
-import com.smartek.offersservice.security.JwtAuthFilter;
-import com.smartek.offersservice.security.SecurityConfig;
 import com.smartek.offersservice.service.SavedOfferService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
-import org.springframework.context.annotation.Import;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = SavedOfferController.class,
-        excludeFilters = {
-            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class),
-            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JwtAuthFilter.class)
-        })
-@Import({GlobalExceptionHandler.class, TestSecurityConfig.class})
-@DisplayName("SavedOfferController — Tests WebMvc")
+/**
+ * Tests du controller SavedOfferController — standalone MockMvc (sans contexte Spring).
+ */
+@ExtendWith(MockitoExtension.class)
+@DisplayName("SavedOfferController — Tests")
 class SavedOfferControllerTest {
 
-    @Autowired private MockMvc mockMvc;
+    @Mock
+    private SavedOfferService savedOfferService;
 
-    @MockBean private SavedOfferService savedOfferService;
+    @InjectMocks
+    private SavedOfferController savedOfferController;
+
+    private MockMvc mockMvc;
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(savedOfferController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+    }
 
     private OfferResponse buildOfferResponse() {
         return OfferResponse.builder()
@@ -48,14 +54,11 @@ class SavedOfferControllerTest {
                 .build();
     }
 
-    // ─── POST /api/saved-offers/{offerId}/learner/{learnerId} ─────────────────
-
     @Nested
     @DisplayName("POST /api/saved-offers/{offerId}/learner/{learnerId}")
     class SaveOfferTests {
 
         @Test
-        @WithMockUser(roles = "LEARNER")
         @DisplayName("200 OK si offre sauvegardée avec succès")
         void saveOffer_shouldReturn200() throws Exception {
             doNothing().when(savedOfferService).saveOffer(1L, 2L);
@@ -67,7 +70,6 @@ class SavedOfferControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "LEARNER")
         @DisplayName("422 si offre déjà en favoris")
         void saveOffer_alreadySaved_shouldReturn422() throws Exception {
             doThrow(new BusinessException("Cette offre est déjà dans vos favoris"))
@@ -80,7 +82,6 @@ class SavedOfferControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "LEARNER")
         @DisplayName("404 si offre introuvable")
         void saveOffer_offerNotFound_shouldReturn404() throws Exception {
             doThrow(new ResourceNotFoundException("Offre non trouvée avec l'id: 99"))
@@ -91,14 +92,11 @@ class SavedOfferControllerTest {
         }
     }
 
-    // ─── DELETE /api/saved-offers/{offerId}/learner/{learnerId} ──────────────
-
     @Nested
     @DisplayName("DELETE /api/saved-offers/{offerId}/learner/{learnerId}")
     class UnsaveOfferTests {
 
         @Test
-        @WithMockUser(roles = "LEARNER")
         @DisplayName("204 No Content si offre retirée des favoris")
         void unsaveOffer_shouldReturn204() throws Exception {
             doNothing().when(savedOfferService).unsaveOffer(1L, 2L);
@@ -110,7 +108,6 @@ class SavedOfferControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "LEARNER")
         @DisplayName("404 si favori introuvable")
         void unsaveOffer_notFound_shouldReturn404() throws Exception {
             doThrow(new ResourceNotFoundException("Favori non trouvé"))
@@ -121,14 +118,11 @@ class SavedOfferControllerTest {
         }
     }
 
-    // ─── GET /api/saved-offers/learner/{learnerId} ────────────────────────────
-
     @Nested
     @DisplayName("GET /api/saved-offers/learner/{learnerId}")
     class GetSavedOffersTests {
 
         @Test
-        @WithMockUser(roles = "LEARNER")
         @DisplayName("200 avec liste des offres sauvegardées")
         void getSavedOffers_shouldReturn200_withList() throws Exception {
             when(savedOfferService.getSavedOffersByLearner(2L))
@@ -142,7 +136,6 @@ class SavedOfferControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "LEARNER")
         @DisplayName("200 avec liste vide si aucun favori")
         void getSavedOffers_shouldReturn200_withEmptyList() throws Exception {
             when(savedOfferService.getSavedOffersByLearner(99L)).thenReturn(List.of());
@@ -154,14 +147,11 @@ class SavedOfferControllerTest {
         }
     }
 
-    // ─── GET /api/saved-offers/{offerId}/learner/{learnerId}/check ───────────
-
     @Nested
     @DisplayName("GET /api/saved-offers/{offerId}/learner/{learnerId}/check")
     class IsSavedTests {
 
         @Test
-        @WithMockUser(roles = "LEARNER")
         @DisplayName("200 true si offre en favoris")
         void isSaved_true_shouldReturn200() throws Exception {
             when(savedOfferService.isSaved(1L, 2L)).thenReturn(true);
@@ -172,7 +162,6 @@ class SavedOfferControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "LEARNER")
         @DisplayName("200 false si offre non en favoris")
         void isSaved_false_shouldReturn200() throws Exception {
             when(savedOfferService.isSaved(1L, 99L)).thenReturn(false);

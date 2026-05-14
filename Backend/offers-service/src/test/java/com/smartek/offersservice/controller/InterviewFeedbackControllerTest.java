@@ -1,25 +1,24 @@
 package com.smartek.offersservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.smartek.offersservice.dto.InterviewFeedbackRequest;
 import com.smartek.offersservice.dto.InterviewFeedbackResponse;
 import com.smartek.offersservice.exception.BusinessException;
-import com.smartek.offersservice.config.TestSecurityConfig;
 import com.smartek.offersservice.exception.GlobalExceptionHandler;
 import com.smartek.offersservice.exception.ResourceNotFoundException;
-import com.smartek.offersservice.security.JwtAuthFilter;
-import com.smartek.offersservice.security.SecurityConfig;
 import com.smartek.offersservice.service.InterviewFeedbackService;
-import org.junit.jupiter.api.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
-import org.springframework.context.annotation.Import;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,21 +29,29 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Tests WebMvc pour InterviewFeedbackController.
+ * Tests du controller InterviewFeedbackController — standalone MockMvc (sans contexte Spring).
  */
-@WebMvcTest(controllers = InterviewFeedbackController.class,
-        excludeFilters = {
-            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class),
-            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JwtAuthFilter.class)
-        })
-@Import({GlobalExceptionHandler.class, TestSecurityConfig.class})
-@DisplayName("InterviewFeedbackController — Tests WebMvc")
+@ExtendWith(MockitoExtension.class)
+@DisplayName("InterviewFeedbackController — Tests")
 class InterviewFeedbackControllerTest {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private ObjectMapper objectMapper;
+    @Mock
+    private InterviewFeedbackService feedbackService;
 
-    @MockBean private InterviewFeedbackService feedbackService;
+    @InjectMocks
+    private InterviewFeedbackController feedbackController;
+
+    private MockMvc mockMvc;
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule());
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(feedbackController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+    }
 
     private InterviewFeedbackResponse buildResponse() {
         return InterviewFeedbackResponse.builder()
@@ -67,14 +74,11 @@ class InterviewFeedbackControllerTest {
         return req;
     }
 
-    // ─── POST /api/interview-feedbacks ────────────────────────────────────────
-
     @Nested
     @DisplayName("POST /api/interview-feedbacks")
     class SubmitFeedbackTests {
 
         @Test
-        @WithMockUser(roles = "TRAINER")
         @DisplayName("201 Created avec feedback HIRED")
         void submitFeedback_hired_returns201() throws Exception {
             when(feedbackService.submitFeedback(any())).thenReturn(buildResponse());
@@ -88,7 +92,6 @@ class InterviewFeedbackControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "TRAINER")
         @DisplayName("201 Created avec feedback REJECTED")
         void submitFeedback_rejected_returns201() throws Exception {
             InterviewFeedbackResponse rejected = InterviewFeedbackResponse.builder()
@@ -105,8 +108,7 @@ class InterviewFeedbackControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "TRAINER")
-        @DisplayName("422 si feedback déjà soumis pour cet entretien")
+        @DisplayName("422 si feedback déjà soumis")
         void submitFeedback_duplicate_returns422() throws Exception {
             when(feedbackService.submitFeedback(any()))
                     .thenThrow(new BusinessException("Un feedback existe déjà pour cet entretien"));
@@ -120,7 +122,6 @@ class InterviewFeedbackControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "TRAINER")
         @DisplayName("404 si entretien non trouvé")
         void submitFeedback_interviewNotFound_returns404() throws Exception {
             when(feedbackService.submitFeedback(any()))
@@ -133,14 +134,11 @@ class InterviewFeedbackControllerTest {
         }
     }
 
-    // ─── POST /api/interviews/feedback (alternative) ──────────────────────────
-
     @Nested
     @DisplayName("POST /api/interviews/feedback (endpoint alternatif)")
     class SubmitFeedbackAltTests {
 
         @Test
-        @WithMockUser(roles = "TRAINER")
         @DisplayName("201 Created via endpoint alternatif")
         void submitFeedbackAlt_returns201() throws Exception {
             when(feedbackService.submitFeedback(any())).thenReturn(buildResponse());
@@ -153,8 +151,7 @@ class InterviewFeedbackControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "TRAINER")
-        @DisplayName("422 si entretien non terminé (BusinessException)")
+        @DisplayName("422 si entretien non terminé")
         void submitFeedbackAlt_notCompleted_returns422() throws Exception {
             when(feedbackService.submitFeedback(any()))
                     .thenThrow(new BusinessException("Le feedback ne peut être soumis que pour un entretien terminé"));
@@ -166,14 +163,11 @@ class InterviewFeedbackControllerTest {
         }
     }
 
-    // ─── GET /api/interview-feedbacks/interview/{id} ──────────────────────────
-
     @Nested
     @DisplayName("GET /api/interview-feedbacks/interview/{id}")
     class GetFeedbackByInterviewTests {
 
         @Test
-        @WithMockUser(roles = "TRAINER")
         @DisplayName("200 avec le feedback trouvé")
         void getFeedbackByInterview_found_returns200() throws Exception {
             when(feedbackService.getFeedbackByInterview(10L)).thenReturn(buildResponse());
@@ -185,7 +179,6 @@ class InterviewFeedbackControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "TRAINER")
         @DisplayName("404 si feedback non trouvé")
         void getFeedbackByInterview_notFound_returns404() throws Exception {
             when(feedbackService.getFeedbackByInterview(99L))
@@ -196,10 +189,7 @@ class InterviewFeedbackControllerTest {
         }
     }
 
-    // ─── GET /api/interview-feedbacks/application/{id} ────────────────────────
-
     @Test
-    @WithMockUser(roles = "TRAINER")
     @DisplayName("GET /api/interview-feedbacks/application/{id} → 200 avec liste")
     void getFeedbacksByApplication_returns200() throws Exception {
         when(feedbackService.getFeedbacksByApplication(1L)).thenReturn(List.of(buildResponse()));
