@@ -22,13 +22,13 @@ services:
       - "8080:8080"
       - "50000:50000"
     environment:
-      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false -Xmx512m
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false -Xmx1024m
     deploy:
       resources:
         limits:
-          memory: 768M
+          memory: 1536M
         reservations:
-          memory: 256M
+          memory: 512M
     volumes:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
