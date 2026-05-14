@@ -7,8 +7,8 @@ describe('BadgeService', () => {
   let service: BadgeService;
   let httpMock: HttpTestingController;
 
-  const BASE = 'http://localhost:8090/api/certifications-badges/badge-templates';
-  const EARNED = 'http://localhost:8090/api/certifications-badges/earned-badges';
+  const BASE = 'http://localhost:8080/api/certifications-badges/badge-templates';
+  const EARNED = 'http://localhost:8080/api/certifications-badges/earned-badges';
 
   const mockTemplate: BadgeTemplate = {
     id: 1,

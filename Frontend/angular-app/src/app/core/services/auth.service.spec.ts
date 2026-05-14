@@ -8,7 +8,7 @@ describe('AuthService', () => {
   let httpMock: HttpTestingController;
   let routerSpy: jasmine.SpyObj<Router>;
 
-  const BASE = 'http://localhost:8090/api/auth';
+  const BASE = 'http://localhost:8080/api/auth';
 
   const mockAuthResponse: AuthResponse = {
     token: 'mock-jwt-token',
