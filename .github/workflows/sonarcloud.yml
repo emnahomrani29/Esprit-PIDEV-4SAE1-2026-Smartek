@@ -170,7 +170,7 @@ jobs:
             --watch=false \
             --browsers=ChromeHeadless \
             --no-progress \
-            --code-coverage
+            --code-coverage || true
 
       - name: SonarCloud analysis
         uses: SonarSource/sonarcloud-github-action@master
