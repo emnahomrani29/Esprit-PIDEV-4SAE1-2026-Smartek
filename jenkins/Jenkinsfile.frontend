@@ -3,8 +3,8 @@ pipeline {
     agent any
 
     environment {
-        SERVICE_PATH  = 'Frontend/angular-app'
-        IMAGE_NAME    = 'smartek/angular-app'
+        SERVICE_PATH = 'Frontend/angular-app'
+        IMAGE_NAME   = 'smartek/angular-app'
     }
 
     tools {
@@ -29,7 +29,8 @@ pipeline {
         stage('Install') {
             steps {
                 dir("${env.SERVICE_PATH}") {
-                    sh 'npm ci --prefer-offline'
+                    // --no-audit and --no-fund suppress advisory noise in logs
+                    sh 'npm ci --no-audit --no-fund'
                 }
             }
         }
@@ -37,7 +38,14 @@ pipeline {
         stage('Lint') {
             steps {
                 dir("${env.SERVICE_PATH}") {
-                    sh 'npm run lint || true'
+                    // lint script is optional; skip gracefully if not defined
+                    sh '''
+                        if npm run | grep -q "^  lint$"; then
+                            npm run lint
+                        else
+                            echo "No lint script found in package.json — skipping"
+                        fi
+                    '''
                 }
             }
         }
@@ -52,6 +60,7 @@ pipeline {
 
         stage('Docker Build') {
             steps {
+                // dist/ is already produced above; Dockerfile copies it directly into nginx
                 sh "docker build -t ${env.IMAGE_NAME}:${BUILD_NUMBER} -t ${env.IMAGE_NAME}:latest ${env.SERVICE_PATH}"
             }
         }
@@ -73,6 +82,7 @@ pipeline {
     post {
         always {
             sh "docker rmi ${env.IMAGE_NAME}:${BUILD_NUMBER} || true"
+            sh "docker rmi ${env.IMAGE_NAME}:latest || true"
             deleteDir()
         }
         success { echo "✅ frontend build #${BUILD_NUMBER} succeeded" }
