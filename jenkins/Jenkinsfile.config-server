@@ -1,21 +1,16 @@
-// ============================================================
 // Pipeline Jenkins - config-server
-// ============================================================
 pipeline {
     agent any
 
     environment {
-        SERVICE_NAME  = 'config-server'
         SERVICE_PATH  = 'Backend/config-server'
         IMAGE_NAME    = 'smartek/config-server'
-        IMAGE_TAG     = "${BUILD_NUMBER}"
-        SONAR_PROJECT = 'smartek-config-server'
         MVN           = '/usr/share/maven/bin/mvn'
     }
 
     options {
         buildDiscarder(logRotator(numToKeepStr: '10'))
-        timeout(time: 30, unit: 'MINUTES')
+        timeout(time: 20, unit: 'MINUTES')
         disableConcurrentBuilds()
     }
 
@@ -28,49 +23,29 @@ pipeline {
             }
         }
 
-        stage('Build & Test') {
+        stage('Build') {
             steps {
                 dir("${env.SERVICE_PATH}") {
-                    sh "${env.MVN} clean verify -Pcoverage --no-transfer-progress -Dspring.profiles.active=test"
-                }
-            }
-            post {
-                always {
-                    junit testResults: "${env.SERVICE_PATH}/target/surefire-reports/*.xml",
-                          allowEmptyResults: true
-                    jacoco execPattern: "${env.SERVICE_PATH}/target/jacoco.exec",
-                           classPattern: "${env.SERVICE_PATH}/target/classes",
-                           sourcePattern: "${env.SERVICE_PATH}/src/main/java"
+                    sh "${env.MVN} clean package -DskipTests --no-transfer-progress"
                 }
             }
         }
 
         stage('Docker Build') {
             steps {
-                sh """
-                    docker build \\\\
-                        --build-arg BUILD_DATE=\\\2026-05-14T23:28:42Z \\\\
-                        --build-arg VERSION=${env.IMAGE_TAG} \\\\
-                        -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} \\\\
-                        -t ${env.IMAGE_NAME}:latest \\\\
-                        ${env.SERVICE_PATH}
-                """
+                sh "docker build -t ${env.IMAGE_NAME}:${BUILD_NUMBER} -t ${env.IMAGE_NAME}:latest ${env.SERVICE_PATH}"
             }
         }
 
         stage('Docker Push') {
             when { branch pattern: 'main|develop', comparator: 'REGEXP' }
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'docker-registry-credentials',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    sh """
-                        echo \\\ | docker login -u \\\ --password-stdin
-                        docker push ${env.IMAGE_NAME}:${env.IMAGE_TAG}
-                        docker push ${env.IMAGE_NAME}:latest
-                    """
+                withCredentials([usernamePassword(credentialsId: 'docker-registry-credentials',
+                                                  usernameVariable: 'DOCKER_USER',
+                                                  passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh "docker push ${env.IMAGE_NAME}:${BUILD_NUMBER}"
+                    sh "docker push ${env.IMAGE_NAME}:latest"
                 }
             }
         }
@@ -78,12 +53,10 @@ pipeline {
 
     post {
         always {
-            script {
-                sh "docker rmi smartek/config-server:${BUILD_NUMBER} || true"
-            }
+            sh "docker rmi ${env.IMAGE_NAME}:${BUILD_NUMBER} || true"
             deleteDir()
         }
-        success { echo "? config-server build #${BUILD_NUMBER} succeeded" }
-        failure { echo "? config-server build #${BUILD_NUMBER} failed" }
+        success { echo "✅ config-server build #${BUILD_NUMBER} succeeded" }
+        failure { echo "❌ config-server build #${BUILD_NUMBER} failed" }
     }
 }

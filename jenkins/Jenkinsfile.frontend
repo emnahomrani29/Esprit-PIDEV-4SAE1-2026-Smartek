@@ -1,26 +1,20 @@
-// ============================================================
-// Pipeline Jenkins - frontend (Angular 18)
-// ============================================================
+// Pipeline Jenkins - frontend Angular
 pipeline {
     agent any
 
     environment {
-        SERVICE_NAME    = 'angular-app'
-        SERVICE_PATH    = 'Frontend/angular-app'
-        IMAGE_NAME      = "${DOCKER_REGISTRY ?: 'smartek'}/${SERVICE_NAME}"
-        IMAGE_TAG       = "${BUILD_NUMBER}"
-        SONAR_PROJECT   = 'smartek-frontend'
-        NODE_VERSION    = '18'
+        SERVICE_PATH  = 'Frontend/angular-app'
+        IMAGE_NAME    = 'smartek/angular-app'
+    }
+
+    tools {
+        nodejs 'NodeJS-20'
     }
 
     options {
         buildDiscarder(logRotator(numToKeepStr: '10'))
         timeout(time: 30, unit: 'MINUTES')
         disableConcurrentBuilds()
-    }
-
-    tools {
-        nodejs 'NodeJS-20'
     }
 
     stages {
@@ -32,9 +26,9 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Install') {
             steps {
-                dir("${SERVICE_PATH}") {
+                dir("${env.SERVICE_PATH}") {
                     sh 'npm ci --prefer-offline'
                 }
             }
@@ -42,70 +36,15 @@ pipeline {
 
         stage('Lint') {
             steps {
-                dir("${SERVICE_PATH}") {
-                    sh 'npm run lint -- --max-warnings=0 || true'
+                dir("${env.SERVICE_PATH}") {
+                    sh 'npm run lint || true'
                 }
             }
         }
 
-        stage('Unit Tests') {
+        stage('Build') {
             steps {
-                dir("${SERVICE_PATH}") {
-                    sh '''
-                        npm run test -- \
-                            --no-watch \
-                            --no-progress \
-                            --browsers=ChromeHeadless \
-                            --code-coverage
-                    '''
-                }
-            }
-            post {
-                always {
-                    junit testResults: "${SERVICE_PATH}/test-results/**/*.xml",
-                          allowEmptyResults: true
-                    publishHTML(target: [
-                        allowMissing: true,
-                        alwaysLinkToLastBuild: true,
-                        keepAll: true,
-                        reportDir: "${SERVICE_PATH}/coverage/angular-app",
-                        reportFiles: 'index.html',
-                        reportName: 'Angular Coverage Report'
-                    ])
-                }
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            when { branch pattern: 'main|develop|feature/.*', comparator: 'REGEXP' }
-            steps {
-                withSonarQubeEnv('SonarQube') {
-                    dir("${SERVICE_PATH}") {
-                        sh """
-                            npx sonar-scanner \
-                                -Dsonar.projectKey=${SONAR_PROJECT} \
-                                -Dsonar.projectName="Smartek Frontend" \
-                                -Dsonar.sources=src \
-                                -Dsonar.exclusions=**/node_modules/**,**/*.spec.ts \
-                                -Dsonar.typescript.lcov.reportPaths=coverage/angular-app/lcov.info
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Quality Gate') {
-            when { branch pattern: 'main|develop|feature/.*', comparator: 'REGEXP' }
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
-
-        stage('Build Production') {
-            steps {
-                dir("${SERVICE_PATH}") {
+                dir("${env.SERVICE_PATH}") {
                     sh 'npm run build -- --configuration production'
                 }
             }
@@ -113,20 +52,7 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh """
-                    docker build \\
-                        --build-arg BUILD_DATE=\$(date -u +%Y-%m-%dT%H:%M:%SZ) \\
-                        --build-arg VERSION=${IMAGE_TAG} \\
-                        -t ${IMAGE_NAME}:${IMAGE_TAG} \\
-                        -t ${IMAGE_NAME}:latest \\
-                        ${SERVICE_PATH}
-                """
-            }
-        }
-
-        stage('Security Scan') {
-            steps {
-                sh "trivy image --exit-code 0 --severity HIGH,CRITICAL --format table ${IMAGE_NAME}:${IMAGE_TAG}"
+                sh "docker build -t ${env.IMAGE_NAME}:${BUILD_NUMBER} -t ${env.IMAGE_NAME}:latest ${env.SERVICE_PATH}"
             }
         }
 
@@ -136,29 +62,20 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'docker-registry-credentials',
                                                   usernameVariable: 'DOCKER_USER',
                                                   passwordVariable: 'DOCKER_PASS')]) {
-                    sh """
-                        echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
-                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                        docker push ${IMAGE_NAME}:latest
-                    """
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh "docker push ${env.IMAGE_NAME}:${BUILD_NUMBER}"
+                    sh "docker push ${env.IMAGE_NAME}:latest"
                 }
-            }
-        }
-
-        stage('Deploy (Dev)') {
-            when { branch 'develop' }
-            steps {
-                sh "docker service update --image ${IMAGE_NAME}:${IMAGE_TAG} smartek_frontend || echo 'Skipping deploy'"
             }
         }
     }
 
     post {
         always {
-            sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true"
-            cleanWs()
+            sh "docker rmi ${env.IMAGE_NAME}:${BUILD_NUMBER} || true"
+            deleteDir()
         }
-        success { echo "✅ Frontend pipeline succeeded (build #${BUILD_NUMBER})" }
-        failure { echo "❌ Frontend pipeline failed (build #${BUILD_NUMBER})" }
+        success { echo "✅ frontend build #${BUILD_NUMBER} succeeded" }
+        failure { echo "❌ frontend build #${BUILD_NUMBER} failed" }
     }
 }

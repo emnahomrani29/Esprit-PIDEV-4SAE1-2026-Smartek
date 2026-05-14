@@ -1,15 +1,10 @@
-// ============================================================
 // Pipeline Jenkins - api-gateway
-// ============================================================
 pipeline {
     agent any
 
     environment {
-        SERVICE_NAME  = 'api-gateway'
         SERVICE_PATH  = 'Backend/api-gateway'
-        IMAGE_NAME    = "smartek/api-gateway"
-        IMAGE_TAG     = "${BUILD_NUMBER}"
-        SONAR_PROJECT = 'smartek-api-gateway'
+        IMAGE_NAME    = 'smartek/api-gateway'
         MVN           = '/usr/share/maven/bin/mvn'
     }
 
@@ -47,30 +42,19 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh """
-                    docker build \\
-                        --build-arg BUILD_DATE=\$(date -u +%Y-%m-%dT%H:%M:%SZ) \\
-                        --build-arg VERSION=${env.IMAGE_TAG} \\
-                        -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} \\
-                        -t ${env.IMAGE_NAME}:latest \\
-                        ${env.SERVICE_PATH}
-                """
+                sh "docker build -t ${env.IMAGE_NAME}:${BUILD_NUMBER} -t ${env.IMAGE_NAME}:latest ${env.SERVICE_PATH}"
             }
         }
 
         stage('Docker Push') {
             when { branch pattern: 'main|develop', comparator: 'REGEXP' }
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'docker-registry-credentials',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    sh """
-                        echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
-                        docker push ${env.IMAGE_NAME}:${env.IMAGE_TAG}
-                        docker push ${env.IMAGE_NAME}:latest
-                    """
+                withCredentials([usernamePassword(credentialsId: 'docker-registry-credentials',
+                                                  usernameVariable: 'DOCKER_USER',
+                                                  passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh "docker push ${env.IMAGE_NAME}:${BUILD_NUMBER}"
+                    sh "docker push ${env.IMAGE_NAME}:latest"
                 }
             }
         }
@@ -78,9 +62,7 @@ pipeline {
 
     post {
         always {
-            script {
-                sh "docker rmi smartek/api-gateway:${BUILD_NUMBER} || true"
-            }
+            sh "docker rmi ${env.IMAGE_NAME}:${BUILD_NUMBER} || true"
             deleteDir()
         }
         success { echo "✅ api-gateway build #${BUILD_NUMBER} succeeded" }

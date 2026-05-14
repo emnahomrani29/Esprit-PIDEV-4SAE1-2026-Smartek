@@ -1,15 +1,10 @@
-// ============================================================
 // Pipeline Jenkins - event-service
-// ============================================================
 pipeline {
     agent any
 
     environment {
-        SERVICE_NAME  = 'event-service'
         SERVICE_PATH  = 'Backend/event-service'
         IMAGE_NAME    = 'smartek/event-service'
-        IMAGE_TAG     = "${BUILD_NUMBER}"
-        SONAR_PROJECT = 'smartek-event-service'
         MVN           = '/usr/share/maven/bin/mvn'
     }
 
@@ -47,30 +42,19 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh """
-                    docker build \\\\
-                        --build-arg BUILD_DATE=\\\2026-05-14T23:28:42Z \\\\
-                        --build-arg VERSION=${env.IMAGE_TAG} \\\\
-                        -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} \\\\
-                        -t ${env.IMAGE_NAME}:latest \\\\
-                        ${env.SERVICE_PATH}
-                """
+                sh "docker build -t ${env.IMAGE_NAME}:${BUILD_NUMBER} -t ${env.IMAGE_NAME}:latest ${env.SERVICE_PATH}"
             }
         }
 
         stage('Docker Push') {
             when { branch pattern: 'main|develop', comparator: 'REGEXP' }
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'docker-registry-credentials',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    sh """
-                        echo \\\ | docker login -u \\\ --password-stdin
-                        docker push ${env.IMAGE_NAME}:${env.IMAGE_TAG}
-                        docker push ${env.IMAGE_NAME}:latest
-                    """
+                withCredentials([usernamePassword(credentialsId: 'docker-registry-credentials',
+                                                  usernameVariable: 'DOCKER_USER',
+                                                  passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh "docker push ${env.IMAGE_NAME}:${BUILD_NUMBER}"
+                    sh "docker push ${env.IMAGE_NAME}:latest"
                 }
             }
         }
@@ -78,12 +62,10 @@ pipeline {
 
     post {
         always {
-            script {
-                sh "docker rmi smartek/event-service:${BUILD_NUMBER} || true"
-            }
+            sh "docker rmi ${env.IMAGE_NAME}:${BUILD_NUMBER} || true"
             deleteDir()
         }
-        success { echo "? event-service build #${BUILD_NUMBER} succeeded" }
-        failure { echo "? event-service build #${BUILD_NUMBER} failed" }
+        success { echo "✅ event-service build #${BUILD_NUMBER} succeeded" }
+        failure { echo "❌ event-service build #${BUILD_NUMBER} failed" }
     }
 }
