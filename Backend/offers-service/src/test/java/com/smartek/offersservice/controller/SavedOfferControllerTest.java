@@ -5,6 +5,7 @@ import com.smartek.offersservice.dto.OfferResponse;
 import com.smartek.offersservice.exception.BusinessException;
 import com.smartek.offersservice.exception.GlobalExceptionHandler;
 import com.smartek.offersservice.exception.ResourceNotFoundException;
+import com.smartek.offersservice.security.SecurityConfig;
 import com.smartek.offersservice.service.SavedOfferService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -12,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -23,7 +26,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(SavedOfferController.class)
+@WebMvcTest(controllers = SavedOfferController.class,
+        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class))
 @Import({GlobalExceptionHandler.class, TestSecurityConfig.class})
 @DisplayName("SavedOfferController — Tests WebMvc")
 class SavedOfferControllerTest {

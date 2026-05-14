@@ -1,0 +1,114 @@
+// ============================================================
+// Pipeline Jenkins - event-service
+// ============================================================
+pipeline {
+    agent any
+
+    environment {
+        SERVICE_NAME    = 'event-service'
+        SERVICE_PATH    = 'Backend/event-service'
+        IMAGE_NAME      = "${DOCKER_REGISTRY ?: 'smartek'}/${SERVICE_NAME}"
+        IMAGE_TAG       = "${BUILD_NUMBER}"
+        SONAR_PROJECT   = 'smartek-event-service'
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+                echo "Branch: ${env.GIT_BRANCH} | Commit: ${env.GIT_COMMIT?.take(8)}"
+            }
+        }
+
+        stage('Build & Test') {
+            steps {
+                dir("${SERVICE_PATH}") {
+                    sh 'mvn clean verify -Pcoverage --no-transfer-progress -Dspring.profiles.active=test'
+                }
+            }
+            post {
+                always {
+                    junit testResults: "${SERVICE_PATH}/target/surefire-reports/*.xml", allowEmptyResults: true
+                    jacoco(execPattern: "${SERVICE_PATH}/target/jacoco.exec",
+                           classPattern: "${SERVICE_PATH}/target/classes",
+                           sourcePattern: "${SERVICE_PATH}/src/main/java")
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            when { branch pattern: 'main|develop|feature/.*', comparator: 'REGEXP' }
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    dir("${SERVICE_PATH}") {
+                        sh 'mvn sonar:sonar -Dsonar.projectKey=${SONAR_PROJECT} --no-transfer-progress'
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            when { branch pattern: 'main|develop|feature/.*', comparator: 'REGEXP' }
+            steps {
+                timeout(time: 5, unit: 'MINUTES') { waitForQualityGate abortPipeline: true }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh """
+                    docker build \\
+                        --build-arg BUILD_DATE=\$(date -u +%Y-%m-%dT%H:%M:%SZ) \\
+                        --build-arg VERSION=${IMAGE_TAG} \\
+                        -t ${IMAGE_NAME}:${IMAGE_TAG} \\
+                        -t ${IMAGE_NAME}:latest \\
+                        ${SERVICE_PATH}
+                """
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                sh "trivy image --exit-code 0 --severity HIGH,CRITICAL --format table ${IMAGE_NAME}:${IMAGE_TAG}"
+            }
+        }
+
+        stage('Docker Push') {
+            when { branch pattern: 'main|develop', comparator: 'REGEXP' }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-registry-credentials',
+                                                  usernameVariable: 'DOCKER_USER',
+                                                  passwordVariable: 'DOCKER_PASS')]) {
+                    sh """
+                        echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
+                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                        docker push ${IMAGE_NAME}:latest
+                    """
+                }
+            }
+        }
+
+        stage('Deploy (Dev)') {
+            when { branch 'develop' }
+            steps {
+                sh "docker service update --image ${IMAGE_NAME}:${IMAGE_TAG} smartek_${SERVICE_NAME} || echo 'Skipping deploy'"
+            }
+        }
+    }
+
+    post {
+        always {
+            sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true"
+            cleanWs()
+        }
+        success { echo "✅ ${SERVICE_NAME} pipeline succeeded (build #${BUILD_NUMBER})" }
+        failure { echo "❌ ${SERVICE_NAME} pipeline failed (build #${BUILD_NUMBER})" }
+    }
+}

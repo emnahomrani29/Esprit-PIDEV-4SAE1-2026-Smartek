@@ -9,6 +9,7 @@ import com.smartek.offersservice.exception.BusinessException;
 import com.smartek.offersservice.config.TestSecurityConfig;
 import com.smartek.offersservice.exception.GlobalExceptionHandler;
 import com.smartek.offersservice.exception.ResourceNotFoundException;
+import com.smartek.offersservice.security.SecurityConfig;
 import com.smartek.offersservice.service.OfferService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -16,6 +17,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -37,7 +40,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Teste la couche HTTP : routing, sérialisation JSON,
  * codes de réponse, et propagation des exceptions.
  */
-@WebMvcTest(OfferController.class)
+@WebMvcTest(controllers = OfferController.class,
+        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class))
 @Import({GlobalExceptionHandler.class, TestSecurityConfig.class})
 @DisplayName("OfferController — Tests WebMvc")
 class OfferControllerTest {

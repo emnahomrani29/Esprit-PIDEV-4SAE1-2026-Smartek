@@ -2,6 +2,7 @@ package com.smartek.offersservice.config;
 
 import com.smartek.offersservice.security.JwtAuthFilter;
 import com.smartek.offersservice.security.JwtService;
+import com.smartek.offersservice.security.SecurityConfig;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
@@ -9,11 +10,15 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.test.context.TestPropertySource;
 
 /**
  * Configuration de sécurité pour les tests WebMvc.
- * Fournit des mocks pour JwtAuthFilter et JwtService afin d'éviter
- * les erreurs de chargement du contexte Spring dans @WebMvcTest.
+ * Remplace SecurityConfig en fournissant une chaîne de filtres permissive
+ * et des mocks pour JwtAuthFilter et JwtService.
+ *
+ * NOTE: Les tests @WebMvcTest doivent exclure SecurityConfig via
+ * excludeFilters pour éviter les conflits de beans.
  */
 @TestConfiguration
 public class TestSecurityConfig {

@@ -7,11 +7,14 @@ import com.smartek.offersservice.exception.BusinessException;
 import com.smartek.offersservice.config.TestSecurityConfig;
 import com.smartek.offersservice.exception.GlobalExceptionHandler;
 import com.smartek.offersservice.exception.ResourceNotFoundException;
+import com.smartek.offersservice.security.SecurityConfig;
 import com.smartek.offersservice.service.InterviewFeedbackService;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -29,7 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Tests WebMvc pour InterviewFeedbackController.
  * Couvre les deux endpoints (primary + alternative) et les cas métier.
  */
-@WebMvcTest(InterviewFeedbackController.class)
+@WebMvcTest(controllers = InterviewFeedbackController.class,
+        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class))
 @Import({GlobalExceptionHandler.class, TestSecurityConfig.class})
 @DisplayName("InterviewFeedbackController — Tests WebMvc")
 class InterviewFeedbackControllerTest {

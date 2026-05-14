@@ -4,12 +4,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartek.offersservice.config.TestSecurityConfig;
 import com.smartek.offersservice.controller.OfferController;
 import com.smartek.offersservice.dto.OfferRequest;
+import com.smartek.offersservice.security.SecurityConfig;
 import com.smartek.offersservice.service.OfferService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -24,7 +27,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Tests du GlobalExceptionHandler via le OfferController.
  * Vérifie que chaque type d'exception produit le bon code HTTP et la bonne structure JSON.
  */
-@WebMvcTest(OfferController.class)
+@WebMvcTest(controllers = OfferController.class,
+        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class))
 @Import({GlobalExceptionHandler.class, TestSecurityConfig.class})
 @DisplayName("GlobalExceptionHandler — Tests")
 class GlobalExceptionHandlerTest {
