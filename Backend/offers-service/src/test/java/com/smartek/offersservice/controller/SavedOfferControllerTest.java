@@ -5,6 +5,7 @@ import com.smartek.offersservice.dto.OfferResponse;
 import com.smartek.offersservice.exception.BusinessException;
 import com.smartek.offersservice.exception.GlobalExceptionHandler;
 import com.smartek.offersservice.exception.ResourceNotFoundException;
+import com.smartek.offersservice.security.JwtAuthFilter;
 import com.smartek.offersservice.security.SecurityConfig;
 import com.smartek.offersservice.service.SavedOfferService;
 import org.junit.jupiter.api.DisplayName;
@@ -27,7 +28,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = SavedOfferController.class,
-        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class))
+        excludeFilters = {
+            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class),
+            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JwtAuthFilter.class)
+        })
 @Import({GlobalExceptionHandler.class, TestSecurityConfig.class})
 @DisplayName("SavedOfferController — Tests WebMvc")
 class SavedOfferControllerTest {

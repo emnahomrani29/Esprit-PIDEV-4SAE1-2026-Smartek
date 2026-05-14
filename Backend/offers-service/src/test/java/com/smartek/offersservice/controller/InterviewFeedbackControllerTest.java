@@ -7,6 +7,7 @@ import com.smartek.offersservice.exception.BusinessException;
 import com.smartek.offersservice.config.TestSecurityConfig;
 import com.smartek.offersservice.exception.GlobalExceptionHandler;
 import com.smartek.offersservice.exception.ResourceNotFoundException;
+import com.smartek.offersservice.security.JwtAuthFilter;
 import com.smartek.offersservice.security.SecurityConfig;
 import com.smartek.offersservice.service.InterviewFeedbackService;
 import org.junit.jupiter.api.*;
@@ -30,10 +31,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Tests WebMvc pour InterviewFeedbackController.
- * Couvre les deux endpoints (primary + alternative) et les cas métier.
  */
 @WebMvcTest(controllers = InterviewFeedbackController.class,
-        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class))
+        excludeFilters = {
+            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class),
+            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JwtAuthFilter.class)
+        })
 @Import({GlobalExceptionHandler.class, TestSecurityConfig.class})
 @DisplayName("InterviewFeedbackController — Tests WebMvc")
 class InterviewFeedbackControllerTest {

@@ -7,6 +7,7 @@ import com.smartek.offersservice.entity.Application;
 import com.smartek.offersservice.exception.BusinessException;
 import com.smartek.offersservice.config.TestSecurityConfig;
 import com.smartek.offersservice.exception.GlobalExceptionHandler;
+import com.smartek.offersservice.security.JwtAuthFilter;
 import com.smartek.offersservice.security.SecurityConfig;
 import com.smartek.offersservice.service.ApplicationService;
 import org.junit.jupiter.api.DisplayName;
@@ -35,7 +36,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Tests du controller ApplicationController avec @WebMvcTest.
  */
 @WebMvcTest(controllers = ApplicationController.class,
-        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class))
+        excludeFilters = {
+            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class),
+            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JwtAuthFilter.class)
+        })
 @Import({GlobalExceptionHandler.class, TestSecurityConfig.class})
 @DisplayName("ApplicationController — Tests WebMvc")
 class ApplicationControllerTest {
