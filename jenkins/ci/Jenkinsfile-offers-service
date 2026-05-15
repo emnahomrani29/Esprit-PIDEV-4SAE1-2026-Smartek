@@ -4,7 +4,7 @@ pipeline {
     environment {
         OFFERS_DIR   = 'Backend/offers-service'
         IMAGE_PREFIX = 'smartek'
-        VM_IP        = '192.168.1.100'
+        VM_IP        = '178.104.30.115'
         SONAR_URL    = "http://${VM_IP}:9000"
         NEXUS_URL    = "http://${VM_IP}:8081"
         NEXUS_REPO   = 'smartek-releases'
@@ -116,7 +116,7 @@ pipeline {
         stage('Update K8s Manifest Tag') {
             steps {
                 sh """
-                    sed -i "s|<DOCKER_HUB_USER>.*\\/${IMAGE_PREFIX}-offers-service:.*|<DOCKER_HUB_USER>\\/${IMAGE_PREFIX}-offers-service:${BUILD_NUMBER}|g" \
+                    sed -i "s|emnahomrani.*\\/${IMAGE_PREFIX}-offers-service:.*|emnahomrani\\/${IMAGE_PREFIX}-offers-service:${BUILD_NUMBER}|g" \
                         k8s/apps/offers-service/offers-service-deployment.yaml
                 """
             }

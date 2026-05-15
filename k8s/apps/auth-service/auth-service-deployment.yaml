@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: auth-service
-          image: <DOCKER_HUB_USER>/smartek-auth-service:latest
+          image: emnahomrani/smartek-auth-service:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8081

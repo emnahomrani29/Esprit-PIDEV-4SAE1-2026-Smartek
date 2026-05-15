@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: offers-service
-          image: <DOCKER_HUB_USER>/smartek-offers-service:latest
+          image: emnahomrani/smartek-offers-service:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8085

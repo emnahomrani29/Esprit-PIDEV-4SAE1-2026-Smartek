@@ -4,7 +4,7 @@ pipeline {
     environment {
         AUTH_DIR     = 'Backend/auth-service'
         IMAGE_PREFIX = 'smartek'
-        VM_IP        = '192.168.1.100'
+        VM_IP        = '178.104.30.115'
         NEXUS_URL    = "http://${VM_IP}:8081"
         NEXUS_REPO   = 'smartek-releases'
     }
@@ -90,7 +90,7 @@ pipeline {
         stage('Update K8s Manifest Tag') {
             steps {
                 sh """
-                    sed -i "s|<DOCKER_HUB_USER>.*\\/${IMAGE_PREFIX}-auth-service:.*|<DOCKER_HUB_USER>\\/${IMAGE_PREFIX}-auth-service:${BUILD_NUMBER}|g" \
+                    sed -i "s|emnahomrani.*\\/${IMAGE_PREFIX}-auth-service:.*|emnahomrani\\/${IMAGE_PREFIX}-auth-service:${BUILD_NUMBER}|g" \
                         k8s/apps/auth-service/auth-service-deployment.yaml
                 """
             }
