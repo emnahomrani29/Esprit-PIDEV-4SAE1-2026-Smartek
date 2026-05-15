@@ -6,18 +6,17 @@ pipeline {
     agent any
 
     parameters {
-        booleanParam(name: 'SKIP_TESTS',  defaultValue: false, description: 'Passer tous les tests')
+        booleanParam(name: 'SKIP_TESTS',  defaultValue: false, description: 'Passer les tests (build rapide)')
         booleanParam(name: 'PUSH_IMAGES', defaultValue: false, description: 'Pousser les images vers le registry')
-        booleanParam(name: 'DEPLOY',      defaultValue: false, description: 'Déployer après le build')
+        booleanParam(name: 'DEPLOY',      defaultValue: false, description: 'Déployer après le build (Docker Swarm)')
         string(name:  'IMAGE_TAG',        defaultValue: '',    description: 'Tag image (vide = numéro de build)')
+        choice(name:  'ENVIRONMENT',      choices: ['dev', 'staging', 'prod'], description: 'Environnement cible')
     }
 
     environment {
         REGISTRY = 'smartek'
         TAG      = "${params.IMAGE_TAG ?: BUILD_NUMBER}"
         MVN      = '/usr/share/maven/bin/mvn'
-        // Exclure les tests nécessitant MySQL
-        TEST_EXCLUDES = '**/repository/**,**/integration/**'
     }
 
     options {
@@ -31,7 +30,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-                echo "Branch: ${env.GIT_BRANCH} | Commit: ${env.GIT_COMMIT?.take(8)} | Tag: ${TAG}"
+                echo "Branch: ${env.GIT_BRANCH} | Commit: ${env.GIT_COMMIT?.take(8)} | Tag: ${TAG} | Env: ${params.ENVIRONMENT}"
             }
         }
 
@@ -161,6 +160,7 @@ pipeline {
                 ]
                 services.each { svc ->
                     sh "docker rmi ${REGISTRY}/${svc}:${TAG} || true"
+                    sh "docker rmi ${REGISTRY}/${svc}:latest || true"
                 }
             }
             deleteDir()
@@ -178,13 +178,16 @@ def buildService(String name, String path, boolean infraOnly = false) {
     def mvn = env.MVN
     def tag = env.TAG
     def registry = env.REGISTRY
-    def excludes = env.TEST_EXCLUDES
 
     dir(path) {
         if (params.SKIP_TESTS || infraOnly) {
+            // Infrastructure services and fast builds skip tests entirely
             sh "${mvn} clean package -DskipTests --no-transfer-progress"
         } else {
-            sh "${mvn} clean verify --no-transfer-progress -Dspring.profiles.active=test -Dmaven.test.failure.ignore=true -Dexclude='${excludes}'"
+            // -Pci activates the CI profile in each service's pom.xml,
+            // which excludes **/repository/** and **/integration/** tests
+            // that require a real MySQL database
+            sh "${mvn} clean verify --no-transfer-progress -Pci -Dspring.profiles.active=test -Dmaven.test.failure.ignore=true"
         }
     }
 
@@ -197,13 +200,22 @@ def buildFrontend() {
     def registry = env.REGISTRY
 
     dir('Frontend/angular-app') {
-        sh 'npm ci --prefer-offline'
+        // --no-audit --no-fund suppress advisory noise in logs
+        sh 'npm ci --no-audit --no-fund'
         if (!params.SKIP_TESTS) {
-            sh 'npm run lint || true'
+            // lint script is optional — skip gracefully if not defined
+            sh '''
+                if npm run | grep -q "^  lint$"; then
+                    npm run lint
+                else
+                    echo "No lint script found — skipping"
+                fi
+            '''
         }
         sh 'npm run build -- --configuration production'
     }
 
+    // dist/ is pre-built above; Dockerfile copies it directly into nginx
     sh "docker build -t ${registry}/angular-app:${tag} -t ${registry}/angular-app:latest Frontend/angular-app"
     echo "✅ Frontend built"
 }
